@@ -1,49 +1,33 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\ProductResource\RelationManagers;
 
-use App\Filament\Resources\TechnicalCompositionResource\Pages;
 use App\Models\TechnicalComposition;
-use App\Models\Product;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
-use Illuminate\Support\Facades\Auth;
 use Filament\Forms;
-use Filament\Resources\Resource;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class TechnicalCompositionResource extends Resource
+class TechnicalCompositionRelationManager extends RelationManager
 {
-    protected static ?string $model = TechnicalComposition::class;
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-beaker';
-    protected static ?string $navigationLabel = 'Composiciones';
-    protected static ?string $modelLabel = 'Composición Técnica';
-    protected static ?string $pluralModelLabel = 'Composiciones Técnicas';
-    protected static string|\UnitEnum|null $navigationGroup = 'Configuración';
-    protected static ?int $navigationSort = 4;
+    protected static string $relationship = 'technicalComposition';
 
-    public static function canAccess(): bool
+    protected static ?string $recordTitleAttribute = 'commercial_name';
+
+    public function isReadOnly(): bool
     {
-        return Auth::user()?->can('viewAny', TechnicalComposition::class) ?? false;
+        return false;
     }
 
-    public static function form(Schema $schema): Schema
+    public function form(Schema $schema): Schema
     {
         return $schema
             ->schema([
-                Section::make('Producto')
-                    ->schema([
-                        Forms\Components\Select::make('product_id')
-                            ->label('Producto')
-                            ->options(Product::where('active', true)->pluck('name', 'id'))
-                            ->required()
-                            ->searchable()
-                            ->unique(ignoreRecord: true),
-                    ]),
-
                 Section::make('Identificación')
                     ->schema([
                         Forms\Components\TextInput::make('commercial_name')
@@ -140,59 +124,44 @@ class TechnicalCompositionResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
+    public function table(Table $table): Table
     {
         return $table
+            ->recordTitleAttribute('commercial_name')
             ->columns([
-                Tables\Columns\TextColumn::make('product.product_code')
-                    ->label('Código')
-                    ->searchable()
-                    ->sortable()
-                    ->badge()
-                    ->color('info'),
-
-                Tables\Columns\TextColumn::make('product.name')
-                    ->label('Producto')
-                    ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('commercial_name')
+                TextColumn::make('commercial_name')
                     ->label('Nombre comercial')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('product_family')
-                    ->label('Familia')
-                    ->toggleable(),
+                TextColumn::make('product_family')
+                    ->label('Familia'),
 
-                Tables\Columns\TextColumn::make('manufacturer')
-                    ->label('Fabricante')
-                    ->toggleable(),
+                TextColumn::make('cover_material')
+                    ->label('Forro')
+                    ->limit(30),
 
-                Tables\Columns\IconColumn::make('active')
+                TextColumn::make('foam_description')
+                    ->label('Espuma')
+                    ->limit(30),
+
+                TextColumn::make('inen_standard')
+                    ->label('Norma INEN'),
+
+                \Filament\Tables\Columns\IconColumn::make('active')
                     ->label('Activo')
                     ->boolean(),
             ])
-            ->filters([
-                Tables\Filters\TernaryFilter::make('active')
-                    ->label('Estado'),
+            ->headerActions([
+                \Filament\Tables\Actions\CreateAction::make()
+                    ->label('Crear Composición Técnica')
+                    ->visible(fn(): bool => $this->getOwnerRecord()->technicalComposition === null),
             ])
             ->actions([
                 EditAction::make()
-                    ->label('Editar')
-                    ->visible(fn(TechnicalComposition $record): bool => Auth::user()?->can('update', $record) ?? false),
+                    ->label('Editar'),
                 DeleteAction::make()
-                    ->label('Eliminar')
-                    ->visible(fn(TechnicalComposition $record): bool => Auth::user()?->can('delete', $record) ?? false),
+                    ->label('Eliminar'),
             ])
             ->bulkActions([]);
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index'  => Pages\ListTechnicalCompositions::route('/'),
-            'create' => Pages\CreateTechnicalComposition::route('/create'),
-            'edit'   => Pages\EditTechnicalComposition::route('/{record}/edit'),
-        ];
     }
 }

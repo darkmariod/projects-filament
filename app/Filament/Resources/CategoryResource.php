@@ -44,8 +44,7 @@ class CategoryResource extends Resource
                             ->label('Código')
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->maxLength(50)
-                            ->helperText('Ejemplo: RES, ORT, SEM'),
+                            ->maxLength(50),
 
                         Forms\Components\Textarea::make('description')
                             ->label('Descripción')

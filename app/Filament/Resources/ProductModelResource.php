@@ -51,20 +51,17 @@ class ProductModelResource extends Resource
                             ->label('Código')
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->maxLength(50)
-                            ->helperText('Ejemplo: SEN, ORT, LUX'),
+                            ->maxLength(50),
 
                         Forms\Components\TextInput::make('type')
                             ->label('Tipo')
                             ->nullable()
-                            ->maxLength(100)
-                            ->helperText('Ejemplo: Colchón de Resortes'),
+                            ->maxLength(100),
 
                         Forms\Components\TextInput::make('class')
                             ->label('Clase')
                             ->nullable()
-                            ->maxLength(100)
-                            ->helperText('Ejemplo: Especial'),
+                            ->maxLength(100),
 
                         Forms\Components\TextInput::make('warranty_years')
                             ->label('Años de garantía')

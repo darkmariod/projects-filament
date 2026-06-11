@@ -43,8 +43,7 @@ class RoleResource extends Resource
                         ->label('Nombre del rol')
                         ->required()
                         ->unique(ignoreRecord: true)
-                        ->maxLength(100)
-                        ->helperText('Ejemplo: administrador, produccion, ventas'),
+                            ->maxLength(100),
 
                     TextInput::make('guard_name')
                         ->label('Guard')

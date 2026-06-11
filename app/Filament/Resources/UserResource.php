@@ -56,8 +56,7 @@ class UserResource extends Resource
                             ->dehydrateStateUsing(fn($state) => !empty($state) ? Hash::make($state) : null)
                             ->dehydrated(fn($state) => !empty($state))
                             ->required(fn(string $operation): bool => $operation === 'create')
-                            ->maxLength(255)
-                            ->helperText('Dejar vacío para no cambiar la contraseña.'),
+                            ->maxLength(255),
 
                         Select::make('roles')
                             ->label('Roles')

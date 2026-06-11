@@ -124,9 +124,12 @@ class PrintQueueService
      * - Items que fallan por ZPL/datos → se marcan como falla y continúa
      * - Items que fallan por conexión (refused/timeout) → pausa la cola
      *
+     * @param  bool  $autoPause  Si true (default), pausa la cola en errores de conexión.
+     *                           Si false, marca como failed y continúa (útil para reintentos).
+     *
      * @return array{processed: int, printed: int, failed: int, total: int, paused: bool}
      */
-    public function processQueue(PrintQueue $queue): array
+    public function processQueue(PrintQueue $queue, bool $autoPause = true): array
     {
         if ($queue->isUsbConnection()) {
             // ── USB ────────────────────────────────────────────────────────
@@ -135,7 +138,11 @@ class PrintQueueService
 
             if ($status !== ZebraZplService::STATUS_READY) {
                 $message = $this->zebraService->getStatusMessage($status);
-                $this->pause($queue, $message, 'printer_offline');
+
+                if ($autoPause) {
+                    $this->pause($queue, $message, 'printer_offline');
+                }
+
                 $totalItems = $queue->items()
                     ->whereIn('status', ['pending', 'printing'])
                     ->count();
@@ -145,7 +152,7 @@ class PrintQueueService
                     'printed'   => 0,
                     'failed'    => 0,
                     'total'     => $totalItems,
-                    'paused'    => true,
+                    'paused'    => $autoPause,
                 ];
             }
 
@@ -153,7 +160,8 @@ class PrintQueueService
                 $queue,
                 fn($item, $queue) => $this->zebraService->sendToUsbPrinter(
                     zpl: $item->zpl_content,
-                )
+                ),
+                $autoPause,
             );
         }
 
@@ -163,7 +171,11 @@ class PrintQueueService
 
         if ($status !== ZebraZplService::STATUS_READY) {
             $message = $this->zebraService->getStatusMessage($status);
-            $this->pause($queue, $message, 'printer_offline');
+
+            if ($autoPause) {
+                $this->pause($queue, $message, 'printer_offline');
+            }
+
             $totalItems = $queue->items()
                 ->whereIn('status', ['pending', 'printing'])
                 ->count();
@@ -173,7 +185,7 @@ class PrintQueueService
                 'printed'   => 0,
                 'failed'    => 0,
                 'total'     => $totalItems,
-                'paused'    => true,
+                'paused'    => $autoPause,
             ];
         }
 
@@ -184,7 +196,8 @@ class PrintQueueService
                 ip: $queue->zebra_ip,
                 port: $queue->zebra_port,
                 timeout: 10,
-            )
+            ),
+            $autoPause,
         );
     }
 
@@ -216,6 +229,7 @@ class PrintQueueService
     protected function processItems(
         PrintQueue $queue,
         callable $sendFn,
+        bool $autoPause = true,
     ): array {
         $queue->update([
             'status'     => 'processing',
@@ -279,15 +293,17 @@ class PrintQueueService
                     'error'   => $e->getMessage(),
                 ]);
 
-                // ⏸ PAUSA solo si es error de conexión (no ZPL/datos)
-                $msg = strtolower($e->getMessage());
-                if (str_contains($msg, 'connection refused')
-                    || str_contains($msg, 'timeout')
-                    || str_contains($msg, 'could not connect')
-                ) {
-                    $this->pause($queue, $e->getMessage(), 'printer_offline');
-                    $paused = true;
-                    break;
+                if ($autoPause) {
+                    // ⏸ PAUSA solo si es error de conexión (no ZPL/datos)
+                    $msg = strtolower($e->getMessage());
+                    if (str_contains($msg, 'connection refused')
+                        || str_contains($msg, 'timeout')
+                        || str_contains($msg, 'could not connect')
+                    ) {
+                        $this->pause($queue, $e->getMessage(), 'printer_offline');
+                        $paused = true;
+                        break;
+                    }
                 }
             }
 

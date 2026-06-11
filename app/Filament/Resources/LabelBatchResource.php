@@ -56,44 +56,19 @@ class LabelBatchResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->columnSpan(1),
-
-                        Forms\Components\TextInput::make('quantity')
-                            ->label('Cantidad de etiquetas')
-                            ->numeric()
-                            ->required()
-                            ->minValue(1)
-                            ->default(100)
-                            ->columnSpan(1),
-
-                        Forms\Components\Textarea::make('observations')
-                            ->label('Observaciones')
-                            ->nullable()
-                            ->maxLength(1000)
-                            ->columnSpanFull(),
-                    ])->columns(2),
-
-                Section::make('Información del producto')
-                    ->schema([
-                        Forms\Components\Placeholder::make('internal_batch_code')
-                            ->label('Código interno')
-                            ->content(function ($get) {
-                                $productId = $get('product_id');
-                                // This is for display only — the real generation happens in booted()
-                                return 'Se generará automáticamente';
-                            }),
-
-                        Forms\Components\Placeholder::make('product_info')
-                            ->label('Información del producto')
-                            ->content(function ($get) {
-                                $productId = $get('product_id');
-                                if (!$productId) {
-                                    return 'Seleccioná un producto para ver su información';
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if (!$state) {
+                                    $set('product_info_display', '');
+                                    $set('product_measurements_display', '—');
+                                    $set('composition_detail_display', '—');
+                                    return;
                                 }
 
-                                $product = Product::with('technicalComposition', 'productModel')->find($productId);
+                                $product = Product::with('technicalComposition', 'productModel')->find($state);
                                 if (!$product) {
-                                    return 'Producto no encontrado';
+                                    $set('product_info_display', 'Producto no encontrado');
+                                    return;
                                 }
 
                                 $parts = [
@@ -118,45 +93,64 @@ class LabelBatchResource extends Resource
                                     }
                                 }
 
-                                return implode(' | ', $parts);
-                            }),
+                                $set('product_info_display', implode(' | ', $parts));
+                                $set('product_measurements_display', $product->measurements_text ?: '—');
 
-                        Forms\Components\Placeholder::make('product_measurements')
+                                $tc = $product->technicalComposition;
+                                if ($tc) {
+                                    $set('composition_detail_display', implode(' | ', array_filter([
+                                        $tc->product_family ? "Familia: {$tc->product_family}" : null,
+                                        $tc->springs ? "Resortes: {$tc->springs}" : null,
+                                        $tc->support_material ? "Soporte: {$tc->support_material}" : null,
+                                        $tc->general_composition ? "Composición: {$tc->general_composition}" : null,
+                                    ])));
+                                } else {
+                                    $set('composition_detail_display', 'Sin datos de composición técnica');
+                                }
+                            })
+                            ->columnSpan(1),
+
+                        Forms\Components\TextInput::make('quantity')
+                            ->label('Cantidad de etiquetas')
+                            ->numeric()
+                            ->required()
+                            ->minValue(1)
+                            ->default(100)
+                            ->columnSpan(1),
+
+                        Forms\Components\Textarea::make('observations')
+                            ->label('Observaciones')
+                            ->nullable()
+                            ->maxLength(1000)
+                            ->columnSpanFull(),
+                    ])->columns(2),
+
+                Section::make('Información del producto')
+                    ->schema([
+                        Forms\Components\Placeholder::make('internal_batch_code')
+                            ->label('Código interno')
+                            ->content(fn () => 'Se generará automáticamente'),
+
+                        Forms\Components\Textarea::make('product_info_display')
+                            ->label('Información del producto')
+                            ->disabled()
+                            ->rows(3)
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+
+                        Forms\Components\TextInput::make('product_measurements_display')
                             ->label('Medidas del producto')
-                            ->content(function ($get) {
-                                $productId = $get('product_id');
-                                if (!$productId) {
-                                    return '—';
-                                }
-                                $product = Product::find($productId);
-                                if (!$product || !$product->measurements_text) {
-                                    return '—';
-                                }
-                                return $product->measurements_text;
-                            }),
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->columnSpan(1),
 
-                        Forms\Components\Placeholder::make('composition_detail')
+                        Forms\Components\TextInput::make('composition_detail_display')
                             ->label('Detalle de composición')
-                            ->content(function ($get) {
-                                $productId = $get('product_id');
-                                if (!$productId) {
-                                    return '—';
-                                }
-                                $product = Product::with('technicalComposition')->find($productId);
-                                $tc = $product?->technicalComposition;
-                                if (!$tc) {
-                                    return 'Sin datos de composición técnica';
-                                }
-                                return implode(' | ', array_filter([
-                                    $tc->product_family ? "Familia: {$tc->product_family}" : null,
-                                    $tc->springs ? "Resortes: {$tc->springs}" : null,
-                                    $tc->support_material ? "Soporte: {$tc->support_material}" : null,
-                                    $tc->general_composition ? "Composición: {$tc->general_composition}" : null,
-                                ]));
-                            }),
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->columnSpan(1),
                     ])
-                    ->columns(2)
-                    ->collapsible(),
+                    ->columns(2),
             ]);
     }
 
@@ -252,16 +246,11 @@ class LabelBatchResource extends Resource
                             }
 
                             return [
-                                Forms\Components\TextInput::make('zebra_ip')
-                                    ->label('IP de la impresora Zebra')
-                                    ->placeholder('192.168.1.200')
-                                    ->required()
-                                    ->helperText('No hay una configuración activa. Ingresá la IP manualmente.'),
-                                Forms\Components\TextInput::make('zebra_port')
-                                    ->label('Puerto TCP')
-                                    ->default(9100)
-                                    ->numeric()
-                                    ->required(),
+                                Forms\Components\TextInput::make('printer_name')
+                                    ->label('Nombre de la impresora en Windows')
+                                    ->placeholder('Zebra ZT411')
+                                    ->default('Zebra ZT411')
+                                    ->helperText('Usá el mismo nombre con el que compartiste la impresora en "Dispositivos e impresoras" → Propiedades → Compartir'),
                             ];
                         })
                         ->modalHeading('Imprimir lote en Zebra ZT411')
@@ -296,11 +285,11 @@ class LabelBatchResource extends Resource
                                 $printerName = $activeSetting->printer_name;
                                 $printerInfo = $activeSetting->getPrinterEndpoint();
                             } else {
-                                $ip = $data['zebra_ip'];
-                                $port = (int) ($data['zebra_port'] ?? 9100);
-                                $connectionType = null;
-                                $printerName = null;
-                                $printerInfo = "{$ip}:{$port}";
+                                $ip = '';
+                                $port = 9100;
+                                $connectionType = 'usb';
+                                $printerName = $data['printer_name'] ?? 'Zebra ZT411';
+                                $printerInfo = $printerName . ' (USB)';
                             }
 
                             try {
@@ -313,11 +302,18 @@ class LabelBatchResource extends Resource
                                     printerName: $printerName,
                                 );
 
+                                $labelText = $pendingCount === 1 ? 'etiqueta' : 'etiquetas';
+                                $isUsb = $connectionType === 'usb';
+                                $msg = "Cola #{$queue->id} creada con {$pendingCount} {$labelText} para {$printerInfo}.";
+                                if ($isUsb) {
+                                    $msg .= " El agente Windows la procesará automáticamente.";
+                                }
+
                                 Notification::make()
                                     ->title('Cola de impresión creada')
-                                    ->body("{$pendingCount} etiquetas en cola para {$printerInfo}")
+                                    ->body($msg)
                                     ->success()
-                                    ->seconds(8)
+                                    ->seconds(12)
                                     ->send();
 
                             } catch (\Exception $e) {

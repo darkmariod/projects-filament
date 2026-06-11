@@ -76,7 +76,7 @@ class ZebraPrintSettingResource extends Resource
                         Forms\Components\Toggle::make('show_logo')
                             ->label('Mostrar logo PARAISO')
                             ->default(true)
-                            ->helperText('Desactivar para pruebas o demos sin marca'),
+
                     ])->columns(2),
 
                 Section::make('Tamaño de etiqueta')
@@ -84,32 +84,27 @@ class ZebraPrintSettingResource extends Resource
                         Forms\Components\TextInput::make('label_width_mm')
                             ->label('Ancho (mm)')
                             ->numeric()
-                            ->required()
-                            ->helperText('Ejemplo: 100'),
+                            ->required(),
 
                         Forms\Components\TextInput::make('label_height_mm')
                             ->label('Alto (mm)')
                             ->numeric()
-                            ->required()
-                            ->helperText('Ejemplo: 350'),
+                            ->required(),
 
                         Forms\Components\TextInput::make('label_gap_mm')
                             ->label('Separación entre etiquetas (mm)')
                             ->numeric()
-                            ->nullable()
-                            ->helperText('Ejemplo: 3'),
+                            ->nullable(),
 
                         Forms\Components\TextInput::make('width_dots')
                             ->label('Ancho en puntos')
                             ->numeric()
-                            ->required()
-                            ->helperText('203 DPI: mm x 8'),
+                            ->required(),
 
                         Forms\Components\TextInput::make('height_dots')
                             ->label('Alto en puntos')
                             ->numeric()
-                            ->required()
-                            ->helperText('203 DPI: mm x 8'),
+                            ->required(),
                     ])->columns(2),
 
                 Section::make('Ajustes de impresión')
@@ -130,8 +125,7 @@ class ZebraPrintSettingResource extends Resource
                             ->label('Tamaño QR')
                             ->numeric()
                             ->default(6)
-                            ->required()
-                            ->helperText('Valor entre 1 y 10'),
+                            ->required(),
 
                         Forms\Components\TextInput::make('barcode_height')
                             ->label('Altura código de barras')
@@ -148,7 +142,6 @@ class ZebraPrintSettingResource extends Resource
                         Forms\Components\TextInput::make('printer_ip')
                             ->label('Dirección IP de la impresora')
                             ->placeholder('Ej: 192.168.1.200')
-                            ->helperText('La ZT411 debe tener una IP fija en la red')
                             ->maxLength(45)
                             ->hidden(fn($get) => $get('connection_type') !== 'network'),
 
@@ -156,20 +149,17 @@ class ZebraPrintSettingResource extends Resource
                             ->label('Puerto TCP')
                             ->numeric()
                             ->default(9100)
-                            ->helperText('Puerto estándar Zebra: 9100')
                             ->hidden(fn($get) => $get('connection_type') !== 'network'),
 
                         Forms\Components\TextInput::make('chunk_size')
                             ->label('Etiquetas por bloque')
                             ->numeric()
                             ->default(500)
-                            ->helperText('Para lotes grandes, se envían en bloques de N etiquetas para no saturar la impresora')
                             ->hidden(fn($get) => $get('connection_type') !== 'network'),
 
                         Forms\Components\TextInput::make('printer_name')
                             ->label('Nombre de la impresora CUPS')
                             ->placeholder('Ej: zebra-zt411')
-                            ->helperText('Ejecutá "lpstat -p" en el servidor para ver las impresoras disponibles')
                             ->maxLength(255)
                             ->hidden(fn($get) => $get('connection_type') !== 'usb'),
                     ])->columns(3),

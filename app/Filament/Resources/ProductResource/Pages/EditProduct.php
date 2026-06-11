@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ProductResource\Pages;
 
 use App\Filament\Resources\ProductResource;
+use App\Filament\Resources\ProductResource\RelationManagers\TechnicalCompositionRelationManager;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
@@ -27,5 +28,12 @@ class EditProduct extends EditRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    public function getRelationManagers(): array
+    {
+        return [
+            TechnicalCompositionRelationManager::class,
+        ];
     }
 }

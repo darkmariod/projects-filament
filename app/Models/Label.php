@@ -11,6 +11,16 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Label extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $label) {
+            if ($label->zpl_generated === null) {
+                $label->zpl_generated = false;
+            }
+        });
+    }
+
     protected $fillable = [
         'label_batch_id',
         'product_id',

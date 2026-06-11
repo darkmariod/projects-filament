@@ -466,7 +466,7 @@ class ZebraZplService
      *
      * @return array{success: bool, message: string, status?: string}
      */
-    public function sendWithSgdCheck(string $zpl, string $ip, int $port = 9100): array
+    public function sendWithSgdCheck(string $zpl, string $ip, int $port = 9100, int $timeout = 10): array
     {
         // ── PRE-CHECK ─────────────────────────────────────────────────────
         $status = $this->checkPrinterStatus($ip, $port);
@@ -488,7 +488,7 @@ class ZebraZplService
         }
 
         // ── ENVIAR ────────────────────────────────────────────────────────
-        return $this->sendSingleLabel($zpl, $ip, $port);
+        return $this->sendSingleLabel($zpl, $ip, $port, $timeout);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

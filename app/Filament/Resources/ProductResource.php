@@ -51,14 +51,12 @@ class ProductResource extends Resource
                             ->label('Código de producto')
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->maxLength(50)
-                            ->helperText('Ejemplo: A50135'),
+                            ->maxLength(50),
 
                         Forms\Components\TextInput::make('barcode')
                             ->label('Código de barras')
                             ->nullable()
-                            ->maxLength(50)
-                            ->helperText('Ejemplo: 7861191227279'),
+                            ->maxLength(50),
 
                         Forms\Components\FileUpload::make('image')
                             ->label('Imagen del producto')
@@ -94,8 +92,7 @@ class ProductResource extends Resource
                         Forms\Components\TextInput::make('measurements_text')
                             ->label('Medidas en texto')
                             ->nullable()
-                            ->maxLength(100)
-                            ->helperText('Ejemplo: 080 x 190 cm'),
+                            ->maxLength(100),
                     ])->columns(2),
 
                 Section::make('Descripción')

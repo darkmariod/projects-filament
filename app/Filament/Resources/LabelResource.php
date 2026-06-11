@@ -58,8 +58,7 @@ class LabelResource extends Resource
                             ->label('Serial')
                             ->nullable()
                             ->maxLength(255)
-                            ->disabled()
-                            ->helperText('Auto-generado si se deja vacío'),
+                            ->disabled(),
                     ])->columns(2),
 
                 Section::make('Identificadores')
@@ -68,24 +67,22 @@ class LabelResource extends Resource
                             ->label('Número de secuencia')
                             ->numeric()
                             ->nullable()
-                            ->disabled()
-                            ->helperText('Auto-generado si se deja vacío'),
+                            ->disabled(),
 
                         Forms\Components\TextInput::make('barcode')
                             ->label('Código de barras')
                             ->nullable()
                             ->maxLength(255)
-                            ->disabled()
-                            ->helperText('Auto-generado desde el producto si se deja vacío'),
+                            ->disabled(),
 
                         Forms\Components\TextInput::make('qr_url')
                             ->label('URL del QR')
                             ->nullable()
-                            ->maxLength(255)
-                            ->helperText('URL que se incrusta en el QR. Se genera automáticamente desde el serial si se deja vacío. Formato: {APP_URL}/p/{serial}'),
+                            ->maxLength(255),
                     ])->columns(2),
 
                 Section::make('Estado y fechas')
+                    ->visible(fn($operation) => $operation === 'edit' || $operation === 'view')
                     ->schema([
                         Forms\Components\Select::make('status')
                             ->label('Estado')
