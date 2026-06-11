@@ -100,7 +100,7 @@ class ZebraZplServiceTest extends TestCase
         $zpl = $this->service->generateForLabel($label);
 
         $this->assertStringContainsString('PARAISO', $zpl);
-        $this->assertStringContainsString('DONDE EMPIEZAN TUS SUENOS', $zpl);
+        $this->assertStringContainsString('DONDE EMPIEZAN TUS SUEÑOS', $zpl);
         $this->assertStringContainsString('CONTROL DE CALIDAD', $zpl);
         $this->assertStringContainsString($label->product->product_code, $zpl);
         $this->assertStringContainsString($label->product->productModel->name, $zpl);
@@ -154,12 +154,12 @@ class ZebraZplServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_generates_without_barcode_when_product_has_no_barcode(): void
+    public function it_generates_without_barcode_when_label_has_no_barcode(): void
     {
         $label = $this->createFullLabel();
-        // Product already has barcode set in createFullLabel; override
-        $label->product->barcode = '';
-        $label->product->save();
+        // Label already has barcode set in createFullLabel; override
+        $label->barcode = '';
+        $label->save();
         $label->load('product');
 
         $zpl = $this->service->generateForLabel($label);

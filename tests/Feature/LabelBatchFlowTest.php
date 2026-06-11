@@ -131,7 +131,7 @@ class LabelBatchFlowTest extends TestCase
     }
 
     /** @test */
-    public function batch_sets_serial_range_after_generation(): void
+    public function batch_sets_generated_status_after_generation(): void
     {
         $batch = LabelBatch::factory()->create([
             'product_id' => $this->product->id,
@@ -142,9 +142,10 @@ class LabelBatchFlowTest extends TestCase
         $this->serialService->generateLabelsForBatch($batch);
         $batch->refresh();
 
-        $this->assertNotNull($batch->serial_from);
-        $this->assertNotNull($batch->serial_to);
-        $this->assertStringContainsString('00000001', $batch->serial_from);
-        $this->assertStringContainsString('00000003', $batch->serial_to);
+        $this->assertSame('generated', $batch->status);
+        $this->assertNotNull($batch->generated_at);
+        $this->assertCount(3, $batch->labels);
+        $this->assertStringContainsString('00000001', $batch->labels[0]->serial);
+        $this->assertStringContainsString('00000003', $batch->labels[2]->serial);
     }
 }

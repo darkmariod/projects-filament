@@ -54,6 +54,14 @@
             <span>{{ $label->serial }}</span>
         </div>
 
+        @if($label->product->image)
+            <div style="text-align:center; margin-bottom:16px;">
+                <img src="{{ asset('storage/' . $label->product->image) }}"
+                     alt="{{ $label->product->name }}"
+                     style="max-width:100%; border-radius:8px; max-height:300px; object-fit:contain;">
+            </div>
+        @endif
+
         <div style="text-align:center; margin-bottom:16px;">
             <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px; display:inline-block;">
                 <img src="{{ route('public.qr.image', $label->serial) }}"

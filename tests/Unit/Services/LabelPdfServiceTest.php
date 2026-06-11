@@ -92,7 +92,7 @@ class LabelPdfServiceTest extends TestCase
         $html = $this->invokeBuildLabelHtml($label);
 
         $this->assertStringContainsString('PARAISO', $html);
-        $this->assertStringContainsString('DONDE EMPIEZAN TUS SUENOS', $html);
+        $this->assertStringContainsString('DONDE EMPIEZAN TUS SUEÑOS', $html);
         $this->assertStringContainsString('CONTROL DE CALIDAD', $html);
         $this->assertStringContainsString('HECHO EN ECUADOR', $html);
         $this->assertStringContainsString('Informacion de Composicion', $html);

@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Print Agent Key
+    |--------------------------------------------------------------------------
+    |
+    | Clave API para autenticar el agente de impresión Windows.
+    | Debe coincidir con la configurada en el script zebra-agent.ps1.
+    |
+    */
+
+    'print_agent_key' => env('PRINT_AGENT_KEY', 'change-me-in-production'),
+
 ];

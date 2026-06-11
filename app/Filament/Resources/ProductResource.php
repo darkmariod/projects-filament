@@ -60,12 +60,21 @@ class ProductResource extends Resource
                             ->maxLength(50)
                             ->helperText('Ejemplo: 7861191227279'),
 
+                        Forms\Components\FileUpload::make('image')
+                            ->label('Imagen del producto')
+                            ->image()
+                            ->disk('public')
+                            ->directory('products')
+                            ->maxSize(5120)
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->columnSpanFull(),
+
                         Forms\Components\Toggle::make('active')
                             ->label('Activo')
                             ->default(true),
                     ])->columns(2),
 
-                Section::make('Medidas')
+                Section::make('Plaza')
                     ->schema([
                         Forms\Components\TextInput::make('width_cm')
                             ->label('Ancho (cm)')

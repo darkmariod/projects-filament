@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -30,9 +31,12 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if (config('app.env') === 'production' || str_starts_with(config('app.url'), 'https://')) {
+        if (str_starts_with(config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
+
+        // Force APP_URL as base for URL generation (fixes port issues behind Nginx)
+        URL::forceRootUrl(config('app.url'));
 
         // Límite de 3 registros de garantía por IP por minuto
         RateLimiter::for('warranty-register', function (Request $request) {

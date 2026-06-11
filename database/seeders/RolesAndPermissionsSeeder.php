@@ -78,8 +78,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'ver productos',
             'ver composiciones',
             'ver lotes',
-            'crear lotes',
-            'generar etiquetas',
             'descargar zpl',
             'descargar pdf etiquetas',
             'ver etiquetas',

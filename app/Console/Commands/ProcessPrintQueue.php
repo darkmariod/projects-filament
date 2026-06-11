@@ -2,186 +2,99 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Label;
-use App\Models\LabelBatch;
-use App\Models\LabelLog;
 use App\Models\PrintQueue;
-use App\Models\ZebraPrintSetting;
+use App\Services\PrintQueueService;
 use App\Services\ZebraZplService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ProcessPrintQueue extends Command
 {
     protected $signature   = 'print:process';
-    protected $description = 'Procesa la cola de impresión: genera ZPL por chunks y envía a la Zebra por TCP/IP';
+    protected $description = 'Procesa la cola de impresión: envía item por item a la Zebra (TCP/IP o USB) con verificación de estado';
 
-    public function handle(): void
+    public function handle(PrintQueueService $service): void
     {
-        $jobs = PrintQueue::where('status', 'pending')
+        $queues = PrintQueue::whereIn('status', ['pending', 'partial', 'paused'])
+            ->where('connection_type', '!=', 'usb') // USB lo maneja el agente Windows
             ->orderBy('created_at')
             ->get();
 
-        if ($jobs->isEmpty()) {
+        if ($queues->isEmpty()) {
             return;
         }
 
-        $settings = ZebraPrintSetting::where('active', true)->first();
-        $service  = new ZebraZplService($settings);
-        $chunkSize = $settings?->chunk_size ?? 500;
-
-        foreach ($jobs as $job) {
-            $this->processJob($job, $service, $chunkSize);
-        }
-    }
-
-    protected function processJob(PrintQueue $job, ZebraZplService $service, int $chunkSize): void
-    {
-        $batch = $job->labelBatch;
-
-        if (!$batch) {
-            $this->failJob($job, 'El lote asociado no existe.');
-            return;
-        }
-
-        $this->info("Trabajo #{$job->id}: lote {$batch->internal_batch_code} → {$job->zebra_ip}:{$job->zebra_port}");
-
-        $job->update([
-            'status'     => 'processing',
-            'started_at' => now(),
+        $this->info("Colas pendientes: {$queues->count()}");
+        Log::info('ProcessPrintQueue: processing queues', [
+            'queue_count' => $queues->count(),
         ]);
 
-        try {
-            $totalLabels = $batch->labels()
-                ->whereNull('printed_at')
-                ->where('status', '!=', 'anulled')
-                ->count();
+        foreach ($queues as $queue) {
+            $printerId = $queue->connection_type === 'usb'
+                ? $queue->printer_name
+                : "{$queue->zebra_ip}:{$queue->zebra_port}";
 
-            if ($totalLabels === 0) {
-                $this->info("  Sin etiquetas pendientes, marcando como completado.");
-                $job->update([
-                    'status'       => 'completed',
-                    'total_labels' => 0,
-                    'sent_labels'  => 0,
-                    'finished_at'  => now(),
-                ]);
-                return;
+            // For paused queues, check if printer is back online first
+            if ($queue->status === 'paused') {
+                $zebraService = app(ZebraZplService::class);
+
+                if ($queue->connection_type === 'network') {
+                    $status = $zebraService->checkPrinterStatus($queue->zebra_ip, $queue->zebra_port ?? 9100);
+                    $printerReady = ($status === ZebraZplService::STATUS_READY);
+                } elseif ($queue->connection_type === 'usb') {
+                    $status = $zebraService->checkUsbPrinterStatus($queue->printer_name);
+                    $printerReady = ($status === ZebraZplService::STATUS_READY);
+                } else {
+                    $status = 'unknown';
+                    $printerReady = false;
+                }
+
+                if (! $printerReady) {
+                    $this->warn("  ⏸ Cola #{$queue->id} — {$printerId} aún en pausa, impresora no disponible");
+                    Log::info("PrintQueue #{$queue->id} skipped (printer still unavailable)", [
+                        'queue_id'        => $queue->id,
+                        'printer'         => $printerId,
+                        'connection_type' => $queue->connection_type,
+                        'printer_status'  => $status ?? 'unknown',
+                    ]);
+                    continue;
+                }
+
+                $service->resume($queue);
+                $this->line("  ▶ Cola #{$queue->id} reanudada — impresora disponible");
             }
 
-            $printedCount = 0;
-            $totalChunks  = (int) ceil($totalLabels / $chunkSize);
-            $chunkIndex   = 0;
-            $errors       = [];
+            $this->line("Procesando cola #{$queue->id} — {$printerId}");
 
-            $batch->labels()
-                ->whereNull('printed_at')
-                ->where('status', '!=', 'anulled')
-                ->orderBy('sequence_number')
-                ->chunk($chunkSize, function ($labels) use (
-                    $service, $job, $batch, &$printedCount, $totalLabels,
-                    &$chunkIndex, $totalChunks, &$errors
-                ) {
-                    $chunkIndex++;
+            $result = $queue->connection_type === 'network'
+                ? $service->processQueueWithStatusCheck($queue)
+                : $service->processQueue($queue);
 
-                    try {
-                        DB::beginTransaction();
+            $this->line("  Procesados: {$result['processed']}, "
+                . "Impresas: {$result['printed']}, "
+                . "Fallidas: {$result['failed']}, "
+                . "Total: {$result['total']}");
 
-                        // 1. Generar ZPL para este chunk
-                        $zpl = $service->generateForLabels($labels);
+            Log::info("PrintQueue #{$queue->id} processed", [
+                'queue_id'        => $queue->id,
+                'processed'       => $result['processed'],
+                'printed'         => $result['printed'],
+                'failed'          => $result['failed'],
+                'total'           => $result['total'],
+                'paused'          => $result['paused'] ?? false,
+                'printer'         => $printerId,
+                'connection_type' => $queue->connection_type,
+            ]);
 
-                        // 2. Enviar a la Zebra por TCP/IP
-                        $socket = @fsockopen($job->zebra_ip, $job->zebra_port, $errno, $errstr, 10);
-
-                        if (!$socket) {
-                            throw new \Exception(
-                                "Chunk {$chunkIndex}/{$totalChunks}: no se pudo conectar a "
-                                . "{$job->zebra_ip}:{$job->zebra_port} — {$errstr}"
-                            );
-                        }
-
-                        fwrite($socket, $zpl);
-                        fclose($socket);
-
-                        // 3. Marcar etiquetas como impresas
-                        $now = now();
-                        Label::whereIn('id', $labels->pluck('id'))
-                            ->update([
-                                'printed_at' => $now,
-                                'status'     => 'printed',
-                            ]);
-
-                        $printedCount += $labels->count();
-                        $job->update(['sent_labels' => $printedCount]);
-
-                        DB::commit();
-
-                        $this->line(
-                            "  [{$chunkIndex}/{$totalChunks}] "
-                            . "{$labels->count()} etiquetas enviadas "
-                            . "({$printedCount}/{$totalLabels})"
-                        );
-
-                        // 4. Pausa entre chunks para no saturar la Zebra
-                        if ($printedCount < $totalLabels) {
-                            usleep(200_000);
-                        }
-                    } catch (\Exception $e) {
-                        DB::rollBack();
-                        Log::error('Print queue chunk exception, rolled back', [
-                            'job_id'     => $job->id,
-                            'chunk'      => $chunkIndex,
-                            'chunk_size' => $labels->count(),
-                            'error'      => $e->getMessage(),
-                        ]);
-                        throw $e; // Re-lanzar para que el catch exterior marque el job como failed
-                    }
-                });
-
-            if (!empty($errors)) {
-                throw new \Exception(implode('; ', $errors));
+            if ($result['paused']) {
+                $this->warn("  ⏸ Cola #{$queue->id} PAUSADA por error de conexión");
+            } elseif ($result['failed'] > 0) {
+                $this->warn("  {$result['failed']} etiquetas fallaron");
             }
 
-            // 5. Marcar lote como impreso
-            $batch->update([
-                'status'     => 'printed',
-                'printed_at' => now(),
-            ]);
-
-            // 6. Registro de auditoría
-            LabelLog::create([
-                'label_batch_id' => $batch->id,
-                'user_id'        => $job->user_id,
-                'action'         => 'printed_queue',
-                'description'    => "Impreso por cola: lote {$batch->internal_batch_code}, "
-                    . "{$printedCount} etiquetas enviadas a {$job->zebra_ip}",
-                'ip'             => '127.0.0.1',
-                'created_at'     => now(),
-            ]);
-
-            // 7. Finalizar trabajo
-            $job->update([
-                'status'       => 'completed',
-                'total_labels' => $totalLabels,
-                'sent_labels'  => $printedCount,
-                'finished_at'  => now(),
-            ]);
-
-            $this->info("  ✓ Trabajo #{$job->id} completado: {$printedCount}/{$totalLabels} etiquetas.");
-
-        } catch (\Exception $e) {
-            $this->failJob($job, $e->getMessage());
+            if ($result['printed'] === $result['total']) {
+                $this->info("  ✓ Cola #{$queue->id} completada");
+            }
         }
-    }
-
-    protected function failJob(PrintQueue $job, string $error): void
-    {
-        $job->update([
-            'status'        => 'failed',
-            'error_message' => $error,
-            'finished_at'   => now(),
-        ]);
-
-        $this->error("  ✗ Trabajo #{$job->id} falló: {$error}");
     }
 }

@@ -9,6 +9,24 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Warranty extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::creating(function (Warranty $warranty) {
+            if (empty($warranty->purchase_date)) {
+                $warranty->purchase_date = today();
+            }
+            if (empty($warranty->warranty_start_date)) {
+                $warranty->warranty_start_date = today();
+            }
+            if (empty($warranty->warranty_end_date)) {
+                $label = $warranty->label()->with('product.productModel')->first();
+                $years = $label?->product?->productModel?->warranty_years ?? 1;
+                $warranty->warranty_end_date = today()->addYears($years);
+            }
+        });
+    }
+
     protected $fillable = [
         'label_id',
         'customer_id',

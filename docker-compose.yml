@@ -1,0 +1,82 @@
+# ============================================================
+# Docker Compose — Sistema Garantías
+# ============================================================
+
+services:
+  # -----------------------------------------------------------
+  # Main application: Nginx + PHP-FPM + Cron
+  # -----------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: garantias-app
+    ports:
+      - "8081:80"
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - garantias-storage:/var/www/html/storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # -----------------------------------------------------------
+  # Queue worker (same image, runs artisan queue:work)
+  # -----------------------------------------------------------
+  queue-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: garantias-queue
+    command:
+      - php
+      - artisan
+      - queue:work
+      - --sleep=3
+      - --tries=3
+      - --queue=default,print,emails
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - garantias-storage:/var/www/html/storage
+    restart: unless-stopped
+
+  # -----------------------------------------------------------
+  # MySQL 8 database
+  # -----------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: garantias-mysql
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-sistema_garantias}
+      MYSQL_USER: ${DB_USERNAME:-garantias_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme_in_production}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_changeme}
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-root_changeme}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  mysql-data:
+    name: garantias-mysql-data
+  garantias-storage:
+    name: garantias-app-storage

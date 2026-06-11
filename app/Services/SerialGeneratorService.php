@@ -84,10 +84,39 @@ class SerialGeneratorService
         return $dv;
     }
 
+    /**
+     * Genera un serial y sequence_number para un producto específico (creación individual).
+     */
+    public function generateForProduct(int $productId): array
+    {
+        $product = Product::findOrFail($productId);
+        $yymm = now()->format('ym');
+        $productCode = strtoupper($product->product_code);
+
+        $lastSequence = $this->getLastSequence($productCode, $yymm);
+        $nextSequence = $lastSequence + 1;
+        $sequence = str_pad($nextSequence, 8, '0', STR_PAD_LEFT);
+        $dv = $this->calculateDV($yymm, $productCode, $this->line, $sequence);
+        $serial = "{$yymm}-{$productCode}-{$this->line}-{$sequence}-{$dv}";
+
+        // Evitar colisiones (misma lógica que generateForBatch)
+        while (Label::where('serial', $serial)->exists()) {
+            $nextSequence++;
+            $sequence = str_pad($nextSequence, 8, '0', STR_PAD_LEFT);
+            $dv = $this->calculateDV($yymm, $productCode, $this->line, $sequence);
+            $serial = "{$yymm}-{$productCode}-{$this->line}-{$sequence}-{$dv}";
+        }
+
+        return [
+            'serial'          => $serial,
+            'sequence_number' => $nextSequence,
+        ];
+    }
+
     public function buildQrUrl(string $serial): string
     {
         $baseUrl = rtrim(config('app.url'), '/');
-        return $baseUrl . '/p/' . $serial;
+        return $baseUrl . '/p/' . rawurlencode($serial);
     }
 
     public function generateLabelsForBatch(LabelBatch $batch): bool
@@ -124,12 +153,7 @@ class SerialGeneratorService
 
             Label::insert($labelsToInsert);
 
-            $firstSerial = $serials[0]['serial'];
-            $lastSerial  = $serials[count($serials) - 1]['serial'];
-
             $batch->update([
-                'serial_from'  => $firstSerial,
-                'serial_to'    => $lastSerial,
                 'generated_at' => $now,
                 'status'       => 'generated',
             ]);

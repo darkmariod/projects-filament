@@ -60,9 +60,11 @@ class UserResource extends Resource
                             ->helperText('Dejar vacío para no cambiar la contraseña.'),
 
                         Select::make('roles')
-                            ->label('Rol')
+                            ->label('Roles')
+                            ->multiple()
                             ->relationship('roles', 'name')
                             ->preload()
+                            ->searchable()
                             ->required(),
                     ])->columns(2),
             ]);

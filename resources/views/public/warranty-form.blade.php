@@ -49,6 +49,16 @@
     </div>
 
     <div class="product-bar">
+        @php $imageUrl = $label->product->image ? \Illuminate\Support\Facades\Storage::url($label->product->image) : null; @endphp
+
+        @if($imageUrl)
+        <div style="text-align:center; margin-bottom:12px;">
+            <img src="{{ $imageUrl }}" alt="{{ $label->product->name }}"
+                 style="max-width:100%; height:auto; max-height:180px; border-radius:8px; object-fit:contain;"
+                 onerror="this.style.display='none'">
+        </div>
+        @endif
+
         <div class="prod-row">
             <div>
                 <div class="prod-label">Producto</div>
@@ -62,6 +72,7 @@
         <div style="display:flex; gap:16px; margin-top:8px; font-size:12px; color:#666;">
             <span>Modelo: {{ $label->product->productModel->name }}</span>
             <span>Medidas: {{ $label->product->measurements_text }}</span>
+            <span>Garantía: {{ $label->product->productModel->warranty_years }} años</span>
         </div>
     </div>
 
@@ -198,19 +209,13 @@
                 @error('store_name') <div class="form-error">{{ $message }}</div> @enderror
             </div>
 
-            <div class="row-2">
-                <div class="form-group">
-                    <label for="invoice_number">Número de factura *</label>
-                    <input type="text" id="invoice_number" name="invoice_number" class="form-control" value="{{ old('invoice_number') }}" maxlength="100" required>
-                    @error('invoice_number') <div class="form-error">{{ $message }}</div> @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="purchase_date">Fecha de compra *</label>
-                    <input type="date" id="purchase_date" name="purchase_date" class="form-control" value="{{ old('purchase_date') }}" required>
-                    @error('purchase_date') <div class="form-error">{{ $message }}</div> @enderror
-                </div>
+            <div class="form-group">
+                <label for="invoice_number">Número de factura *</label>
+                <input type="text" id="invoice_number" name="invoice_number" class="form-control" value="{{ old('invoice_number') }}" maxlength="100" required>
+                @error('invoice_number') <div class="form-error">{{ $message }}</div> @enderror
             </div>
+
+            <p style="font-size:12px; color:#666; margin-top:4px;">Fecha de compra: se registra automáticamente la fecha actual.</p>
 
             <div class="section-divider"></div>
 

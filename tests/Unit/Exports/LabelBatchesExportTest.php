@@ -30,8 +30,7 @@ class LabelBatchesExportTest extends TestCase
             'Código interno',
             'Producto',
             'Cantidad',
-            'Serial inicial',
-            'Serial final',
+            'Número lote cliente',
             'Operador',
             'Generado por',
             'Fecha generación',
@@ -40,7 +39,7 @@ class LabelBatchesExportTest extends TestCase
         ];
 
         $this->assertSame($expectedHeadings, $headings);
-        $this->assertCount(10, $headings);
+        $this->assertCount(9, $headings);
     }
 
     /** @test */
@@ -69,8 +68,9 @@ class LabelBatchesExportTest extends TestCase
         $this->assertSame($batch->internal_batch_code, $mapped[0]);
         $this->assertSame($batch->product->name, $mapped[1]);
         $this->assertSame(3, $mapped[2]);
-        $this->assertSame($batch->operator, $mapped[5]);
-        $this->assertSame('Generado', $mapped[9]);
+        $this->assertSame($batch->customer_batch_number, $mapped[3]);
+        $this->assertSame($batch->operator, $mapped[4]);
+        $this->assertSame('Generado', $mapped[8]);
     }
 
     /** @test */
@@ -93,19 +93,19 @@ class LabelBatchesExportTest extends TestCase
 
         $batch = $this->createBatch(1);
         $generated = $export->map($batch);
-        $this->assertStringContainsString('Generado', $generated[9]);
+        $this->assertStringContainsString('Generado', $generated[8]);
 
         $batch->update(['status' => 'active']);
         $active = $export->map($batch->fresh());
-        $this->assertStringContainsString('Activo', $active[9]);
+        $this->assertStringContainsString('Activo', $active[8]);
 
         $batch->update(['status' => 'printed']);
         $printed = $export->map($batch->fresh());
-        $this->assertStringContainsString('Impreso', $printed[9]);
+        $this->assertStringContainsString('Impreso', $printed[8]);
 
         $batch->update(['status' => 'anulled']);
         $anulled = $export->map($batch->fresh());
-        $this->assertStringContainsString('Anulado', $anulled[9]);
+        $this->assertStringContainsString('Anulado', $anulled[8]);
     }
 
     /** @test */
@@ -133,29 +133,16 @@ class LabelBatchesExportTest extends TestCase
     }
 
     /** @test */
-    public function export_maps_serial_range(): void
+    public function export_maps_customer_batch_number(): void
     {
-        $batch = $this->createBatchWithSerials(3);
+        $batch = $this->createBatch(3);
 
         $export = new LabelBatchesExport();
 
         $mapped = $export->map($batch);
 
-        $this->assertStringContainsString('00000001', $mapped[3]);
-        $this->assertStringContainsString('00000003', $mapped[4]);
-    }
-
-    /** @test */
-    public function export_maps_serial_range_as_empty_when_no_serials(): void
-    {
-        $batch = $this->createBatch(1);
-
-        $export = new LabelBatchesExport();
-
-        $mapped = $export->map($batch);
-
-        $this->assertSame('', $mapped[3]);
-        $this->assertSame('', $mapped[4]);
+        $this->assertSame($batch->customer_batch_number, $mapped[3]);
+        $this->assertNotEmpty($mapped[3]);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────
@@ -216,16 +203,5 @@ class LabelBatchesExportTest extends TestCase
         return $batch;
     }
 
-    private function createBatchWithSerials(int $labelCount): LabelBatch
-    {
-        $batch = $this->createBatch($labelCount);
 
-        $batch->update([
-            'serial_from' => '2605-TEST-V-00000001-3',
-            'serial_to'   => '2605-TEST-V-00000003-5',
-            'generated_at' => now(),
-        ]);
-
-        return $batch->fresh();
-    }
 }

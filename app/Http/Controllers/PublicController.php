@@ -92,7 +92,6 @@ class PublicController extends Controller
             'sector'           => 'nullable|string|max:100',
             'store_name'       => 'required|string|max:255',
             'invoice_number'   => 'required|string|max:100',
-            'purchase_date'    => 'required|date',
             'terms_accepted'   => 'required|accepted',
         ], [
             'first_name.required'      => 'El primer nombre es obligatorio.',
@@ -107,7 +106,6 @@ class PublicController extends Controller
             'city.required'            => 'La ciudad es obligatoria.',
             'store_name.required'      => 'El local de compra es obligatorio.',
             'invoice_number.required'  => 'El número de factura es obligatorio.',
-            'purchase_date.required'   => 'La fecha de compra es obligatoria.',
             'terms_accepted.accepted'  => 'Debe aceptar los términos y condiciones.',
         ]);
 
@@ -131,19 +129,13 @@ class PublicController extends Controller
                 ]
             );
 
-            $purchaseDate    = \Carbon\Carbon::parse($request->purchase_date);
-            $warrantyYears   = $label->product->productModel->warranty_years ?? 1;
-            $warrantyStart   = $purchaseDate->copy();
-            $warrantyEnd     = $purchaseDate->copy()->addYears($warrantyYears);
+            $warrantyYears = $label->product->productModel->warranty_years ?? 1;
 
             Warranty::create([
                 'label_id'            => $label->id,
                 'customer_id'         => $customer->id,
                 'store_name'          => $request->store_name,
                 'invoice_number'      => $request->invoice_number,
-                'purchase_date'       => $purchaseDate,
-                'warranty_start_date' => $warrantyStart,
-                'warranty_end_date'   => $warrantyEnd,
                 'status'              => 'active',
                 'terms_accepted'      => true,
             ]);

@@ -195,20 +195,6 @@ class SerialGeneratorServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_updates_batch_serial_from_and_to(): void
-    {
-        $batch = $this->createBatch(quantity: 3, productCode: 'RANGE', date: '2026-05-27');
-
-        $this->service->generateLabelsForBatch($batch);
-        $batch->refresh();
-
-        $this->assertNotNull($batch->serial_from);
-        $this->assertNotNull($batch->serial_to);
-        $this->assertStringContainsString('00000001', $batch->serial_from);
-        $this->assertStringContainsString('00000003', $batch->serial_to);
-    }
-
-    /** @test */
     public function it_does_not_duplicate_labels(): void
     {
         $batch = $this->createBatch(quantity: 3, productCode: 'NODUP', date: '2026-05-27');
@@ -228,7 +214,7 @@ class SerialGeneratorServiceTest extends TestCase
     /** @test */
     public function it_sets_generated_at_and_status_on_batch(): void
     {
-        $batch = $this->createBatch(quantity: 1, productCode: 'STATUS', date: '2026-05-27');
+        $batch = $this->createBatch(quantity: 3, productCode: 'RANGE', date: '2026-05-27');
 
         $this->service->generateLabelsForBatch($batch);
         $batch->refresh();

@@ -67,20 +67,20 @@ class WarrantyResource extends Resource
                             ->nullable()
                             ->maxLength(255),
 
-                        Forms\Components\DatePicker::make('purchase_date')
+                        Forms\Components\Placeholder::make('purchase_date')
                             ->label('Fecha de compra')
-                            ->nullable(),
+                            ->content(fn($record) => $record?->purchase_date?->format('d/m/Y') ?? 'Auto-generada al registrar'),
                     ])->columns(2),
 
                 Section::make('Período de garantía')
                     ->schema([
-                        Forms\Components\DatePicker::make('warranty_start_date')
+                        Forms\Components\Placeholder::make('warranty_start_date')
                             ->label('Inicio de garantía')
-                            ->nullable(),
+                            ->content(fn($record) => $record?->warranty_start_date?->format('d/m/Y') ?? 'Auto-generada'),
 
-                        Forms\Components\DatePicker::make('warranty_end_date')
+                        Forms\Components\Placeholder::make('warranty_end_date')
                             ->label('Fin de garantía')
-                            ->nullable(),
+                            ->content(fn($record) => $record?->warranty_end_date?->format('d/m/Y') ?? 'Auto-generada según producto'),
                     ])->columns(2),
 
                 Section::make('Estado')
@@ -227,11 +227,23 @@ class WarrantyResource extends Resource
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('success')
                     ->visible(fn(): bool => Auth::user()?->can('export', Warranty::class) ?? false)
-                    ->action(function () {
-                        $filters = request()->all();
-
+                    ->form([
+                        Forms\Components\DatePicker::make('date_from')
+                            ->label('Fecha desde'),
+                        Forms\Components\DatePicker::make('date_to')
+                            ->label('Fecha hasta'),
+                        Forms\Components\Select::make('status')
+                            ->label('Estado')
+                            ->options([
+                                ''         => 'Todos',
+                                'active'   => 'Vigente',
+                                'expired'  => 'Vencida',
+                                'anulled'  => 'Anulada',
+                            ]),
+                    ])
+                    ->action(function (array $data) {
                         return Excel::download(
-                            new WarrantiesExport($filters),
+                            new WarrantiesExport($data),
                             'garantias-' . now()->format('Ymd-His') . '.xlsx'
                         );
                     }),

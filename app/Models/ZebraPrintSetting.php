@@ -8,6 +8,8 @@ class ZebraPrintSetting extends Model
 {
     protected $fillable = [
         'name',
+        'connection_type',
+        'printer_name',
         'printer_model',
         'dpi',
         'label_width_mm',
@@ -45,11 +47,24 @@ class ZebraPrintSetting extends Model
 
     public function isNetworkConfigured(): bool
     {
-        return !empty($this->printer_ip);
+        return $this->connection_type === 'network' && !empty($this->printer_ip);
+    }
+
+    public function isUsbConfigured(): bool
+    {
+        return $this->connection_type === 'usb' && !empty($this->printer_name);
     }
 
     public function getPrinterEndpoint(): string
     {
+        if ($this->isUsbConfigured()) {
+            return $this->printer_name . ' (USB)';
+        }
         return "{$this->printer_ip}:{$this->printer_port}";
+    }
+
+    public function isAnyPrinterConfigured(): bool
+    {
+        return $this->isNetworkConfigured() || $this->isUsbConfigured();
     }
 }

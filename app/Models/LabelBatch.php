@@ -10,6 +10,54 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class LabelBatch extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::creating(function (LabelBatch $batch) {
+            // Generar internal_batch_code automático
+            if (empty($batch->internal_batch_code) && $batch->product_id) {
+                $batch->internal_batch_code = $batch->generateInternalCode();
+            }
+
+            // Auto-generar customer_batch_number si está vacío
+            if (empty($batch->customer_batch_number)) {
+                $prefix = 'LOTE-' . now()->format('Ym');
+                $last = static::where('customer_batch_number', 'like', $prefix . '-%')
+                    ->orderBy('customer_batch_number', 'desc')
+                    ->first();
+                $nextSequence = $last ? ((int) substr($last->customer_batch_number, -3)) + 1 : 1;
+                $batch->customer_batch_number = $prefix . '-' . str_pad($nextSequence, 3, '0', STR_PAD_LEFT);
+            }
+
+            // Auto-fechas: ninguna editable por el usuario
+            if (empty($batch->customer_batch_date)) {
+                $batch->customer_batch_date = now();
+            }
+
+            if (empty($batch->generated_at)) {
+                $batch->generated_at = now();
+            }
+
+            if (empty($batch->operator)) {
+                $batch->operator = auth()->user()?->name;
+            }
+
+            if (empty($batch->generated_by_user_id)) {
+                $batch->generated_by_user_id = auth()->id() ?? 1;
+            }
+
+            if (empty($batch->status)) {
+                $batch->status = 'active';
+            }
+        });
+
+        static::updating(function (LabelBatch $batch) {
+            if ($batch->isDirty(['product_id', 'customer_batch_date'])) {
+                $batch->internal_batch_code = $batch->generateInternalCode();
+            }
+        });
+    }
+
     protected $fillable = [
         'product_id',
         'internal_batch_code',
@@ -18,8 +66,6 @@ class LabelBatch extends Model
         'quantity',
         'operator',
         'observations',
-        'serial_from',
-        'serial_to',
         'generated_by_user_id',
         'generated_at',
         'printed_at',
@@ -35,6 +81,28 @@ class LabelBatch extends Model
             'quantity'            => 'integer',
         ];
     }
+
+    /**
+     * Genera el código interno con formato: {product_code_slug}-{MMYYYY}
+     * Ejemplo: CR SE 080 + junio 2026 → CR-SE-080-062026
+     */
+    public function generateInternalCode(): string
+    {
+        $product = $this->product;
+
+        if (!$product) {
+            return 'LOTE-' . now()->format('YmdHis');
+        }
+
+        $slug = str_replace(' ', '-', $product->product_code);
+        $date = $this->customer_batch_date
+            ? \Carbon\Carbon::parse($this->customer_batch_date)
+            : now();
+
+        return $slug . '-' . $date->format('mY');
+    }
+
+    // ── Relaciones ────────────────────────────────────────────────────────
 
     public function product(): BelongsTo
     {

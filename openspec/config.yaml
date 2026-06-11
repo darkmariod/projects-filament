@@ -1,0 +1,47 @@
+# openspec/config.yaml — SDD Configuration
+schema: spec-driven
+
+context: |
+  Project: Sistema de Garantías (Productos Paraíso)
+  Stack: Laravel 12, PHP 8.2, Filament v5, MySQL, Tailwind CSS v4, Vite
+  Packages: Spatie Permission v7, DomPDF, Maatwebsite Excel, SimpleSoftwareIO QR Code
+  Architecture: Filament Resources (CRUD) + Policies (13) + Services (ZPL/DOM/Serial) + Exports + Jobs
+  Models: Warranty, Label, LabelBatch, LabelLog, Product, ProductModel, Category, Customer, ZebraPrintSetting, PrintQueue, Role, User, TechnicalComposition
+  Queue: database driver | Cache: database | Session: database
+  Timezone: America/Guayaquil | Locale: es
+  DB: MySQL (prod), SQLite :memory: (test)
+  Naming: PSR-4, snake_case DB, Spanish project name, English code identifiers
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Define scope boundaries clearly
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Reference Filament Resources and Service classes when applicable
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing Laravel + Filament patterns
+    tdd: true
+    test_command: "php artisan test"
+  verify:
+    test_command: "php artisan test --parallel"
+    build_command: "composer dump-autoload"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  runner: PHPUnit 11.5.50
+  layers:
+    unit: phpunit (tests/Unit)
+    feature: phpunit (tests/Feature)
+    e2e: false
+  coverage: false
+  strict_tdd: true

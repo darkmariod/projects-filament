@@ -16,10 +16,13 @@ class Product extends Model
         'name',
         'product_code',
         'barcode',
+        'image',
         'width_cm',
         'length_cm',
         'height_cm',
         'measurements_text',
+        'class',
+        'plazas',
         'description',
         'active',
     ];

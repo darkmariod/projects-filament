@@ -36,11 +36,11 @@ class PrintLabelBatch implements ShouldQueue
 
         $settings = ZebraPrintSetting::where('active', true)->first();
 
-        if (!$settings || !$settings->isNetworkConfigured()) {
-            Log::error('PrintLabelBatch: Zebra sin IP configurada', [
+        if (!$settings || !$settings->isAnyPrinterConfigured()) {
+            Log::error('PrintLabelBatch: Zebra sin configurar', [
                 'batch_id' => $this->batch->id,
             ]);
-            $this->fail(new \RuntimeException('Zebra printer IP is not configured'));
+            $this->fail(new \RuntimeException('Zebra printer is not configured'));
             return;
         }
 

@@ -57,7 +57,9 @@ class LabelResource extends Resource
                         Forms\Components\TextInput::make('serial')
                             ->label('Serial')
                             ->nullable()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->disabled()
+                            ->helperText('Auto-generado si se deja vacío'),
                     ])->columns(2),
 
                 Section::make('Identificadores')
@@ -65,12 +67,16 @@ class LabelResource extends Resource
                         Forms\Components\TextInput::make('sequence_number')
                             ->label('Número de secuencia')
                             ->numeric()
-                            ->nullable(),
+                            ->nullable()
+                            ->disabled()
+                            ->helperText('Auto-generado si se deja vacío'),
 
                         Forms\Components\TextInput::make('barcode')
                             ->label('Código de barras')
                             ->nullable()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->disabled()
+                            ->helperText('Auto-generado desde el producto si se deja vacío'),
 
                         Forms\Components\TextInput::make('qr_url')
                             ->label('URL del QR')
@@ -96,11 +102,13 @@ class LabelResource extends Resource
                             ->label('ZPL generado')
                             ->default(false),
 
-                        Forms\Components\DateTimePicker::make('printed_at')
-                            ->label('Impreso el'),
+                        Forms\Components\Placeholder::make('printed_at')
+                            ->label('Impreso el')
+                            ->content(fn($record) => $record?->printed_at?->format('d/m/Y H:i') ?? '—'),
 
-                        Forms\Components\DateTimePicker::make('registered_at')
-                            ->label('Registrado el'),
+                        Forms\Components\Placeholder::make('registered_at')
+                            ->label('Registrado el')
+                            ->content(fn($record) => $record?->registered_at?->format('d/m/Y H:i') ?? '—'),
                     ])->columns(2),
             ]);
     }

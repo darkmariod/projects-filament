@@ -38,6 +38,16 @@ class ZebraPrintSettingResource extends Resource
             ->schema([
                 Section::make('Datos de la impresora')
                     ->schema([
+                        Forms\Components\Select::make('connection_type')
+                            ->label('Tipo de conexión')
+                            ->options([
+                                'network' => 'Red (TCP/IP)',
+                                'usb'     => 'USB (CUPS)',
+                            ])
+                            ->default('network')
+                            ->required()
+                            ->live(),
+
                         Forms\Components\TextInput::make('name')
                             ->label('Nombre de la configuración')
                             ->required()
@@ -130,26 +140,38 @@ class ZebraPrintSettingResource extends Resource
                             ->required(),
                     ])->columns(2),
 
-                Section::make('Impresión por red (TCP/IP)')
-                    ->description('Configuración para imprimir directamente desde el VPS a la Zebra ZT411 por Ethernet. Si no completás estos datos, solo se podrá descargar el ZPL.')
+                Section::make('Configuración de conexión')
+                    ->description(fn($get) => $get('connection_type') === 'usb'
+                        ? 'Impresión por USB usando CUPS. Asegurate de tener la impresora compartida por CUPS en el servidor.'
+                        : 'Configuración para imprimir directamente desde el VPS a la Zebra ZT411 por Ethernet. Si no completás estos datos, solo se podrá descargar el ZPL.')
                     ->schema([
                         Forms\Components\TextInput::make('printer_ip')
                             ->label('Dirección IP de la impresora')
                             ->placeholder('Ej: 192.168.1.200')
                             ->helperText('La ZT411 debe tener una IP fija en la red')
-                            ->maxLength(45),
+                            ->maxLength(45)
+                            ->hidden(fn($get) => $get('connection_type') !== 'network'),
 
                         Forms\Components\TextInput::make('printer_port')
                             ->label('Puerto TCP')
                             ->numeric()
                             ->default(9100)
-                            ->helperText('Puerto estándar Zebra: 9100'),
+                            ->helperText('Puerto estándar Zebra: 9100')
+                            ->hidden(fn($get) => $get('connection_type') !== 'network'),
 
                         Forms\Components\TextInput::make('chunk_size')
                             ->label('Etiquetas por bloque')
                             ->numeric()
                             ->default(500)
-                            ->helperText('Para lotes grandes, se envían en bloques de N etiquetas para no saturar la impresora'),
+                            ->helperText('Para lotes grandes, se envían en bloques de N etiquetas para no saturar la impresora')
+                            ->hidden(fn($get) => $get('connection_type') !== 'network'),
+
+                        Forms\Components\TextInput::make('printer_name')
+                            ->label('Nombre de la impresora CUPS')
+                            ->placeholder('Ej: zebra-zt411')
+                            ->helperText('Ejecutá "lpstat -p" en el servidor para ver las impresoras disponibles')
+                            ->maxLength(255)
+                            ->hidden(fn($get) => $get('connection_type') !== 'usb'),
                     ])->columns(3),
             ]);
     }
@@ -162,6 +184,25 @@ class ZebraPrintSettingResource extends Resource
                     ->label('Nombre')
                     ->searchable()
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('connection_type')
+                    ->label('Conexión')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'network' => 'info',
+                        'usb'     => 'success',
+                        default   => 'gray',
+                    })
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                        'network' => 'Red',
+                        'usb'     => 'USB',
+                        default   => $state,
+                    }),
+
+                Tables\Columns\TextColumn::make('printer_name')
+                    ->label('Impresora USB')
+                    ->placeholder('—')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('printer_model')
                     ->label('Impresora')
@@ -244,7 +285,7 @@ class ZebraPrintSettingResource extends Resource
                                 ->send();
                         }
                     })
-                    ->visible(fn(ZebraPrintSetting $record): bool => $record->isNetworkConfigured()),
+                    ->visible(fn(ZebraPrintSetting $record): bool => $record->isAnyPrinterConfigured()),
             ])
             ->bulkActions([]);
     }
