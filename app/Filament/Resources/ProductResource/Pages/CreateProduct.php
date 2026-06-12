@@ -44,7 +44,16 @@ class CreateProduct extends CreateRecord
 
     protected function afterCreate(): void
     {
-        if ($this->record && !empty(array_filter($this->manufacturerData))) {
+        $template = TechnicalComposition::where('active', true)->first();
+        $hasManufacturerData = !empty(array_filter($this->manufacturerData));
+
+        if ($template) {
+            $data = $template->replicate(['id', 'product_id', 'created_at', 'updated_at'])->toArray();
+            if ($hasManufacturerData) {
+                $data = array_merge($data, $this->manufacturerData);
+            }
+            $this->record->technicalComposition()->create($data);
+        } elseif ($hasManufacturerData) {
             $this->record->technicalComposition()->create($this->manufacturerData);
         }
     }

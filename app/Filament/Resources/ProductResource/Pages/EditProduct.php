@@ -68,17 +68,27 @@ class EditProduct extends EditRecord
 
     protected function afterSave(): void
     {
-        if (empty(array_filter($this->manufacturerData))) {
-            return;
-        }
+        $hasManufacturerData = !empty(array_filter($this->manufacturerData));
 
         $tc = $this->record->technicalComposition;
         if ($tc) {
-            $tc->update($this->manufacturerData);
+            if ($hasManufacturerData) {
+                $tc->update($this->manufacturerData);
+            }
         } else {
-            $this->record->technicalComposition()->create(
-                array_merge($this->manufacturerData, ['active' => true])
-            );
+            $template = TechnicalComposition::where('active', true)->first();
+
+            if ($template) {
+                $data = $template->replicate(['id', 'product_id', 'created_at', 'updated_at'])->toArray();
+                if ($hasManufacturerData) {
+                    $data = array_merge($data, $this->manufacturerData);
+                }
+                $this->record->technicalComposition()->create($data);
+            } elseif ($hasManufacturerData) {
+                $this->record->technicalComposition()->create(
+                    array_merge($this->manufacturerData, ['active' => true])
+                );
+            }
         }
     }
 
