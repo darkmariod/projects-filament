@@ -41,7 +41,27 @@ class TechnicalCompositionResource extends Resource
                             ->options(Product::where('active', true)->pluck('name', 'id'))
                             ->required()
                             ->searchable()
-                            ->unique(ignoreRecord: true),
+                            ->unique(ignoreRecord: true)
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                if (!$state) return;
+                                $template = TechnicalComposition::where('active', true)->first();
+                                if ($template) {
+                                    $set('cover_material', $template->cover_material);
+                                    $set('springs', $template->springs);
+                                    $set('foam_description', $template->foam_description);
+                                    $set('support_material', $template->support_material);
+                                    $set('general_composition', $template->general_composition);
+                                    $set('conservation_instructions', $template->conservation_instructions);
+                                    $set('legal_text', $template->legal_text);
+                                    $set('inen_standard', $template->inen_standard);
+                                    $set('manufacturing_country', $template->manufacturing_country);
+                                    $set('manufacturer', $template->manufacturer);
+                                    $set('manufacturer_ruc', $template->manufacturer_ruc);
+                                    $set('manufacturer_address', $template->manufacturer_address);
+                                    $set('website', $template->website);
+                                }
+                            }),
                     ]),
 
                 Section::make('Identificación')

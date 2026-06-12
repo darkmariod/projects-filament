@@ -45,7 +45,16 @@ class ProductModelResource extends Resource
                         Forms\Components\TextInput::make('name')
                             ->label('Nombre del modelo')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                if (!$state) return;
+                                $code = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $state);
+                                $code = strtoupper($code);
+                                $code = preg_replace('/[^A-Z0-9]+/', '_', $code);
+                                $code = trim($code, '_');
+                                $set('code', $code);
+                            }),
 
                         Forms\Components\TextInput::make('code')
                             ->label('Código')
