@@ -67,7 +67,12 @@ class ZebraPrintSettingResource extends Resource
                                 600 => '600 DPI',
                             ])
                             ->default(203)
-                            ->required(),
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                                static::recalculateDots($get, $set);
+                            })
+                            ->hint('Cambiar DPI recalcula los puntos automáticamente'),
 
                         Forms\Components\Toggle::make('active')
                             ->label('Activo')
@@ -80,16 +85,25 @@ class ZebraPrintSettingResource extends Resource
                     ])->columns(2),
 
                 Section::make('Tamaño de etiqueta')
+                    ->description('Los campos en puntos se calculan automáticamente desde mm × DPI / 25.4')
                     ->schema([
                         Forms\Components\TextInput::make('label_width_mm')
                             ->label('Ancho (mm)')
                             ->numeric()
-                            ->required(),
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                                static::recalculateDots($get, $set);
+                            }),
 
                         Forms\Components\TextInput::make('label_height_mm')
                             ->label('Alto (mm)')
                             ->numeric()
-                            ->required(),
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                                static::recalculateDots($get, $set);
+                            }),
 
                         Forms\Components\TextInput::make('label_gap_mm')
                             ->label('Separación entre etiquetas (mm)')
@@ -98,13 +112,11 @@ class ZebraPrintSettingResource extends Resource
 
                         Forms\Components\TextInput::make('width_dots')
                             ->label('Ancho en puntos')
-                            ->numeric()
-                            ->required(),
+                            ->disabled(),
 
                         Forms\Components\TextInput::make('height_dots')
                             ->label('Alto en puntos')
-                            ->numeric()
-                            ->required(),
+                            ->disabled(),
                     ])->columns(2),
 
                 Section::make('Ajustes de impresión')
@@ -251,12 +263,16 @@ class ZebraPrintSettingResource extends Resource
                     ->action(function (ZebraPrintSetting $record) {
                         $service = new ZebraZplService($record);
 
+                        $w = $record->width_dots;
+                        $h = $record->height_dots;
                         $testZpl = "^XA\n"
-                            . "^FO20,20^A0N,30,30^FDETIQUETA DE PRUEBA^FS\n"
-                            . "^FO20,60^A0N,18,18^FDImpresora: {$record->getPrinterEndpoint()}^FS\n"
-                            . "^FO20,90^A0N,18,18^FDSi ves esto, la conexion funciona!^FS\n"
-                            . "^FO20,140^GB560,1,3^FS\n"
-                            . "^FO20,160^A0N,18,18^FD" . now()->format('d/m/Y H:i:s') . "^FS\n"
+                            . "^FO0,0^GB{$w},{$h},3,B,0^FS\n"
+                            . "^FO20,40^A0N,30,30^FDETIQUETA DE PRUEBA^FS\n"
+                            . "^FO20,80^A0N,18,18^FDImpresora: {$record->getPrinterEndpoint()}^FS\n"
+                            . "^FO20,110^A0N,18,18^FDSi ves esto, la conexion funciona!^FS\n"
+                            . "^FO20,150^GB560,1,3^FS\n"
+                            . "^FO20,170^A0N,18,18^FD" . now()->format('d/m/Y H:i:s') . "^FS\n"
+                            . "^FO20,200^A0N,18,18^FD{$record->label_width_mm}x{$record->label_height_mm}mm / {$w}x{$h}px - {$record->dpi}DPI^FS\n"
                             . "^XZ";
 
                         $result = $service->sendToConfiguredPrinter($testZpl);
@@ -278,6 +294,20 @@ class ZebraPrintSettingResource extends Resource
                     ->visible(fn(ZebraPrintSetting $record): bool => $record->isAnyPrinterConfigured()),
             ])
             ->bulkActions([]);
+    }
+
+    public static function recalculateDots(Forms\Get $get, Forms\Set $set): void
+    {
+        $dpi = $get('dpi');
+        $w = $get('label_width_mm');
+        $h = $get('label_height_mm');
+
+        if ($dpi && $w) {
+            $set('width_dots', (int) round($w * $dpi / 25.4));
+        }
+        if ($dpi && $h) {
+            $set('height_dots', (int) round($h * $dpi / 25.4));
+        }
     }
 
     public static function getPages(): array

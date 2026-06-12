@@ -28,4 +28,15 @@ class EditZebraPrintSetting extends EditRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['width_dots'] = (int) round(
+            ($data['label_width_mm'] ?? 0) * ($data['dpi'] ?? 203) / 25.4
+        );
+        $data['height_dots'] = (int) round(
+            ($data['label_height_mm'] ?? 0) * ($data['dpi'] ?? 203) / 25.4
+        );
+        return $data;
+    }
 }

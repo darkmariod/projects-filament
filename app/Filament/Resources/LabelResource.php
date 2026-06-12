@@ -55,32 +55,6 @@ class LabelResource extends Resource
                             ->relationship('product', 'name')
                             ->searchable()
                             ->preload(),
-
-                        Forms\Components\TextInput::make('serial')
-                            ->label('Serial')
-                            ->nullable()
-                            ->maxLength(255)
-                            ->disabled(),
-                    ])->columns(2),
-
-                Section::make('Identificadores')
-                    ->schema([
-                        Forms\Components\TextInput::make('sequence_number')
-                            ->label('Número de secuencia')
-                            ->numeric()
-                            ->nullable()
-                            ->disabled(),
-
-                        Forms\Components\TextInput::make('barcode')
-                            ->label('Código de barras')
-                            ->nullable()
-                            ->maxLength(255)
-                            ->disabled(),
-
-                        Forms\Components\TextInput::make('qr_url')
-                            ->label('URL del QR')
-                            ->nullable()
-                            ->maxLength(255),
                     ])->columns(2),
 
                 Section::make('Estado y fechas')

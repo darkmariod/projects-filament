@@ -95,14 +95,39 @@ class ProductResource extends Resource
                             ->maxLength(100),
                     ])->columns(2),
 
-                Section::make('Descripción')
+                Section::make('Datos del fabricante')
+                    ->description('Completá los datos UNA vez y se auto-completarán en los próximos productos. Por producto se puede editar sin afectar a los demás.')
                     ->schema([
-                        Forms\Components\Textarea::make('description')
-                            ->label('Descripción')
+                        Forms\Components\TextInput::make('manufacturer')
+                            ->label('Fabricante')
                             ->nullable()
-                            ->rows(3)
-                            ->columnSpanFull(),
-                    ]),
+                            ->maxLength(255)
+                            ->default(fn() => static::getDefaultManufacturer('manufacturer')),
+
+                        Forms\Components\TextInput::make('manufacturer_ruc')
+                            ->label('RUC del fabricante')
+                            ->nullable()
+                            ->maxLength(50)
+                            ->default(fn() => static::getDefaultManufacturer('manufacturer_ruc')),
+
+                        Forms\Components\TextInput::make('manufacturer_address')
+                            ->label('Dirección del fabricante')
+                            ->nullable()
+                            ->maxLength(255)
+                            ->default(fn() => static::getDefaultManufacturer('manufacturer_address')),
+
+                        Forms\Components\TextInput::make('manufacturing_country')
+                            ->label('País de fabricación')
+                            ->nullable()
+                            ->maxLength(100)
+                            ->default(fn() => static::getDefaultManufacturer('manufacturing_country')),
+
+                        Forms\Components\TextInput::make('website')
+                            ->label('Sitio web')
+                            ->nullable()
+                            ->maxLength(255)
+                            ->default(fn() => static::getDefaultManufacturer('website')),
+                    ])->columns(2),
             ]);
     }
 
@@ -155,6 +180,15 @@ class ProductResource extends Resource
                     ->visible(fn(Product $record): bool => Auth::user()?->can('delete', $record) ?? false),
             ])
             ->bulkActions([]);
+    }
+
+    public static function getDefaultManufacturer(string $field): ?string
+    {
+        static $template = null;
+        if ($template === null) {
+            $template = \App\Models\TechnicalComposition::where('active', true)->first();
+        }
+        return $template?->{$field};
     }
 
     public static function getPages(): array

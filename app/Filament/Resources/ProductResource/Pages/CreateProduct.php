@@ -3,11 +3,14 @@
 namespace App\Filament\Resources\ProductResource\Pages;
 
 use App\Filament\Resources\ProductResource;
+use App\Models\TechnicalComposition;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateProduct extends CreateRecord
 {
     protected static string $resource = ProductResource::class;
+
+    protected array $manufacturerData = [];
 
     protected function getCreateFormAction(): \Filament\Actions\Action
     {
@@ -17,5 +20,32 @@ class CreateProduct extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $this->manufacturerData = [
+            'manufacturer'         => $data['manufacturer'] ?? null,
+            'manufacturer_ruc'     => $data['manufacturer_ruc'] ?? null,
+            'manufacturer_address' => $data['manufacturer_address'] ?? null,
+            'manufacturing_country' => $data['manufacturing_country'] ?? null,
+            'website'              => $data['website'] ?? null,
+            'active'               => true,
+        ];
+
+        unset(
+            $data['manufacturer'], $data['manufacturer_ruc'],
+            $data['manufacturer_address'], $data['manufacturing_country'],
+            $data['website']
+        );
+
+        return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        if ($this->record && !empty(array_filter($this->manufacturerData))) {
+            $this->record->technicalComposition()->create($this->manufacturerData);
+        }
     }
 }
