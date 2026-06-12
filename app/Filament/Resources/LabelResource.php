@@ -222,6 +222,7 @@ class LabelResource extends Resource
                         $zpl = app(ZebraZplService::class)->generateForLabel($record);
                         $setting = ZebraPrintSetting::where('active', true)->first();
 
+                        // ── Modo network (TCP directo a IP) ──────────────
                         if ($setting && $setting->connection_type === 'network') {
                             $result = app(ZebraZplService::class)->sendSingleLabel(
                                 zpl: $zpl,
@@ -246,16 +247,34 @@ class LabelResource extends Resource
                             return;
                         }
 
+                        // ── Modo USB: encolar para agente Windows ───────
+                        // Buscar la mejor config USB disponible
+                        $usbSetting = $setting?->connection_type === 'usb'
+                            ? $setting
+                            : ZebraPrintSetting::where('connection_type', 'usb')
+                                ->whereNotNull('printer_name')
+                                ->first();
+
+                        if (!$usbSetting) {
+                            Notification::make()
+                                ->title('Sin impresora configurada')
+                                ->body('No hay una configuración USB activa. Andá a ZebraPrintSettings > Configuración de Impresora y creá una config USB.')
+                                ->danger()
+                                ->seconds(10)
+                                ->send();
+                            return;
+                        }
+
                         $queue = app(PrintQueueService::class)->createSingleQueue(
                             zpl: $zpl,
-                            connectionType: 'usb',
-                            printerName: $setting?->printer_name,
                             labelId: $record->id,
+                            connectionType: 'usb',
+                            printerName: $usbSetting->printer_name,
                         );
 
                         Notification::make()
                             ->title('Etiqueta encolada')
-                            ->body("{$record->serial} enviada a cola #{$queue->id}. El agente Windows la imprimirá en segundos.")
+                            ->body("{$record->serial} enviada a cola #{$queue->id} para {$usbSetting->printer_name}. El agente Windows la imprimirá.")
                             ->success()
                             ->send();
                     }),
