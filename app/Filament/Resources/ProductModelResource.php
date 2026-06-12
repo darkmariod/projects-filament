@@ -47,7 +47,7 @@ class ProductModelResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                            ->afterStateUpdated(function ($state, $set) {
                                 if (!$state) return;
                                 $code = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $state);
                                 $code = strtoupper($code);

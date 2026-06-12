@@ -43,7 +43,7 @@ class TechnicalCompositionResource extends Resource
                             ->searchable()
                             ->unique(ignoreRecord: true)
                             ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                            ->afterStateUpdated(function ($state, $set) {
                                 if (!$state) return;
                                 $template = TechnicalComposition::where('active', true)->first();
                                 if ($template) {
