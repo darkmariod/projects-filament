@@ -22,7 +22,7 @@ class Warranty extends Model
             if (empty($warranty->warranty_end_date)) {
                 $label = $warranty->label()->with('product.productModel')->first();
                 $years = $label?->product?->productModel?->warranty_years ?? 1;
-                $warranty->warranty_end_date = today()->addYears($years);
+                $warranty->warranty_end_date = ($warranty->purchase_date ?? today())->addYears($years);
             }
         });
     }

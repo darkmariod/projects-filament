@@ -92,6 +92,7 @@ class PublicController extends Controller
             'sector'           => 'nullable|string|max:100',
             'store_name'       => 'required|string|max:255',
             'invoice_number'   => 'required|string|max:100',
+            'purchase_date'    => 'required|date',
             'terms_accepted'   => 'required|accepted',
         ], [
             'first_name.required'      => 'El primer nombre es obligatorio.',
@@ -106,6 +107,8 @@ class PublicController extends Controller
             'city.required'            => 'La ciudad es obligatoria.',
             'store_name.required'      => 'El local de compra es obligatorio.',
             'invoice_number.required'  => 'El número de factura es obligatorio.',
+            'purchase_date.required'   => 'La fecha de compra es obligatoria.',
+            'purchase_date.date'       => 'La fecha de compra no es válida.',
             'terms_accepted.accepted'  => 'Debe aceptar los términos y condiciones.',
         ]);
 
@@ -136,6 +139,7 @@ class PublicController extends Controller
                 'customer_id'         => $customer->id,
                 'store_name'          => $request->store_name,
                 'invoice_number'      => $request->invoice_number,
+                'purchase_date'       => $request->purchase_date,
                 'status'              => 'active',
                 'terms_accepted'      => true,
             ]);

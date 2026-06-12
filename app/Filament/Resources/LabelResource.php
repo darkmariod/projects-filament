@@ -5,8 +5,10 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\LabelResource\Pages;
 use App\Models\Label;
 use App\Models\LabelLog;
+use App\Models\ZebraPrintSetting;
 use App\Exports\LabelsExport;
 use App\Services\LabelPdfService;
+use App\Services\PrintQueueService;
 use App\Services\ZebraZplService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -202,6 +204,62 @@ class LabelResource extends Resource
                     ->relationship('labelBatch', 'internal_batch_code'),
             ])
             ->actions([
+                Action::make('imprimir')
+                    ->label('Imprimir en Zebra')
+                    ->icon('heroicon-o-printer')
+                    ->color('success')
+                    ->visible(fn(Label $record): bool =>
+                        $record->status !== 'anulled'
+                        && (Auth::user()?->can('downloadZpl', $record) ?? false)
+                    )
+                    ->requiresConfirmation()
+                    ->modalHeading('Imprimir etiqueta')
+                    ->modalDescription(fn(Label $record): string =>
+                        "¿Enviar la etiqueta {$record->serial} a la impresora Zebra?"
+                    )
+                    ->modalSubmitActionLabel('Sí, imprimir')
+                    ->action(function (Label $record) {
+                        $zpl = app(ZebraZplService::class)->generateForLabel($record);
+                        $setting = ZebraPrintSetting::where('active', true)->first();
+
+                        if ($setting && $setting->connection_type === 'network') {
+                            $result = app(ZebraZplService::class)->sendSingleLabel(
+                                zpl: $zpl,
+                                ip: $setting->printer_ip,
+                                port: $setting->printer_port,
+                            );
+
+                            if ($result['success']) {
+                                $record->update(['printed_at' => now(), 'status' => 'printed']);
+                                Notification::make()
+                                    ->title('Etiqueta impresa')
+                                    ->body("{$record->serial} enviada a {$setting->getPrinterEndpoint()}")
+                                    ->success()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Error al imprimir')
+                                    ->body($result['message'])
+                                    ->danger()
+                                    ->send();
+                            }
+                            return;
+                        }
+
+                        $queue = app(PrintQueueService::class)->createSingleQueue(
+                            zpl: $zpl,
+                            connectionType: 'usb',
+                            printerName: $setting?->printer_name,
+                            labelId: $record->id,
+                        );
+
+                        Notification::make()
+                            ->title('Etiqueta encolada')
+                            ->body("{$record->serial} enviada a cola #{$queue->id}. El agente Windows la imprimirá en segundos.")
+                            ->success()
+                            ->send();
+                    }),
+
                 EditAction::make()
                     ->label('Editar')
                     ->visible(fn(Label $record): bool => Auth::user()?->can('update', $record) ?? false),

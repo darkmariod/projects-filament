@@ -2,11 +2,15 @@
 .SYNOPSIS
   Agente de impresión para Zebra ZT411 — Sistema Garantías
 .DESCRIPTION
-  Consulta el VPS cada 30s, descarga ZPL pendientes y los envía
-  a la Zebra por USB (copy /b). Reporta resultados al servidor.
+  Consulta el VPS cada 30s (adaptativo: 5s si hay trabajo),
+  descarga ZPL pendientes y los envía a la Zebra por USB (copy /b).
+  Reporta resultados al servidor.
 
-  Modo interactivo:
+  Modo interactivo (loop continuo):
     .\zebra-agent.ps1
+
+  Una sola iteración (ideal para atajo de escritorio):
+    .\zebra-agent.ps1 -once
 
   Instalar como tarea programada (Task Scheduler):
     .\zebra-agent.ps1 -install
@@ -21,7 +25,8 @@
 param(
     [switch]$install,
     [switch]$uninstall,
-    [switch]$status
+    [switch]$status,
+    [switch]$once
 )
 
 # ═══════════════════════════════════════════════════════════════
@@ -164,18 +169,19 @@ function Process-Pending {
     <#
     .SYNOPSIS
       Consulta colas pendientes y procesa cada item.
+      Returns $true si había trabajo, $false si no.
     #>
     Write-Log "Consultando colas pendientes..."
     $response = Invoke-Api -Endpoint "/pending"
 
     if (-not $response -or -not $response.success) {
-        return
+        return $false
     }
 
     $queues = $response.queues
     if (-not $queues -or $queues.Count -eq 0) {
         Write-Log "No hay colas pendientes."
-        return
+        return $false
     }
 
     Write-Log "Se encontraron $($queues.Count) cola(s) para procesar."
@@ -216,6 +222,8 @@ function Process-Pending {
             Write-Log "✓ Cola #$($queue.queue_id) finalizada: $($result.status)"
         }
     }
+
+    return $true
 }
 
 function Install-Task {
@@ -231,7 +239,7 @@ function Install-Task {
 
     $action = New-ScheduledTaskAction `
         -Execute "powershell.exe" `
-        -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$scriptPath`""
+        -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$scriptPath`" -once"
 
     $trigger = @(
         New-ScheduledTaskTrigger -AtStartup
@@ -342,7 +350,20 @@ if ($status) {
     return
 }
 
-# ── Modo interactivo (loop) ──────────────────────────────────
+# ── Modo -once ───────────────────────────────────────────────
+# Ejecuta UNA iteración y sale. Ideal para triggers rápidos
+# desde el escritorio o webhook local.
+# ─────────────────────────────────────────────────────────────
+
+if ($once) {
+    Write-Log "Modo -once: ejecutando una iteración..."
+    Test-Printer | Out-Null
+    Process-Pending
+    Write-Log "Modo -once: finalizado."
+    return
+}
+
+# ── Modo interactivo (loop con polling adaptativo) ───────────
 
 # Verificar impresora al inicio
 $printerOk = Test-Printer
@@ -355,9 +376,20 @@ if (-not $printerOk) {
     Write-Log "El agente va a seguir intentando igual..."
 }
 
+# Polling adaptativo: si hay colas pendientes, acelera a 5s
+# Si no hay, vuelve a PollInterval normal (30s)
+$currentInterval = $Script:PollInterval
+
 # Loop principal
 while ($true) {
-    Process-Pending
-    Write-Log "Esperando $Script:PollInterval segundos..."
-    Start-Sleep -Seconds $Script:PollInterval
+    $hadWork = Process-Pending
+
+    if ($hadWork) {
+        $currentInterval = 5
+    } else {
+        $currentInterval = $Script:PollInterval
+    }
+
+    Write-Log "Esperando $currentInterval segundos..."
+    Start-Sleep -Seconds $currentInterval
 }

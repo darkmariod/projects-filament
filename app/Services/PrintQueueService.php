@@ -476,6 +476,84 @@ class PrintQueueService
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    //  CREAR COLA DE UNA SOLA ETIQUETA
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Crear una cola de impresión con UNA sola etiqueta.
+     * Útil para impresión individual desde el UI de etiquetas (cobro, reimpresión).
+     *
+     * @param  string      $zpl              ZPL ya generado
+     * @param  int         $labelId          ID de la etiqueta
+     * @param  string      $connectionType   'network'|'usb'
+     * @param  string|null $printerName      Nombre de impresora USB
+     * @param  string      $ip               IP para red
+     * @param  int         $port             Puerto para red
+     * @param  int|null    $userId           Usuario que crea la cola
+     */
+    public function createSingleQueue(
+        string $zpl,
+        int $labelId,
+        string $connectionType = 'usb',
+        ?string $printerName = null,
+        string $ip = '',
+        int $port = 9100,
+        ?int $userId = null,
+    ): PrintQueue {
+        $userId ??= auth()->id() ?? 1;
+
+        DB::beginTransaction();
+
+        try {
+            $queue = PrintQueue::create([
+                'label_batch_id'  => null,
+                'user_id'         => $userId,
+                'zebra_ip'        => $ip,
+                'zebra_port'      => $port,
+                'connection_type' => $connectionType,
+                'printer_name'    => $printerName,
+                'status'          => 'pending',
+                'total_labels'    => 1,
+                'printed_labels'  => 0,
+                'failed_labels'   => 0,
+            ]);
+
+            PrintQueueItem::create([
+                'print_queue_id' => $queue->id,
+                'label_id'       => $labelId,
+                'sequence'       => 1,
+                'zpl_content'    => $zpl,
+                'status'         => 'pending',
+                'attempts'       => 0,
+                'max_attempts'   => 3,
+            ]);
+
+            if ($labelId) {
+                LabelLog::create([
+                    'label_id'    => $labelId,
+                    'user_id'     => $userId,
+                    'action'      => 'single_print_queued',
+                    'description' => "Cola individual #{$queue->id} creada para reimpresión",
+                    'ip'          => request()->ip() ?? '127.0.0.1',
+                    'created_at'  => now(),
+                ]);
+            }
+
+            DB::commit();
+
+            return $queue;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error creando cola individual', [
+                'label_id' => $labelId,
+                'error'    => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     //  ENVIAR UNA ETIQUETA (helper directo)
     // ─────────────────────────────────────────────────────────────────────────
 

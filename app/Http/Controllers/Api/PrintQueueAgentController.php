@@ -7,7 +7,10 @@ use App\Models\Label;
 use App\Models\LabelLog;
 use App\Models\PrintQueue;
 use App\Models\PrintQueueItem;
+use App\Services\PrintQueueService;
+use App\Services\ZebraZplService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class PrintQueueAgentController extends Controller
@@ -186,6 +189,47 @@ class PrintQueueAgentController extends Controller
             'success' => true,
             'status'  => $finishedStatus,
             'message' => "Cola #{$queueId} finalizada con estado: {$finishedStatus}",
+        ]);
+    }
+
+    /**
+     * POST /api/agent/print-label
+     *
+     * Encola UNA etiqueta para impresión inmediata via label_id.
+     * Útil para impresión individual desde el UI de etiquetas.
+     *
+     * Body:
+     *   label_id: ID de la etiqueta (requerido)
+     *   printer:  Nombre de impresora (opcional, usa config activa)
+     */
+    public function printSingleLabel(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'label_id' => 'required|integer|exists:labels,id',
+            'printer'  => 'nullable|string|max:255',
+        ]);
+
+        $label = Label::findOrFail($validated['label_id']);
+        $zpl = app(ZebraZplService::class)->generateForLabel($label);
+
+        $queue = app(PrintQueueService::class)->createSingleQueue(
+            zpl: $zpl,
+            labelId: $label->id,
+            connectionType: 'usb',
+            printerName: $validated['printer'] ?? null,
+            userId: $request->user()?->id ?? 1,
+        );
+
+        Log::info('PrintAgent: etiqueta individual encolada', [
+            'queue_id' => $queue->id,
+            'label_id' => $label->id,
+            'serial'   => $label->serial,
+        ]);
+
+        return response()->json([
+            'success'  => true,
+            'queue_id' => $queue->id,
+            'message'  => "Etiqueta {$label->serial} encolada para impresión",
         ]);
     }
 
