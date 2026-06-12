@@ -15,6 +15,14 @@ services:
       - "8081:80"
     env_file:
       - .env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.garantias.rule=Host(`108.174.152.179`)"
+      - "traefik.http.routers.garantias.entrypoints=web"
+      - "traefik.http.services.garantias.loadbalancer.server.port=80"
+    networks:
+      - default
+      - dokploy-network
     depends_on:
       mysql:
         condition: service_healthy
@@ -80,3 +88,7 @@ volumes:
     name: garantias-mysql-data
   garantias-storage:
     name: garantias-app-storage
+
+networks:
+  dokploy-network:
+    external: true
