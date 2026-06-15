@@ -59,7 +59,7 @@ class TechnicalCompositionRelationManager extends RelationManager
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('support_material')
-                            ->label('Soporte')
+                            ->label('Tiempo de garantía')
                             ->nullable()
                             ->maxLength(255),
 

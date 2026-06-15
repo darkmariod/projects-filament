@@ -71,5 +71,12 @@ class CreateProduct extends CreateRecord
                 array_merge($this->manufacturerData, $this->productTcFields, ['active' => true])
             );
         }
+
+        // Auto-fill warranty_years from ProductModel into support_material ("Tiempo de garantía")
+        $tc = $this->record->technicalComposition;
+        $model = $this->record->productModel;
+        if ($tc && $model?->warranty_years && empty($this->productTcFields['support_material'] ?? null)) {
+            $tc->updateQuietly(['support_material' => "{$model->warranty_years} años"]);
+        }
     }
 }

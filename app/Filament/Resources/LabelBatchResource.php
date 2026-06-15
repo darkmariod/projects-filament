@@ -97,11 +97,12 @@ class LabelBatchResource extends Resource
                                 $set('product_measurements_display', $product->measurements_text ?: '—');
 
                                 $tc = $product->technicalComposition;
+                                $model = $product->productModel;
                                 if ($tc) {
                                     $set('composition_detail_display', implode(' | ', array_filter([
                                         $tc->product_family ? "Familia: {$tc->product_family}" : null,
                                         $tc->springs ? "Resortes: {$tc->springs}" : null,
-                                        $tc->support_material ? "Soporte: {$tc->support_material}" : null,
+                                        $model?->warranty_years ? "Tiempo de garantía: {$model->warranty_years} años" : null,
                                         $tc->general_composition ? "Composición: {$tc->general_composition}" : null,
                                     ])));
                                 } else {

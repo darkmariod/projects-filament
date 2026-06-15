@@ -116,6 +116,13 @@ class EditProduct extends EditRecord
                 );
             }
         }
+
+        // Auto-fill warranty_years from ProductModel into support_material ("Tiempo de garantía")
+        $model = $this->record->productModel;
+        $tc = $this->record->technicalComposition;
+        if ($tc && $model?->warranty_years) {
+            $tc->updateQuietly(['support_material' => "{$model->warranty_years} años"]);
+        }
     }
 
     public function getRelationManagers(): array

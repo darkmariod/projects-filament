@@ -80,6 +80,7 @@ class LabelPdfService
         $inen         = e($composition->inen_standard ?? 'NTE INEN 2035');
         $website      = e($composition->website ?? '');
         $legalText    = e($composition->legal_text ?? '');
+        $warrantyText = $model->warranty_years ? "Garantía: {$model->warranty_years} años" : '';
 
         $qrBase64 = base64_encode(
             \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
@@ -212,6 +213,7 @@ class LabelPdfService
                         <div style="margin-top:2px;">FABRICADO POR:</div>
                         <div>{$manufacturer}</div>
                         <div>RUC {$ruc}</div>
+                        <div>{$warrantyText}</div>
                         <div>{$address}</div>
                     </div>
                 </div>

@@ -554,6 +554,7 @@ class ZebraZplService
         $inen         = $this->sanitizeField($composition->inen_standard ?? 'NTE INEN 2035');
         $website      = $this->sanitizeField($composition->website ?? '');
         $legalText    = $this->sanitizeField($composition->legal_text ?? '');
+        $warrantyText = $model->warranty_years ? "Garantía: {$model->warranty_years} años" : '';
         $frase2       = 'NO DESPRENDER LA ETIQUETA';
 
         // ── Constantes de layout ──────────────────────────────────────────
@@ -595,9 +596,10 @@ class ZebraZplService
             $batchDate, $batchNumber,
             $cover, $springs, $foam,
             $manufacturer, $ruc, $address, $inen, $website, $operator,
+            $warrantyText,
             $col1_x, $col2_x, $y2
         );
-        $end2 = $y2 + 240;
+        $end2 = $y2 + 260;
 
         $sepG2Y = $end2 + 2;
         $secSepG2 = $this->separatorThick($mx, $sepG2Y, $pw - $mx * 2);
@@ -708,6 +710,7 @@ class ZebraZplService
         string $cover, string $springs, string $foam,
         string $manufacturer, string $ruc, string $address,
         string $inen, string $website, string $operator,
+        string $warrantyText,
         int $col1_x, int $col2_x, int $y
     ): string {
         $zpl = '';
@@ -737,10 +740,16 @@ class ZebraZplService
         $zpl .= "^FO{$col2_x}," . ($yl + 112) . "^A0N,12,12^FDFABRICADO POR:^FS\n";
         $zpl .= "^FO{$col2_x}," . ($yl + 126) . "^A0N,12,12^FD{$manufacturer}^FS\n";
         $zpl .= "^FO{$col2_x}," . ($yl + 140) . "^A0N,12,12^FDRUC {$ruc}^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 154) . "^A0N,12,12^FD{$address}^FS\n";
+        if (!empty($warrantyText)) {
+            $zpl .= "^FO{$col2_x}," . ($yl + 152) . "^A0N,12,12^FD{$warrantyText}^FS\n";
+            $addressY = $yl + 166;
+        } else {
+            $addressY = $yl + 154;
+        }
+        $zpl .= "^FO{$col2_x}," . $addressY . "^A0N,12,12^FD{$address}^FS\n";
 
         // Footer
-        $fy = $yl + 178;
+        $fy = empty($warrantyText) ? $yl + 178 : $yl + 192;
         $zpl .= "^FO{$col1_x},{$fy}^A0N,13,13^FDOperador {$operator}^FS\n";
         $zpl .= "^FO{$col1_x}," . ($fy + 18) . "^A0N,13,13^FD{$inen}^FS\n";
         $zpl .= "^FO{$col2_x},{$fy}^A0N,13,13^FD{$website}^FS\n";
