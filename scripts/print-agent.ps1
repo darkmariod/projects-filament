@@ -13,9 +13,10 @@
 #>
 
 # ============================================================
-# CONFIGURACION — NO TOCAR
+# CONFIGURACION
 # ============================================================
-$VpsUrl       = "http://108.174.152.179"
+$ServerUrl    = "http://localhost:8000"   # Local (Laragon / artisan serve)
+$VpsUrl       = "http://108.174.152.179:8081"  # VPS producción
 $AgentKey     = "zebra-agent-key-2026"
 $PrinterName  = "Zebra ZT411"
 $PollInterval = 10
@@ -94,10 +95,12 @@ function Send-Zpl {
 }
 
 # ── API CALL ──────────────────────────────────────────────────
+$Script:ActiveUrl = $ServerUrl   # Se asigna al conectar
+
 function Call-Api {
     param([string]$Method, [string]$Path)
     try {
-        return Invoke-RestMethod -Uri "$VpsUrl/api/agent/$Path" -Headers $Headers -Method $Method -ErrorAction Stop
+        return Invoke-RestMethod -Uri "$Script:ActiveUrl/api/agent/$Path" -Headers $Headers -Method $Method -ErrorAction Stop
     } catch {
         Add-Log "Error API $Method $Path : $_" "ERROR"
         return $null
@@ -115,29 +118,38 @@ Write-Host ""
 
 Add-Log "=== INICIO DEL AGENTE ==="
 
-# 1) Verificar conexion al VPS
-Write-Step "PASO 1: Verificando conexion al VPS ..."
+# 1) Verificar conexion — prueba localhost primero, VPS como fallback
+Write-Step "PASO 1: Verificando conexion al servidor ..."
 $connected = $false
-for ($i = 1; $i -le 3; $i++) {
-    try {
-        $r = Invoke-RestMethod -Uri "$VpsUrl/api/agent/status" -Headers $Headers -Method GET -ErrorAction Stop
-        if ($r.success) {
-            Write-Ok "Conectado a $VpsUrl ($($r.server))"
-            Add-Log "Conectado a $VpsUrl"
-            $connected = $true
-            break
+$urlsToTry = @(
+    @{Url = $ServerUrl; Label = "localhost (Laragon)"},
+    @{Url = $VpsUrl; Label = "VPS producción"}
+)
+foreach ($target in $urlsToTry) {
+    Write-Info "Probando $($target.Label): $($target.Url)..."
+    for ($i = 1; $i -le 2; $i++) {
+        try {
+            $r = Invoke-RestMethod -Uri "$($target.Url)/api/agent/status" -Headers $Headers -Method GET -ErrorAction Stop
+            if ($r.success) {
+                $Script:ActiveUrl = $target.Url
+                Write-Ok "Conectado a $($target.Label) ($($target.Url))"
+                Add-Log "Conectado a $($target.Label): $($target.Url)"
+                $connected = $true
+                break
+            }
+        } catch {
+            Write-Warn "  $($target.Label): intento $i/2 falló"
+            Start-Sleep -Seconds 1
         }
-    } catch {
-        Write-Warn "Intento $i/3 — No se puede conectar al VPS"
-        Start-Sleep -Seconds 2
     }
+    if ($connected) { break }
 }
 
 if (-not $connected) {
-    Write-Error "NO se pudo conectar al VPS en $VpsUrl"
+    Write-Error "NO se pudo conectar a ningún servidor"
     Write-Warn "Verifica:"
-    Write-Warn "  1. Que la PC tenga internet"
-    Write-Warn "  2. Que el VPS este encendido (http://$VpsUrl/admin)"
+    Write-Warn "  1. Que la app esté corriendo (php artisan serve)"
+    Write-Warn "  2. O que el VPS esté accesible (http://108.174.152.179:8081/admin)"
     Write-Warn "  3. Que el AgentKey coincida con el del .env"
     Write-Warn ""
     Write-Warn "  El script se va a cerrar en 15 segundos..."
@@ -157,7 +169,7 @@ if (-not $printerOk) {
 
 # 3) Iniciar loop
 Write-Step "PASO 3: AGENTE ACTIVO — esperando colas de impresion"
-Write-Info "VPS:       $VpsUrl"
+Write-Info "Servidor:  $ActiveUrl"
 Write-Info "Impresora: $PrinterName"
 Write-Info "Intervalo: cada $PollInterval segundos"
 Write-Info "Log:       $LogFile"
@@ -190,10 +202,10 @@ while ($true) {
 
                     if ($ok) {
                         Call-Api -Method POST -Path "$($q.queue_id)/item/$($item.item_id)/complete"
-                        Write-Ok "Item #$($item.item_id) marcado como impreso en el VPS"
+                        Write-Ok "Item #$($item.item_id) marcado como impreso en el servidor"
                     } else {
                         Call-Api -Method POST -Path "$($q.queue_id)/item/$($item.item_id)/failed"
-                        Write-Error "Item #$($item.item_id) marcado como fallido en el VPS"
+                        Write-Error "Item #$($item.item_id) marcado como fallido en el servidor"
                     }
                 }
 
