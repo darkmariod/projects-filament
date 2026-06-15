@@ -14,6 +14,8 @@ class Product extends Model
     protected $fillable = [
         'product_model_id',
         'name',
+        'commercial_name',
+        'product_family',
         'product_code',
         'barcode',
         'image',
@@ -23,7 +25,10 @@ class Product extends Model
         'measurements_text',
         'class',
         'plazas',
+        'springs',
+        'foam_description',
         'description',
+        'conservation_instructions',
         'active',
     ];
 

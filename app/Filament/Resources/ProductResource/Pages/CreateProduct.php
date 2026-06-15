@@ -11,6 +11,7 @@ class CreateProduct extends CreateRecord
     protected static string $resource = ProductResource::class;
 
     protected array $manufacturerData = [];
+    protected array $productTcFields = [];
 
     protected function getCreateFormAction(): \Filament\Actions\Action
     {
@@ -24,6 +25,14 @@ class CreateProduct extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $this->productTcFields = [
+            'commercial_name'           => $data['commercial_name'] ?? null,
+            'product_family'            => $data['product_family'] ?? null,
+            'springs'                   => $data['springs'] ?? null,
+            'foam_description'          => $data['foam_description'] ?? null,
+            'conservation_instructions' => $data['conservation_instructions'] ?? null,
+        ];
+
         $this->manufacturerData = [
             'manufacturer'         => $data['manufacturer'] ?? null,
             'manufacturer_ruc'     => $data['manufacturer_ruc'] ?? null,
@@ -44,17 +53,23 @@ class CreateProduct extends CreateRecord
 
     protected function afterCreate(): void
     {
-        $template = TechnicalComposition::where('active', true)->first();
         $hasManufacturerData = !empty(array_filter($this->manufacturerData));
+        $hasProductTcData = !empty(array_filter($this->productTcFields));
+        $template = TechnicalComposition::where('active', true)->first();
 
         if ($template) {
             $data = $template->replicate(['id', 'product_id', 'created_at', 'updated_at'])->toArray();
             if ($hasManufacturerData) {
                 $data = array_merge($data, $this->manufacturerData);
             }
+            if ($hasProductTcData) {
+                $data = array_merge($data, $this->productTcFields);
+            }
             $this->record->technicalComposition()->create($data);
-        } elseif ($hasManufacturerData) {
-            $this->record->technicalComposition()->create($this->manufacturerData);
+        } elseif ($hasManufacturerData || $hasProductTcData) {
+            $this->record->technicalComposition()->create(
+                array_merge($this->manufacturerData, $this->productTcFields, ['active' => true])
+            );
         }
     }
 }

@@ -38,13 +38,23 @@ class ProductResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('product_model_id')
                             ->label('Modelo')
-                            ->options(ProductModel::where('active', true)->pluck('name', 'id'))
+                            ->options(ProductModel::pluck('name', 'id'))
                             ->required()
                             ->searchable(),
 
                         Forms\Components\TextInput::make('name')
                             ->label('Nombre del producto')
                             ->required()
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('commercial_name')
+                            ->label('Nombre comercial')
+                            ->required()
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('product_family')
+                            ->label('Familia de producto')
+                            ->nullable()
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('product_code')
@@ -94,6 +104,30 @@ class ProductResource extends Resource
                             ->nullable()
                             ->maxLength(100),
                     ])->columns(2),
+
+                Section::make('Materiales')
+                    ->description('Completá los datos UNA vez y se auto-completarán en la Composición Técnica. Por producto se puede editar sin afectar a los demás.')
+                    ->schema([
+                        Forms\Components\TextInput::make('springs')
+                            ->label('Resortes')
+                            ->nullable()
+                            ->maxLength(255)
+                            ->default(fn() => static::getDefaultField('springs')),
+
+                        Forms\Components\TextInput::make('foam_description')
+                            ->label('Espuma')
+                            ->nullable()
+                            ->maxLength(255),
+                    ])->columns(2),
+
+                Section::make('Cuidado y conservación')
+                    ->schema([
+                        Forms\Components\Textarea::make('conservation_instructions')
+                            ->label('Instrucciones de conservación')
+                            ->nullable()
+                            ->rows(2)
+                            ->columnSpanFull(),
+                    ]),
 
                 Section::make('Datos del fabricante')
                     ->description('Completá los datos UNA vez y se auto-completarán en los próximos productos. Por producto se puede editar sin afectar a los demás.')
@@ -183,6 +217,15 @@ class ProductResource extends Resource
     }
 
     public static function getDefaultManufacturer(string $field): ?string
+    {
+        static $template = null;
+        if ($template === null) {
+            $template = \App\Models\TechnicalComposition::where('active', true)->first();
+        }
+        return $template?->{$field};
+    }
+
+    public static function getDefaultField(string $field): ?string
     {
         static $template = null;
         if ($template === null) {

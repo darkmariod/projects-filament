@@ -4,40 +4,41 @@
     <meta charset="UTF-8">
     <title>Certificado de Garantía - {{ $label->serial }}</title>
     <style>
+        @page { margin: 12mm 12mm 8mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; font-size: 10pt; line-height: 1.4; }
-        .page { width: 190mm; padding: 20mm 15mm; margin: 0 auto; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; font-size: 9pt; line-height: 1.35; }
+        .page { width: 100%; }
 
-        .header { background: #8B0000; color: #fff; padding: 20px 30px; margin: -20mm -15mm 0; text-align: center; }
-        .header h1 { font-size: 28pt; letter-spacing: 4px; }
-        .header p { font-size: 10pt; opacity: 0.9; margin-top: 2px; }
-        .header .company-info { font-size: 8pt; opacity: 0.7; margin-top: 6px; }
+        .header { background: #8B0000; color: #fff; padding: 12px 20px; margin: -12mm -12mm 0; text-align: center; }
+        .header h1 { font-size: 22pt; letter-spacing: 4px; }
+        .header p { font-size: 9pt; opacity: 0.9; margin-top: 2px; }
+        .header .company-info { font-size: 7.5pt; opacity: 0.7; margin-top: 4px; }
 
-        .cert-title { text-align: center; font-size: 16pt; color: #8B0000; margin: 24px 0 20px; font-weight: bold; letter-spacing: 1px; }
+        .cert-title { text-align: center; font-size: 14pt; color: #8B0000; margin: 14px 0 10px; font-weight: bold; letter-spacing: 1px; }
 
-        .serial-box { text-align: center; margin-bottom: 20px; }
-        .serial-box .label { font-size: 8pt; color: #666; }
-        .serial-box .code { font-family: 'Courier New', monospace; font-size: 14pt; color: #8B0000; font-weight: bold; letter-spacing: 1px; }
+        .serial-box { text-align: center; margin-bottom: 10px; }
+        .serial-box .label { font-size: 7.5pt; color: #666; }
+        .serial-box .code { font-family: 'Courier New', monospace; font-size: 13pt; color: #8B0000; font-weight: bold; letter-spacing: 1px; }
 
-        .validity-box { background: #d4edda; border: 2px solid #c3e6cb; border-radius: 6px; padding: 14px; text-align: center; margin-bottom: 20px; }
-        .validity-box .title { font-size: 10pt; color: #155724; }
-        .validity-box .date { font-size: 18pt; font-weight: bold; color: #155724; margin-top: 4px; }
+        .validity-box { background: #d4edda; border: 2px solid #c3e6cb; border-radius: 6px; padding: 8px; text-align: center; margin-bottom: 12px; }
+        .validity-box .title { font-size: 9pt; color: #155724; }
+        .validity-box .date { font-size: 16pt; font-weight: bold; color: #155724; margin-top: 2px; }
 
-        .columns { display: flex; gap: 20px; margin-bottom: 20px; }
+        .columns { display: flex; gap: 10px; margin-bottom: 12px; }
         .col { flex: 1; }
-        .section { margin-bottom: 16px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 14px; }
-        .section h3 { font-size: 8pt; color: #8B0000; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
-        .row { margin-bottom: 4px; }
-        .row .label { font-size: 8pt; color: #888; }
-        .row .value { font-size: 10pt; font-weight: bold; color: #333; }
+        .section { margin-bottom: 8px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px; }
+        .section h3 { font-size: 7.5pt; color: #8B0000; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        .row { margin-bottom: 2px; }
+        .row .label { font-size: 7pt; color: #888; }
+        .row .value { font-size: 8.5pt; font-weight: bold; color: #333; }
 
-        .legal { background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; padding: 14px; margin-bottom: 20px; }
-        .legal h3 { font-size: 8pt; color: #8B0000; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-        .legal p { font-size: 7.5pt; color: #666; line-height: 1.5; text-align: justify; }
+        .legal { background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; padding: 8px; margin-bottom: 10px; }
+        .legal h3 { font-size: 7.5pt; color: #8B0000; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .legal p { font-size: 7pt; color: #666; line-height: 1.4; text-align: justify; }
 
-        .footer { text-align: center; font-size: 7.5pt; color: #999; border-top: 1px solid #eee; padding-top: 12px; margin-top: 10px; }
-        .footer .line { margin-bottom: 2px; }
-        .footer .generated { font-size: 7pt; color: #bbb; margin-top: 4px; }
+        .footer { text-align: center; font-size: 7pt; color: #999; border-top: 1px solid #eee; padding-top: 6px; margin-top: 6px; }
+        .footer .line { margin-bottom: 1px; }
+        .footer .generated { font-size: 6.5pt; color: #bbb; margin-top: 2px; }
     </style>
 </head>
 <body>

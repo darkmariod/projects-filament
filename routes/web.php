@@ -28,3 +28,7 @@ Route::post('/garantia/{serial}/registrar', [PublicController::class, 'warrantyS
     ->name('public.warranty.store');
 Route::get('/garantia/{serial}/certificado', [PublicController::class, 'warrantyCertificate'])->name('public.warranty.certificate');
 
+Route::view('/terminos-condiciones', 'public.terms')->name('public.terms');
+Route::view('/proteccion-datos', 'public.privacy')->name('public.privacy');
+Route::view('/cookies', 'public.cookies')->name('public.cookies');
+

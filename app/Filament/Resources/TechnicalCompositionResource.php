@@ -45,14 +45,27 @@ class TechnicalCompositionResource extends Resource
                             ->live()
                             ->afterStateUpdated(function ($state, $set) {
                                 if (!$state) return;
+
+                                // 1. Pull fields from the selected product
+                                $product = \App\Models\Product::find($state);
+                                if ($product) {
+                                    $set('commercial_name', $product->commercial_name);
+                                    $set('product_family', $product->product_family);
+                                    $set('conservation_instructions', $product->conservation_instructions);
+                                    $set('springs', $product->springs);
+                                    $set('foam_description', $product->foam_description);
+                                }
+
+                                // 2. Fill remaining composition fields from active template
                                 $template = TechnicalComposition::where('active', true)->first();
                                 if ($template) {
                                     $set('cover_material', $template->cover_material);
-                                    $set('springs', $template->springs);
-                                    $set('foam_description', $template->foam_description);
+                                    // Only set from template if product didn't provide a value
+                                    if (!$product?->springs) $set('springs', $template->springs);
+                                    if (!$product?->foam_description) $set('foam_description', $template->foam_description);
+                                    if (!$product?->conservation_instructions) $set('conservation_instructions', $template->conservation_instructions);
                                     $set('support_material', $template->support_material);
                                     $set('general_composition', $template->general_composition);
-                                    $set('conservation_instructions', $template->conservation_instructions);
                                     $set('legal_text', $template->legal_text);
                                     $set('inen_standard', $template->inen_standard);
                                     $set('manufacturing_country', $template->manufacturing_country);
