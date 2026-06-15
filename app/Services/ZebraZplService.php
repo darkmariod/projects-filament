@@ -21,8 +21,8 @@ class ZebraZplService
                 'dpi'             => 203,
                 'label_width_mm'  => 95,
                 'label_height_mm' => 200,
-                'width_dots'      => 760,
-                'height_dots'     => 1600,
+                'width_dots'      => 1594,
+                'height_dots'     => 760,
                 'margin_x'        => 16,
                 'margin_y'        => 12,
                 'qr_size'         => 5,
@@ -507,20 +507,20 @@ class ZebraZplService
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    //  GENERATE FOR LABEL — Layout exacto 760x1600 (95x200mm @ 203 DPI)
+    //  GENERATE FOR LABEL — Layout LANDSCAPE 1594x760 (200x95mm @ 203 DPI)
+    // ─────────────────────────────────────────────────────────────────────────
+    //
+    //  La etiqueta FÍSICA es 95mm × 200mm. Se imprime rotada 90° (landscape).
+    //  Por eso en ZPL: PW = 200mm en dots (≈1594), LL = 95mm en dots (≈760).
+    //
+    //  ┌─────────────────────────────────────────────────────────────────┐
+    //  │ ZONA A (x:10-420)           │ ZONA B (x:430-1560)              │
+    //  │ Composición técnica         │ Trazabilidad (B1 + B2)            │
+    //  ├─────────────────────────────┴───────────────────────────────────┤
+    //  │ ZONA C (y:495-750) — QR | Logo | Legal | NO DESPRENDER         │
+    //  └─────────────────────────────────────────────────────────────────┘
     // ─────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Layout de 4 secciones en 760x1600 dots (95x200mm @ 203 DPI):
-     *
-     *   SECCIÓN 1A — Trazabilidad (con línea superior)
-     *   SEPARADOR
-     *   SECCIÓN 1B — Trazabilidad repetida (con 3 líneas de firma)
-     *   SEPARADOR GRUESO
-     *   SECCIÓN 2 — Composición técnica
-     *   SEPARADOR GRUESO
-     *   SECCIÓN 3 — Principal (QR + barcode + contenido)
-     */
     public function generateForLabel(Label $label): string
     {
         $label->load(['product.productModel', 'product.technicalComposition', 'labelBatch']);
@@ -545,7 +545,6 @@ class ZebraZplService
         $barcode       = $this->sanitizeField($label->barcode ?? '', 48);
 
         $cover        = $this->sanitizeField($composition->cover_material ?? '');
-        $springs      = $this->sanitizeField($composition->springs ?? '');
         $foam         = $this->sanitizeField($composition->foam_description ?? '');
         $conservation = $this->sanitizeField($composition->conservation_instructions ?? '');
         $manufacturer = $this->sanitizeField($composition->manufacturer ?? '');
@@ -554,281 +553,227 @@ class ZebraZplService
         $inen         = $this->sanitizeField($composition->inen_standard ?? 'NTE INEN 2035');
         $website      = $this->sanitizeField($composition->website ?? '');
         $legalText    = $this->sanitizeField($composition->legal_text ?? '');
-        $warrantyText = $model->warranty_years ? "Garantía: {$model->warranty_years} años" : '';
+        $warrantyText = $model->warranty_years ? $this->sanitizeField("Garantía: {$model->warranty_years} años") : '';
         $frase2       = 'NO DESPRENDER LA ETIQUETA';
 
-        // ── Constantes de layout ──────────────────────────────────────────
-        $pw  = $this->settings->width_dots;   // 760
-        $ll  = $this->settings->height_dots;  // 1600
-        $mx  = $this->settings->margin_x;     // 16
-        $bch = 75; // altura barcode vertical
-
-        $col1_x = $mx;
-        $col2_x = (int) round($pw / 2);
-
-        // ── SECCIÓN 1A: TRAZABILIDAD ─────────────────────────────────────
-        $y = 12;
-        $sec1a = $this->buildSection1A(
-            $serial, $productCode, $batchDate, $batchNumber,
-            $type, $modelName, $measurements, $class, $plazas,
-            $col1_x, $col2_x, $y
-        );
-        $end1a = $y + 155;
-
-        $secSep1 = $this->separator($mx, $end1a, $pw - $mx * 2);
-
-        // ── SECCIÓN 1B: TRAZABILIDAD REPETIDA ────────────────────────────
-        $y1b = $end1a + 8;
-        $sec1b = $this->buildSection1B(
-            $serial, $productCode, $batchDate, $batchNumber,
-            $type, $modelName, $measurements, $class, $plazas,
-            $col1_x, $col2_x, $y1b
-        );
-        $end1b = $y1b + 170;
-
-        $sepG1Y = $end1b + 2;
-        $secSepG1 = $this->separatorThick($mx, $sepG1Y, $pw - $mx * 2);
-
-        // ── SECCIÓN 2: COMPOSICIÓN TÉCNICA ───────────────────────────────
-        $y2 = $sepG1Y + 10;
-        $sec2 = $this->buildSection2(
-            $type, $class, $measurements, $plazas, $conservation,
-            $batchDate, $batchNumber,
-            $cover, $springs, $foam,
-            $manufacturer, $ruc, $address, $inen, $website, $operator,
-            $warrantyText,
-            $col1_x, $col2_x, $y2
-        );
-        $end2 = $y2 + 260;
-
-        $sepG2Y = $end2 + 2;
-        $secSepG2 = $this->separatorThick($mx, $sepG2Y, $pw - $mx * 2);
-
-        // ── SECCIÓN 3: PRINCIPAL ─────────────────────────────────────────
-        $y3 = $sepG2Y + 10;
-        $sec3 = $this->buildSection3(
-            $serial, $productCode, $type,
-            $modelName, $measurements, $class, $plazas,
-            $qrUrl, $barcode, $legalText, $frase2,
-            $mx, $y3, $bch
-        );
-
-        // ── ENSAMBLE FINAL ───────────────────────────────────────────────
+        // ── ENSAMBLE ──────────────────────────────────────────────────────
         $zpl  = "^XA\n";
-        $zpl .= "^PW{$pw}\n";
-        $zpl .= "^LL{$ll}\n";
+        $zpl .= "^PW1594\n";            // landscape: ancho = 200mm
+        $zpl .= "^LL760\n";             // landscape: largo = 95mm
         $zpl .= "^LH0,0\n";
         $zpl .= "^CI28\n";
         $zpl .= "^MMT\n";
-        $zpl .= $sec1a;
-        $zpl .= $secSep1;
-        $zpl .= $sec1b;
-        $zpl .= $secSepG1;
-        $zpl .= $sec2;
-        $zpl .= $secSepG2;
-        $zpl .= $sec3;
+
+        // Separadores estructurales
+        $zpl .= "^FO425,10^GB2,480,2^FS\n";      // vertical Zona A | Zona B
+        $zpl .= "^FO430,250^GB1130,2,2^FS\n";    // horizontal B1 | B2
+        $zpl .= "^FO10,493^GB1574,4,4^FS\n";     // grueso horizontal C
+        $zpl .= "^FO1530,493^GB2,262,2^FS\n";    // vertical antes de NO DESPRENDER
+
+        $zpl .= $this->buildZonaA(
+            $type, $modelName, $class, $measurements, $plazas,
+            $conservation, $batchDate, $batchNumber,
+            $serial, $operator, $inen, $website,
+            $cover, $foam, $manufacturer, $ruc, $address, $warrantyText
+        );
+
+        $zpl .= $this->buildZonaB(
+            $serial, $productCode, $batchDate, $batchNumber,
+            $type, $modelName, $measurements, $class, $plazas
+        );
+
+        $zpl .= $this->buildZonaC(
+            $qrUrl, $barcode, $productCode,
+            $serial, $productCode, $type, $measurements, $class, $plazas,
+            $modelName, $legalText, $frase2
+        );
+
         $zpl .= "^XZ\n";
 
         return $zpl;
     }
 
-    // ── SECCIÓN 1A ──────────────────────────────────────────────────────────
+    // ── ZONA A: Composición técnica (x:10-420, y:10-490) ────────────────────
 
-    protected function buildSection1A(
-        string $serial, string $productCode,
-        string $batchDate, string $batchNumber,
-        string $type, string $modelName, string $measurements,
-        string $class, string $plazas,
-        int $col1_x, int $col2_x, int $y
-    ): string {
-        $zpl = '';
-
-        // Línea superior
-        $zpl .= "^FO{$col1_x},{$y}^A0N,18,18^FDLote: {$batchNumber} ({$measurements}) {$class} {$plazas}^FS\n";
-
-        $yl = $y + 25;
-
-        // Col izq
-        $zpl .= "^FO{$col1_x},{$yl}^A0N,16,16^FDN° {$serial}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 22) . "^A0N,14,14^FD{$productCode}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 42) . "^A0N,14,14^FDFecha: {$batchDate}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 62) . "^A0N,14,14^FDLote: {$batchNumber}^FS\n";
-
-        // Col der
-        $zpl .= "^FO{$col2_x},{$yl}^A0N,16,16^FDCONTROL DE CALIDAD^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 22) . "^A0N,14,14^FD{$type}^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 42) . "^A0N,18,18^FD{$modelName}^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 64) . "^A0N,14,14^FD({$measurements}) {$class} {$plazas}^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 90) . "^A0N,14,14^FDOperador Ensamble ________________^FS\n";
-
-        return $zpl;
-    }
-
-    // ── SECCIÓN 1B ──────────────────────────────────────────────────────────
-
-    protected function buildSection1B(
-        string $serial, string $productCode,
-        string $batchDate, string $batchNumber,
-        string $type, string $modelName, string $measurements,
-        string $class, string $plazas,
-        int $col1_x, int $col2_x, int $y
-    ): string {
-        $zpl = '';
-
-        $yl = $y;
-
-        // Col izq
-        $zpl .= "^FO{$col1_x},{$yl}^A0N,16,16^FDN° {$serial}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 22) . "^A0N,14,14^FD{$productCode}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 42) . "^A0N,14,14^FDFecha: {$batchDate}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 62) . "^A0N,14,14^FDLote: {$batchNumber}^FS\n";
-
-        // Col der
-        $zpl .= "^FO{$col2_x},{$yl}^A0N,16,16^FDCONTROL DE CALIDAD^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 22) . "^A0N,14,14^FD{$type}^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 42) . "^A0N,18,18^FD{$modelName}^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 64) . "^A0N,14,14^FD({$measurements}) {$class} {$plazas}^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 90) . "^A0N,14,14^FDCerrador ____________________^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 110) . "^A0N,14,14^FDTrazabilidad ________________^FS\n";
-
-        // 3 líneas de firma
-        $firmY = $yl + 135;
-        $firmWidth = 160;
-        $zpl .= "^FO{$col1_x},{$firmY}^GB{$firmWidth},2,2^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($firmY + 8) . "^GB{$firmWidth},2,2^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($firmY + 16) . "^GB{$firmWidth},2,2^FS\n";
-
-        return $zpl;
-    }
-
-    // ── SECCIÓN 2 ───────────────────────────────────────────────────────────
-
-    protected function buildSection2(
-        string $type, string $class, string $measurements,
+    protected function buildZonaA(
+        string $type, string $modelName, string $class, string $measurements,
         string $plazas, string $conservation,
         string $batchDate, string $batchNumber,
-        string $cover, string $springs, string $foam,
-        string $manufacturer, string $ruc, string $address,
-        string $inen, string $website, string $operator,
-        string $warrantyText,
-        int $col1_x, int $col2_x, int $y
+        string $serial, string $operator, string $inen, string $website,
+        string $cover, string $foam, string $manufacturer, string $ruc,
+        string $address, string $warrantyText
     ): string {
         $zpl = '';
 
-        // Título centrado
-        $zpl .= "^FO{$col1_x},{$y}^A0N,20,20^FDInformacion de Composicion^FS\n";
+        // ── Título ────────────────────────────────────────────────────────
+        $zpl .= "^FO10,10^A0N,22,22^FDInformacion de Composicion^FS\n";
+        $yl = 38;
 
-        $yl = $y + 28;
+        // ═══════════════════════════════════════════════════════════════════
+        //  COLUMNA IZQUIERDA (x=10)
+        // ═══════════════════════════════════════════════════════════════════
 
-        // Col izq
-        $zpl .= "^FO{$col1_x},{$yl}^A0N,14,14^FDTipo IV: {$type}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 20) . "^A0N,14,14^FDClase {$class}: {$measurements} {$plazas}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 42) . "^A0N,13,13^FDCONDICIONES CONSERVACION^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 58) . "^A0N,13,13^FD{$conservation}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 78) . "^A0N,13,13^FD[X][^][X][=][X]^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 100) . "^A0N,14,14^FDFecha: {$batchDate}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 120) . "^A0N,14,14^FDLote: {$batchNumber}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 144) . "^GB100,2,2^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($yl + 148) . "^A0N,13,13^FDOperador ________________^FS\n";
+        $x1 = 10;
 
-        // Col der
-        $zpl .= "^FO{$col2_x},{$yl}^A0N,14,14^FDForro: {$cover}^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 20) . "^A0N,14,14^FDResortes: {$springs}^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 42) . "^A0N,14,14^FDEspuma Poliuretano:^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 60) . "^A0N,14,14^FD{$foam}^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 90) . "^A0N,17,17^FDHECHO EN ECUADOR^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 112) . "^A0N,12,12^FDFABRICADO POR:^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 126) . "^A0N,12,12^FD{$manufacturer}^FS\n";
-        $zpl .= "^FO{$col2_x}," . ($yl + 140) . "^A0N,12,12^FDRUC {$ruc}^FS\n";
+        $zpl .= "^FO{$x1},{$yl}^A0N,14,14^FDTipo IV: {$type}^FS\n";
+        $zpl .= "^FO{$x1}," . ($yl + 20) . "^A0N,14,14^FDClase {$class}: {$measurements} {$plazas}^FS\n";
+        $zpl .= "^FO{$x1}," . ($yl + 42) . "^A0N,13,13^FDCONDICIONES PARA SU CONSERVACION^FS\n";
+        $zpl .= "^FO{$x1}," . ($yl + 60) . "^A0N,13,13^FD{$conservation}^FS\n";
+
+        // Iconos de lavado (texto estilizado)
+        $zpl .= "^FO{$x1}," . ($yl + 86) . "^A0N,13,13^FD☒ NO LAVAR  ☒ NO BLANQ  ☒ NO SECAR  ☒ NO PLANCH^FS\n";
+
+        $zpl .= "^FO{$x1}," . ($yl + 112) . "^A0N,14,14^FDFecha: {$batchDate}^FS\n";
+        $zpl .= "^FO{$x1}," . ($yl + 132) . "^A0N,14,14^FDLote: {$batchNumber}^FS\n";
+
+        // Línea separadora
+        $zpl .= "^FO{$x1}," . ($yl + 154) . "^GB150,2,2^FS\n";
+
+        // Serial grande
+        $zpl .= "^FO{$x1}," . ($yl + 162) . "^A0N,28,28^FD{$serial}^FS\n";
+
+        // Operador + INEN
+        $zpl .= "^FO{$x1}," . ($yl + 198) . "^A0N,13,13^FDOperador: {$operator}    {$inen}^FS\n";
+
+        // Website
+        $zpl .= "^FO{$x1}," . ($yl + 218) . "^A0N,13,13^FD{$website}^FS\n";
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  COLUMNA DERECHA (x=220)
+        // ═══════════════════════════════════════════════════════════════════
+
+        $x2 = 220;
+
+        $zpl .= "^FO{$x2},{$yl}^A0N,14,14^FDForro: {$cover}^FS\n";
+        // Resortes ya no se imprime en el label
+        $zpl .= "^FO{$x2}," . ($yl + 20) . "^A0N,14,14^FDEspuma Poliuretano:^FS\n";
+
+        // Foam: si es multilínea, usar FB para auto-wrap
+        $zpl .= "^FO{$x2}," . ($yl + 40) . "^A0N,13,13^FD{$foam}^FS\n";
+
+        $zpl .= "^FO{$x2}," . ($yl + 68) . "^A0N,17,17^FDHECHO EN ECUADOR^FS\n";
+        $zpl .= "^FO{$x2}," . ($yl + 90) . "^A0N,12,12^FDFABRICADO POR:^FS\n";
+        $zpl .= "^FO{$x2}," . ($yl + 106) . "^A0N,12,12^FD{$manufacturer}^FS\n";
+        $zpl .= "^FO{$x2}," . ($yl + 120) . "^A0N,12,12^FDRUC {$ruc}^FS\n";
         if (!empty($warrantyText)) {
-            $zpl .= "^FO{$col2_x}," . ($yl + 152) . "^A0N,12,12^FD{$warrantyText}^FS\n";
-            $addressY = $yl + 166;
+            $zpl .= "^FO{$x2}," . ($yl + 134) . "^A0N,12,12^FD{$warrantyText}^FS\n";
+            $addrY = $yl + 148;
         } else {
-            $addressY = $yl + 154;
+            $addrY = $yl + 134;
         }
-        $zpl .= "^FO{$col2_x}," . $addressY . "^A0N,12,12^FD{$address}^FS\n";
-
-        // Footer
-        $fy = empty($warrantyText) ? $yl + 178 : $yl + 192;
-        $zpl .= "^FO{$col1_x},{$fy}^A0N,13,13^FDOperador {$operator}^FS\n";
-        $zpl .= "^FO{$col1_x}," . ($fy + 18) . "^A0N,13,13^FD{$inen}^FS\n";
-        $zpl .= "^FO{$col2_x},{$fy}^A0N,13,13^FD{$website}^FS\n";
+        $zpl .= "^FO{$x2}," . $addrY . "^A0N,12,12^FD{$address}^FS\n";
 
         return $zpl;
     }
 
-    // ── SECCIÓN 3 ───────────────────────────────────────────────────────────
+    // ── ZONA B: Trazabilidad (x:430-1560, y:10-490) ────────────────────────
 
-    protected function buildSection3(
+    protected function buildZonaB(
         string $serial, string $productCode,
+        string $batchDate, string $batchNumber,
         string $type, string $modelName, string $measurements,
-        string $class, string $plazas, string $qrUrl, string $barcode,
-        string $legalText, string $frase2,
-        int $x, int $y, int $bch
+        string $class, string $plazas
     ): string {
         $zpl = '';
 
-        // QR 25x25mm (magnification 5 ≈ 200 dots)
-        $qrX = $x + 5;
-        $qrY = $y;
-        $zpl .= "^FO{$qrX},{$qrY}^BQN,2,5^FDQA,{$qrUrl}^FS\n";
+        // ═══════════════════════════════════════════════════════════════════
+        //  BLOQUE B1 (y=10 a y=240)
+        // ═══════════════════════════════════════════════════════════════════
 
-        // Barcode vertical debajo del QR
-        $bcX = $qrX + 5;
-        $bcY = $qrY + 200;
-        if (!empty($barcode)) {
-            $zpl .= "^FO{$bcX},{$bcY}^BCR,{$bch},Y,N,N^FD{$barcode}^FS\n";
-        }
+        $x  = 435;
+        $y1 = 10;
 
-        // Columna centro-derecha
-        $tx = (int) round($this->settings->width_dots * 0.3);
-        $tl = $y;
+        $zpl .= "^FO{$x},{$y1}^A0N,18,18^FDN°: {$serial}^FS\n";
+        $zpl .= "^FO{$x}," . ($y1 + 24) . "^A0N,14,14^FD{$productCode}^FS\n";
+        $zpl .= "^FO{$x}," . ($y1 + 44) . "^A0N,14,14^FDFecha: {$batchDate}^FS\n";
+        $zpl .= "^FO{$x}," . ($y1 + 64) . "^A0N,14,14^FDLote: {$batchNumber}^FS\n";
+        $zpl .= "^FO{$x}," . ($y1 + 88) . "^A0N,16,16^FDCONTROL DE CALIDAD^FS\n";
+        $zpl .= "^FO{$x}," . ($y1 + 112) . "^A0N,14,14^FD{$type}^FS\n";
+        $zpl .= "^FO{$x}," . ($y1 + 132) . "^A0N,18,18^FD{$modelName}^FS\n";
+        $zpl .= "^FO{$x}," . ($y1 + 154) . "^A0N,14,14^FD({$measurements}) {$class} {$plazas}^FS\n";
+        $zpl .= "^FO{$x}," . ($y1 + 178) . "^A0N,14,14^FDOperador Ensamble: _______________^FS\n";
 
-        $zpl .= "^FO{$tx},{$tl}^A0N,38,38^FDPARAISO^FS\n";
-        $tl += 44;
-        $zpl .= "^FO{$tx},{$tl}^A0N,14,14^FDDONDE EMPIEZAN TUS SUEÑOS^FS\n";
-        $tl += 20;
-        $zpl .= "^FO{$tx},{$tl}^GB300,2,2^FS\n";
-        $tl += 10;
-        $zpl .= "^FO{$tx},{$tl}^A0N,16,16^FDCONTROL DE CALIDAD^FS\n";
-        $tl += 22;
-        $zpl .= "^FO{$tx},{$tl}^A0N,18,18^FDN°: {$serial}^FS\n";
-        $tl += 22;
-        $zpl .= "^FO{$tx},{$tl}^A0N,14,14^FD{$productCode}^FS\n";
-        $tl += 18;
-        $zpl .= "^FO{$tx},{$tl}^A0N,14,14^FD{$type}^FS\n";
-        $tl += 18;
-        $zpl .= "^FO{$tx},{$tl}^A0N,14,14^FD({$measurements}) - {$class} {$plazas}^FS\n";
-        $tl += 20;
-        $zpl .= "^FO{$tx},{$tl}^A0N,28,28^FD{$modelName}^FS\n";
-        $tl += 34;
-        $zpl .= "^FO{$tx},{$tl}^GB300,2,2^FS\n";
-        $tl += 10;
-        if (!empty($legalText)) {
-            $zpl .= "^FO{$tx},{$tl}^A0N,12,12^FD{$legalText}^FS\n";
-            $tl += 18;
-        }
-        $zpl .= "^FO{$tx},{$tl}^A0N,12,12^FDEtiqueta elaborada 100% con material reciclado post-consumo^FS\n";
-        $tl += 16;
-        $zpl .= "^FO{$tx},{$tl}^A0N,13,13^FDCOMPROMETIDOS CON EL MEDIO AMBIENTE^FS\n";
+        // ═══════════════════════════════════════════════════════════════════
+        //  BLOQUE B2 (y=260 a y=490)
+        // ═══════════════════════════════════════════════════════════════════
 
-        // Texto vertical borde derecho
-        $vx = $this->settings->width_dots - 30;
-        $zpl .= "^FO{$vx}," . ($y + 80) . "^A0R,14,14^FD{$frase2}^FS\n";
+        $y2 = 260;
+
+        $zpl .= "^FO{$x},{$y2}^A0N,18,18^FDN°: {$serial}^FS\n";
+        $zpl .= "^FO{$x}," . ($y2 + 24) . "^A0N,14,14^FD{$productCode}^FS\n";
+        $zpl .= "^FO{$x}," . ($y2 + 44) . "^A0N,14,14^FDFecha: {$batchDate}^FS\n";
+        $zpl .= "^FO{$x}," . ($y2 + 64) . "^A0N,14,14^FDLote: {$batchNumber}^FS\n";
+        $zpl .= "^FO{$x}," . ($y2 + 88) . "^A0N,16,16^FDCONTROL DE CALIDAD^FS\n";
+        $zpl .= "^FO{$x}," . ($y2 + 112) . "^A0N,14,14^FD{$type}^FS\n";
+        $zpl .= "^FO{$x}," . ($y2 + 132) . "^A0N,18,18^FD{$modelName}^FS\n";
+        $zpl .= "^FO{$x}," . ($y2 + 154) . "^A0N,14,14^FD({$measurements}) {$class} {$plazas}^FS\n";
+        $zpl .= "^FO{$x}," . ($y2 + 178) . "^A0N,14,14^FDCerrador: ____________________^FS\n";
+        $zpl .= "^FO{$x}," . ($y2 + 200) . "^A0N,14,14^FDTrazabilidad: ________________^FS\n";
 
         return $zpl;
     }
 
-    // ── UTILIDADES ──────────────────────────────────────────────────────────
+    // ── ZONA C: Franja inferior (y:495-750) ────────────────────────────────
 
-    protected function separator(int $x, int $y, int $width): string
-    {
-        return "^FO{$x},{$y}^GB{$width},2,2^FS\n";
-    }
+    protected function buildZonaC(
+        string $qrUrl, string $barcode, string $barcodeProductCode,
+        string $serial, string $productCode, string $type,
+        string $measurements, string $class, string $plazas,
+        string $modelName, string $legalText, string $frase2
+    ): string {
+        $zpl = '';
 
-    protected function separatorThick(int $x, int $y, int $width): string
-    {
-        return "^FO{$x},{$y}^GB{$width},6,6^FS\n";
+        // ═══════════════════════════════════════════════════════════════════
+        //  C1 — QR + Barcode (x:15-200)
+        // ═══════════════════════════════════════════════════════════════════
+
+        $zpl .= "^FO15,505^BQN,2,4^FDQA,{$qrUrl}^FS\n";
+
+        if (!empty($barcode)) {
+            // ^BCN = Code 128 normal orientation, height 60 dots
+            $zpl .= "^FO15,650^BCN,60,N,N,N^FD{$barcode}^FS\n";
+        }
+
+        $zpl .= "^FO15,715^A0N,14,14^FD{$barcodeProductCode}^FS\n";
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  C2 — Logo PARAÍSO + info (x:210-900)
+        // ═══════════════════════════════════════════════════════════════════
+
+        $cx = 210;
+        $cy = 505;
+
+        $zpl .= "^FO{$cx},{$cy}^A0N,55,55^FDPARAISO^FS\n";
+        $zpl .= "^FO{$cx}," . ($cy + 60) . "^A0N,14,14^FDDONDE EMPIEZAN TUS SUEÑOS^FS\n";
+        $zpl .= "^FO{$cx}," . ($cy + 78) . "^GB680,2,2^FS\n";
+        $zpl .= "^FO{$cx}," . ($cy + 90) . "^A0N,18,18^FDCONTROL DE CALIDAD^FS\n";
+        $zpl .= "^FO{$cx}," . ($cy + 114) . "^A0N,16,16^FDN°: {$serial}^FS\n";
+        $zpl .= "^FO{$cx}," . ($cy + 134) . "^A0N,14,14^FD{$productCode}^FS\n";
+        $zpl .= "^FO{$cx}," . ($cy + 152) . "^A0N,14,14^FD{$type}^FS\n";
+        $zpl .= "^FO{$cx}," . ($cy + 170) . "^A0N,14,14^FD({$measurements}) - {$class} {$plazas}^FS\n";
+        $zpl .= "^FO{$cx}," . ($cy + 192) . "^A0N,26,26^FD{$modelName}^FS\n";
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  C3 — Legal text (x:905-1520)
+        // ═══════════════════════════════════════════════════════════════════
+
+        $lx = 905;
+        $ly = 505;
+
+        if (!empty($legalText)) {
+            $zpl .= "^FO{$lx},{$ly}^A0N,11,11^FD{$legalText}^FS\n";
+        }
+
+        $zpl .= "^FO{$lx}," . ($ly + 170) . "^A0N,11,11^FDEtiqueta elaborada 100% con material reciclado post-consumo^FS\n";
+        $zpl .= "^FO{$lx}," . ($ly + 186) . "^A0N,12,12^FDCOMPROMETIDOS CON EL MEDIO AMBIENTE^FS\n";
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  C4 — Texto vertical "NO DESPRENDER LA ETIQUETA" (x:1540)
+        // ═══════════════════════════════════════════════════════════════════
+
+        $zpl .= "^FO1540,500^A0R,14,14^FD{$frase2}^FS\n";
+
+        return $zpl;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

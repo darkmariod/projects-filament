@@ -250,8 +250,8 @@ class ZebraZplServiceTest extends TestCase
 
         // Should still generate ZPL with defaults
         $this->assertStringContainsString('^XA', $zpl);
-        $this->assertStringContainsString('^PW760', $zpl);
-        $this->assertStringContainsString('^LL1600', $zpl);
+        $this->assertStringContainsString('^PW1594', $zpl);
+        $this->assertStringContainsString('^LL760', $zpl);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
