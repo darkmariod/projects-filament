@@ -15,6 +15,9 @@ services:
       - "8081:80"
     env_file:
       - .env
+    environment:
+      DB_HOST: mysql
+      DB_USERNAME: garantias_user
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.garantias.rule=Host(`108.174.152.179`)"
@@ -68,9 +71,9 @@ services:
     container_name: garantias-mysql
     environment:
       MYSQL_DATABASE: ${DB_DATABASE:-sistema_garantias}
-      MYSQL_USER: ${DB_USERNAME:-garantias_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme_in_production}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_changeme}
+      MYSQL_USER: garantias_user
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme_in_production}
     ports:
       - "127.0.0.1:3307:3306"
     networks:
