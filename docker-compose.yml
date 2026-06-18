@@ -16,7 +16,7 @@ services:
     env_file:
       - .env
     environment:
-      DB_HOST: mysql
+      DB_HOST: garantias-mysql
       DB_USERNAME: garantias_user
     labels:
       - "traefik.enable=true"
@@ -78,7 +78,6 @@ services:
       - "127.0.0.1:3307:3306"
     networks:
       - default
-      - dokploy-network
     volumes:
       - mysql-data:/var/lib/mysql
     restart: unless-stopped
