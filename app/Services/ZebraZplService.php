@@ -38,9 +38,9 @@ class ZebraZplService
 
     public function sanitizeField(string $value, int $maxLength = 100): string
     {
-        $value = str_replace(['^', '~', '\\'], ['^^', '~', '\\\\'], $value);
+        $value = str_replace(['^', '~', '\\'], ['^^', '~~', '\\\\'], $value);
         $value = preg_replace(
-            '/[^\x20-\x7E\x0A\x0D\xC0-\xFF\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\xFA\xFB\xFC\xFD\xFE\xFFñÑáéíóúÁÉÍÓÚüÜ]/u',
+            '/[^\x20-\x7E\x0A\x0D\xC0-\xFF]/u',
             '',
             $value
         );
