@@ -552,17 +552,20 @@ class ZebraZplService
         $address      = $this->sanitizeField($composition->manufacturer_address ?? '');
         $inen         = $this->sanitizeField($composition->inen_standard ?? 'NTE INEN 2035');
         $website      = $this->sanitizeField($composition->website ?? '');
-        $legalText    = $this->sanitizeField($composition->legal_text ?? '');
+        $legalText    = $this->sanitizeField($composition->legal_text ?? '', 400);
         $warrantyText = $model->warranty_years ? $this->sanitizeField("Garantía: {$model->warranty_years} años") : '';
         $frase2       = 'NO DESPRENDER LA ETIQUETA';
 
         // ── ENSAMBLE ──────────────────────────────────────────────────────
         $zpl  = "^XA\n";
-        $zpl .= "^PW1594\n";            // landscape: ancho = 200mm
-        $zpl .= "^LL760\n";             // landscape: largo = 95mm
+        $zpl .= "^PW1594\n";
+        $zpl .= "^LL760\n";
+        $zpl .= "^MNW\n";
+        $zpl .= "^MTT\n";
+        $zpl .= "^MMT\n";
+        $zpl .= "^PR4,4\n";
         $zpl .= "^LH0,0\n";
         $zpl .= "^CI28\n";
-        $zpl .= "^MMT\n";
 
         // Separadores estructurales
         $zpl .= "^FO425,10^GB2,480,2^FS\n";      // vertical Zona A | Zona B
@@ -615,8 +618,8 @@ class ZebraZplService
 
         $x1 = 10;
 
-        $zpl .= "^FO{$x1},{$yl}^A0N,14,14^FDTipo IV: {$type}^FS\n";
-        $zpl .= "^FO{$x1}," . ($yl + 20) . "^A0N,14,14^FDClase {$class}: {$measurements} {$plazas}^FS\n";
+        $zpl .= "^FO{$x1},{$yl}^A0N,14,14^FD{$type}^FS\n";
+        $zpl .= "^FO{$x1}," . ($yl + 20) . "^A0N,14,14^FD{$class}: {$measurements} {$plazas}^FS\n";
         $zpl .= "^FO{$x1}," . ($yl + 42) . "^A0N,13,13^FDCONDICIONES PARA SU CONSERVACION^FS\n";
         $zpl .= "^FO{$x1}," . ($yl + 60) . "^A0N,13,13^FD{$conservation}^FS\n";
 
@@ -635,33 +638,56 @@ class ZebraZplService
         // Operador + INEN
         $zpl .= "^FO{$x1}," . ($yl + 198) . "^A0N,13,13^FDOperador: {$operator}    {$inen}^FS\n";
 
-        // Website
-        $zpl .= "^FO{$x1}," . ($yl + 218) . "^A0N,13,13^FD{$website}^FS\n";
+        if (!empty($website)) {
+            $zpl .= "^FO{$x1}," . ($yl + 218) . "^A0N,13,13^FD{$website}^FS\n";
+        }
 
         // ═══════════════════════════════════════════════════════════════════
         //  COLUMNA DERECHA (x=220)
         // ═══════════════════════════════════════════════════════════════════
 
         $x2 = 220;
+        $ry = $yl;
 
-        $zpl .= "^FO{$x2},{$yl}^A0N,14,14^FDForro: {$cover}^FS\n";
-        // Resortes ya no se imprime en el label
-        $zpl .= "^FO{$x2}," . ($yl + 20) . "^A0N,14,14^FDEspuma Poliuretano:^FS\n";
-
-        // Foam: si es multilínea, usar FB para auto-wrap
-        $zpl .= "^FO{$x2}," . ($yl + 40) . "^A0N,13,13^FD{$foam}^FS\n";
-
-        $zpl .= "^FO{$x2}," . ($yl + 68) . "^A0N,17,17^FDHECHO EN ECUADOR^FS\n";
-        $zpl .= "^FO{$x2}," . ($yl + 90) . "^A0N,12,12^FDFABRICADO POR:^FS\n";
-        $zpl .= "^FO{$x2}," . ($yl + 106) . "^A0N,12,12^FD{$manufacturer}^FS\n";
-        $zpl .= "^FO{$x2}," . ($yl + 120) . "^A0N,12,12^FDRUC {$ruc}^FS\n";
-        if (!empty($warrantyText)) {
-            $zpl .= "^FO{$x2}," . ($yl + 134) . "^A0N,12,12^FD{$warrantyText}^FS\n";
-            $addrY = $yl + 148;
-        } else {
-            $addrY = $yl + 134;
+        // Forro: split por \n (BUG 2)
+        $coverLines = explode("\n", $cover);
+        $zpl .= "^FO{$x2},{$ry}^A0N,13,13^FDForro: {$coverLines[0]}^FS\n";
+        $ry += 20;
+        for ($i = 1; $i < count($coverLines); $i++) {
+            $zpl .= "^FO{$x2},{$ry}^A0N,13,13^FD{$coverLines[$i]}^FS\n";
+            $ry += 16;
         }
-        $zpl .= "^FO{$x2}," . $addrY . "^A0N,12,12^FD{$address}^FS\n";
+
+        $zpl .= "^FO{$x2},{$ry}^A0N,13,13^FDEspuma Poliuretano:^FS\n";
+        $ry += 20;
+
+        // Foam: split por \n (BUG 2)
+        $foamLines = explode("\n", $foam);
+        foreach (array_filter($foamLines, fn($l) => trim($l) !== '') as $fl) {
+            $zpl .= "^FO{$x2},{$ry}^A0N,13,13^FD" . trim($fl) . "^FS\n";
+            $ry += 16;
+        }
+
+        $zpl .= "^FO{$x2},{$ry}^A0N,17,17^FDHECHO EN ECUADOR^FS\n";
+        $ry += 22;
+        $zpl .= "^FO{$x2},{$ry}^A0N,12,12^FDFABRICADO POR:^FS\n";
+        $ry += 14;
+        $zpl .= "^FO{$x2},{$ry}^A0N,12,12^FD{$manufacturer}^FS\n";
+        $ry += 14;
+
+        if (!empty($ruc)) {
+            $zpl .= "^FO{$x2},{$ry}^A0N,12,12^FDRUC {$ruc}^FS\n";
+            $ry += 14;
+        }
+
+        if (!empty($warrantyText)) {
+            $zpl .= "^FO{$x2},{$ry}^A0N,12,12^FD{$warrantyText}^FS\n";
+            $ry += 14;
+        }
+
+        if (!empty($address)) {
+            $zpl .= "^FO{$x2},{$ry}^A0N,12,12^FD{$address}^FS\n";
+        }
 
         return $zpl;
     }
