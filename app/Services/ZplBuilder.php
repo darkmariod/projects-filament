@@ -113,6 +113,29 @@ class ZplBuilder
         return $this;
     }
 
+    /**
+     * Rectángulo o línea con ancho, alto y grosor independientes.
+     */
+    public function box(int $x, int $y, int $width, int $height, int $thickness): static
+    {
+        $this->zpl .= "^FO{$x},{$y}^GB{$width},{$height},{$thickness}^FS
+";
+
+        return $this;
+    }
+
+    /**
+     * Texto rotado 90 grados hacia la derecha.
+     */
+    public function rotatedText(int $x, int $y, int $height, int $width, string $value): static
+    {
+        $value = $this->escape($value);
+        $this->zpl .= "^FO{$x},{$y}^A0R,{$height},{$width}^FD{$value}^FS
+";
+
+        return $this;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     //  RAW
     // ─────────────────────────────────────────────────────────────────────────

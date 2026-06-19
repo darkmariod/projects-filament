@@ -237,6 +237,42 @@ class ZebraZplServiceTest extends TestCase
     //  Constructor fallback
     // ─────────────────────────────────────────────────────────────────────────
 
+
+    /** @test */
+    public function it_generates_landscape_label_layout_matching_physical_zpl(): void
+    {
+        $label = $this->createFullLabel([
+            'serial' => '2606-CR SE 090-V-00000016-1',
+            'barcode' => '7861191234261',
+            'qr_url' => 'http://108.174.152.179:8081/p/2606-CR%20SE%20090-V-00000016-1',
+        ]);
+
+        $label->product->update([
+            'product_code' => 'CR SE 090',
+            'measurements_text' => '90X190X22',
+            'class' => 'Clase B',
+            'plazas' => '1 1/4 PLZ',
+        ]);
+
+        $label->product->productModel->update([
+            'name' => 'COL. SENORIAL',
+            'type' => 'Tipo IV: COL. RES',
+            'warranty_years' => 1,
+        ]);
+
+        $zpl = $this->service->generateForLabel($label->fresh());
+
+        $this->assertStringContainsString('^PW1594', $zpl);
+        $this->assertStringContainsString('^LL760', $zpl);
+        $this->assertStringContainsString('^FO425,10^GB2,480,2^FS', $zpl);
+        $this->assertStringContainsString('^FO430,250^GB1130,2,2^FS', $zpl);
+        $this->assertStringContainsString('^FO10,493^GB1574,4,4^FS', $zpl);
+        $this->assertStringContainsString('^FO435,10^A0N,18,18^FDN°: 2606-CR SE 090-V-00000016-1^FS', $zpl);
+        $this->assertStringContainsString('^FO435,122^A0N,14,14^FDTipo IV: COL. RES^FS', $zpl);
+        $this->assertStringContainsString('^FO15,505^BQN,2,4^FDQA,http://108.174.152.179:8081/p/2606-CR%20SE%20090-V-00000016-1^FS', $zpl);
+        $this->assertStringContainsString('^FO1540,500^A0R,14,14^FDNO DESPRENDER LA ETIQUETA^FS', $zpl);
+    }
+
     /** @test */
     public function it_uses_fallback_settings_when_no_active_setting(): void
     {
@@ -248,10 +284,10 @@ class ZebraZplServiceTest extends TestCase
         $label = $this->createFullLabel();
         $zpl = $service->generateForLabel($label);
 
-        // Should still generate ZPL with defaults (portrait 760×1594)
+        // Should still generate ZPL with defaults (landscape 1594×760)
         $this->assertStringContainsString('^XA', $zpl);
-        $this->assertStringContainsString('^PW760', $zpl);
-        $this->assertStringContainsString('^LL1594', $zpl);
+        $this->assertStringContainsString('^PW1594', $zpl);
+        $this->assertStringContainsString('^LL760', $zpl);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
