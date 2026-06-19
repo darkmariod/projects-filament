@@ -248,10 +248,10 @@ class ZebraZplServiceTest extends TestCase
         $label = $this->createFullLabel();
         $zpl = $service->generateForLabel($label);
 
-        // Should still generate ZPL with defaults
+        // Should still generate ZPL with defaults (portrait 760×1594)
         $this->assertStringContainsString('^XA', $zpl);
-        $this->assertStringContainsString('^PW1594', $zpl);
-        $this->assertStringContainsString('^LL760', $zpl);
+        $this->assertStringContainsString('^PW760', $zpl);
+        $this->assertStringContainsString('^LL1594', $zpl);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

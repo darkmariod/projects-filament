@@ -24,8 +24,9 @@ services:
       - "traefik.http.routers.garantias.entrypoints=web"
       - "traefik.http.services.garantias.loadbalancer.server.port=80"
     networks:
-      - default
-      - dokploy-network
+      default:
+      garantias-traefik:
+        ipv4_address: 172.23.0.10
     depends_on:
       mysql:
         condition: service_healthy
@@ -95,5 +96,6 @@ volumes:
     name: garantias-app-storage
 
 networks:
-  dokploy-network:
+  garantias-traefik:
     external: true
+    name: garantias-traefik

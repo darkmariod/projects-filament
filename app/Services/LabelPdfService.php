@@ -70,10 +70,12 @@ class LabelPdfService
         $operator     = e($batch->operator ?? '');
         $barcodeNum   = e($label->barcode ?? '');
 
-        $cover        = e($composition->cover_material ?? '');
+        $resolveNewlines = fn(string $v): string => nl2br(e(str_replace(['\\n', '\n'], "\n", $v)));
+
+        $cover        = $resolveNewlines($composition->cover_material ?? '');
         $springs      = e($composition->springs ?? '');
-        $foam         = e($composition->foam_description ?? '');
-        $conservation = e($composition->conservation_instructions ?? '');
+        $foam         = $resolveNewlines($composition->foam_description ?? '');
+        $conservation = $resolveNewlines($composition->conservation_instructions ?? '');
         $manufacturer = e($composition->manufacturer ?? '');
         $ruc          = e($composition->manufacturer_ruc ?? '');
         $address      = e($composition->manufacturer_address ?? '');
@@ -81,6 +83,9 @@ class LabelPdfService
         $website      = e($composition->website ?? '');
         $legalText    = e($composition->legal_text ?? '');
         $warrantyText = $model->warranty_years ? "Garantía: {$model->warranty_years} años" : '';
+
+        $resortesHtml = $springs ? '<div>Resortes: ' . $springs . '</div>' : '';
+        $rucHtml      = $ruc ? '<div>RUC ' . $ruc . '</div>' : '';
 
         $qrBase64 = base64_encode(
             \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
@@ -192,11 +197,10 @@ class LabelPdfService
                 <div class="titulo-sec">Informacion de Composicion</div>
                 <div class="fila">
                     <div class="col">
-                        <div>Tipo IV: {$type}</div>
-                        <div>Clase {$class}: {$measurements} {$plazas}</div>
+                        <div>{$type}</div>
+                        <div>{$class}: {$measurements} {$plazas}</div>
                         <div style="margin-top:2px; font-weight:bold;">CONDICIONES CONSERVACION</div>
                         <div>{$conservation}</div>
-                        <div>[X][^][X][=][X]</div>
                         <div style="margin-top:3px;">Fecha: {$batchDate}</div>
                         <div>Lote: {$batchNumber}</div>
                         <div style="margin-top:4px;">
@@ -206,13 +210,13 @@ class LabelPdfService
                     </div>
                     <div class="col">
                         <div>Forro: {$cover}</div>
-                        <div>Resortes: {$springs}</div>
+                        {$resortesHtml}
                         <div>Espuma Poliuretano:</div>
                         <div>{$foam}</div>
                         <div style="margin-top:3px; font-weight:bold;">HECHO EN ECUADOR</div>
                         <div style="margin-top:2px;">FABRICADO POR:</div>
                         <div>{$manufacturer}</div>
-                        <div>RUC {$ruc}</div>
+                        {$rucHtml}
                         <div>{$warrantyText}</div>
                         <div>{$address}</div>
                     </div>
