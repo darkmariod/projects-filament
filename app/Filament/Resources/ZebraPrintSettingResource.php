@@ -69,7 +69,7 @@ class ZebraPrintSettingResource extends Resource
                             ->default(203)
                             ->required()
                             ->live()
-                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                            ->afterStateUpdated(function ($state, $get, $set) {
                                 static::recalculateDots($get, $set);
                             })
                             ->hint('Cambiar DPI recalcula los puntos automáticamente'),
@@ -92,7 +92,7 @@ class ZebraPrintSettingResource extends Resource
                             ->numeric()
                             ->required()
                             ->live()
-                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                            ->afterStateUpdated(function ($state, $get, $set) {
                                 static::recalculateDots($get, $set);
                             }),
 
@@ -101,7 +101,7 @@ class ZebraPrintSettingResource extends Resource
                             ->numeric()
                             ->required()
                             ->live()
-                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                            ->afterStateUpdated(function ($state, $get, $set) {
                                 static::recalculateDots($get, $set);
                             }),
 
@@ -296,7 +296,7 @@ class ZebraPrintSettingResource extends Resource
             ->bulkActions([]);
     }
 
-    public static function recalculateDots(Forms\Get $get, Forms\Set $set): void
+    public static function recalculateDots(callable $get, callable $set): void
     {
         $dpi = $get('dpi');
         $w = $get('label_width_mm');

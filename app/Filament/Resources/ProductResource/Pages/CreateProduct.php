@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\ProductResource\Pages;
 
 use App\Filament\Resources\ProductResource;
+use App\Models\LabelBatch;
 use App\Models\TechnicalComposition;
+use App\Services\SerialGeneratorService;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateProduct extends CreateRecord
@@ -78,5 +80,15 @@ class CreateProduct extends CreateRecord
         if ($tc && $model?->warranty_years && empty($this->productTcFields['support_material'] ?? null)) {
             $tc->updateQuietly(['support_material' => "{$model->warranty_years} años"]);
         }
+
+        // ── Auto-crear LabelBatch ─────────────────────────────────────────────
+        $quantity = $this->data['default_label_quantity'] ?? 100;
+        $batch = LabelBatch::create([
+            'product_id' => $this->record->id,
+            'quantity'   => $quantity,
+        ]);
+
+        // Generar seriales inmediatamente
+        app(SerialGeneratorService::class)->generateLabelsForBatch($batch);
     }
 }

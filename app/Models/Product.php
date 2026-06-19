@@ -30,15 +30,17 @@ class Product extends Model
         'description',
         'conservation_instructions',
         'active',
+        'default_label_quantity',
     ];
 
     protected function casts(): array
     {
         return [
-            'active'    => 'boolean',
-            'width_cm'  => 'decimal:2',
-            'length_cm' => 'decimal:2',
-            'height_cm' => 'decimal:2',
+            'active'                => 'boolean',
+            'width_cm'              => 'decimal:2',
+            'length_cm'             => 'decimal:2',
+            'height_cm'             => 'decimal:2',
+            'default_label_quantity' => 'integer',
         ];
     }
 

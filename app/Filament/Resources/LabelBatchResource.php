@@ -32,9 +32,9 @@ class LabelBatchResource extends Resource
 {
     protected static ?string $model = LabelBatch::class;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-qr-code';
-    protected static ?string $navigationLabel = 'Controles de Etiquetas';
+    protected static ?string $navigationLabel = 'Lotes de Etiquetas';
     protected static ?string $modelLabel = 'Lote';
-    protected static ?string $pluralModelLabel = 'Controles de Etiquetas';
+    protected static ?string $pluralModelLabel = 'Lotes de Etiquetas';
     protected static string|\UnitEnum|null $navigationGroup = 'Etiquetas';
     protected static ?int $navigationSort = 1;
 

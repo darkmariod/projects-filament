@@ -80,6 +80,14 @@ class ProductResource extends Resource
                         Forms\Components\Toggle::make('active')
                             ->label('Activo')
                             ->default(true),
+
+                        Forms\Components\TextInput::make('default_label_quantity')
+                            ->label('Cantidad de etiquetas (default)')
+                            ->helperText('Se usará al auto-crear el lote de etiquetas. Dejá vacío para usar 100.')
+                            ->numeric()
+                            ->minValue(1)
+                            ->nullable()
+                            ->maxLength(6),
                     ])->columns(2),
 
                 Section::make('Plaza')

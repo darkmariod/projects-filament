@@ -85,6 +85,9 @@ class LabelBatch extends Model
     /**
      * Genera el código interno con formato: {product_code_slug}-{MMYYYY}
      * Ejemplo: CR SE 080 + junio 2026 → CR-SE-080-062026
+     *
+     * Evita duplicados: si ya existe un lote con ese código, agrega
+     * un sufijo -2, -3, etc.
      */
     public function generateInternalCode(): string
     {
@@ -99,7 +102,25 @@ class LabelBatch extends Model
             ? \Carbon\Carbon::parse($this->customer_batch_date)
             : now();
 
-        return $slug . '-' . $date->format('mY');
+        $base = $slug . '-' . $date->format('mY');
+
+        // Si no hay colisión, usar el código base
+        if (!static::where('internal_batch_code', $base)->exists()) {
+            return $base;
+        }
+
+        // Buscar el sufijo más alto existente para este código base
+        $latest = static::where('internal_batch_code', 'like', $base . '-%')
+            ->orderByRaw('CAST(SUBSTRING_INDEX(internal_batch_code, \'-\', -1) AS UNSIGNED) DESC')
+            ->first();
+
+        if ($latest) {
+            $parts = explode('-', $latest->internal_batch_code);
+            $lastSuffix = (int) end($parts);
+            return $base . '-' . ($lastSuffix + 1);
+        }
+
+        return $base . '-2';
     }
 
     // ── Relaciones ────────────────────────────────────────────────────────
