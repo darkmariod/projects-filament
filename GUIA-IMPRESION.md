@@ -9,6 +9,7 @@ Te voy a guiar paso a paso, como si estuviéramos al lado.
 ## ¿Qué vamos a hacer?
 
 Vamos a instalar un programita en la PC de la fábrica que se encarga de:
+
 1. Preguntarle al sistema cada tantos segundos si hay etiquetas para imprimir
 2. Si hay, las manda a la impresora Zebra
 3. Le avisa al sistema que ya se imprimieron
@@ -19,254 +20,220 @@ Vamos a instalar un programita en la PC de la fábrica que se encarga de:
 
 ## Requisitos
 
-- Una PC con Windows 10 o Windows 11
-- La impresora Zebra conectada por USB a esa PC
-- Que la PC tenga internet (para hablar con el sistema)
+- Una PC con **Windows 10 o Windows 11**
+- La impresora **Zebra conectada por USB** a esa PC
+- Que la PC tenga **internet** (para hablar con el sistema)
 
 ---
 
-## Paso 1 — Encontrar la impresora en Windows
+## Paso 1 — Descargar el programita
 
-Primero tenemos que ver el nombre exacto que Windows le puso a la Zebra.
-
-1. Conectá la Zebra por USB a la PC y prendela
-2. Abrí el **Menú Inicio** y escribí **"Ver impresoras"**
-3. Hacé clic en el resultado que dice **"Ver impresoras y escáneres"**
-4. Buscá la Zebra en la lista
-5. **Anotate el nombre exacto** tal cual aparece. Por lo general es algo como:
-   - `Zebra ZT411`
-   - `Zebra ZT230`
-   - `ZPL Printer`
-
-   Ese nombre lo vamos a necesitar después.
-
-![La pantalla de impresoras de Windows muestra la lista con el nombre de cada una]
-
-*También podés hacer esto:* apretá las teclas **Windows + R**, escribí `control printers` y apretá Enter.
-
----
-
-## Paso 2 — Descargar el programita
-
-1. En la misma PC, abrí el navegador (Chrome, Edge, el que tengas)
+1. En la PC de la fábrica, abrí el navegador (Chrome, Edge, el que tengas)
 2. Hacé clic en la barra de direcciones (arriba de todo) y escribí:
 
    ```
-   http://108.174.152.179:8081/zebra-agent.ps1
+   http://108.174.152.179:8081/scripts/agente.zip
    ```
 
 3. Apretá Enter
-4. Se va a descargar un archivo llamado `zebra-agent.ps1`
-5. **No lo cierres todavía**, después te digo dónde guardarlo
-
-> **Si el navegador te muestra el contenido del archivo en vez de descargarlo:**
-> Apretá **Ctrl + S**, elegí **Escritorio** como lugar y **Guardar**.
+4. Se va a descargar un archivo llamado `agente.zip`
+5. **No lo abras todavía**
 
 ---
 
-## Paso 3 — Abrir PowerShell como Administrador
+## Paso 2 — Extraer en el Escritorio
 
-Este es el paso más importante. PowerShell es como una ventanita negra donde escribimos órdenes.
+1. Andá a la carpeta de **Descargas**
+2. Buscá el archivo `agente.zip`
+3. Hacé **clic derecho** sobre él
+4. Elegí **"Extraer todo..."**
+5. En la ventana que aparece, **cambiá la carpeta de destino** al **Escritorio**
+6. Apretá **Extraer**
 
-1. Apretá la tecla **Windows** (la del logo) y escribí **PowerShell**
-2. Te va a aparecer **Windows PowerShell** en la lista
-3. **NO hagas clic todavía.** En lugar de eso, fijate que a la derecha dice **"Ejecutar como administrador"** — hacé clic ahí
-4. Te va a preguntar "¿Querés permitir que esta app haga cambios?" — decí **Sí**
-5. Se abre una ventana negra. **Esa es la consola.**
+Te tiene que quedar una carpeta llamada `agente` en el Escritorio
+con estos archivos adentro:
 
-> Quizás te asuste un poco ver una pantalla negra, pero es normal. Todo lo que escribas ahí le da órdenes a la PC.
-
-![Una ventana negra con texto blanco: Windows PowerShell]
+```
+1-VER-IMPRESORAS.cmd
+2-TEST-IMPRESION.cmd
+3-INICIAR-AGENTE.cmd
+4-INSTALAR-INICIO-AUTOMATICO.cmd
+5-VER-ESTADO.cmd
+zebra-raw-agent.ps1
+```
 
 ---
 
-## Paso 4 — Permitir que PowerShell ejecute scripts
+## Paso 3 — Ver el nombre de la impresora
 
-Windows a veces bloquea estos programitas por seguridad. Vamos a darle permiso solo una vez.
-
-En la ventana negra de PowerShell, **escribí exactamente esto** (podés copiar y pegar con click derecho):
-
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-```
-
-Apretá **Enter**. Te va a preguntar algo como:
+Dentro de la carpeta `agente`, hacé **doble clic** en:
 
 ```
-¿Desea cambiar la directiva de ejecución?
-[S] Sí  [N] No  [T] Todos
+1-VER-IMPRESORAS.cmd
 ```
 
-Escribí la letra **S** (de Sí) y apretá **Enter**.
+Se va a abrir una ventana negra con una lista de impresoras instaladas.
+**Anotate el nombre exacto** de la Zebra. Por lo general es algo como:
+
+- `Zebra ZT411`
+- `Zebra ZT230`
+- `ZPL Printer`
+
+Cuando terminés, apretá cualquier tecla para cerrar la ventana.
+
+> 💡 Si no aparece ninguna Zebra en la lista, asegurate de que esté
+> prendida y conectada por USB a la PC.
 
 ---
 
-## Paso 5 — Ir al Escritorio
+## Paso 4 — Configurar el nombre en los archivos
 
-Ahora vamos a decirle a PowerShell que trabaje en el Escritorio, donde descargamos el archivo.
+Ahora vamos a poner el nombre exacto de tu impresora en los archivos .cmd.
 
-Escribí este comando y apretá Enter:
+1. Hacé **clic derecho** sobre `2-TEST-IMPRESION.cmd`
+2. Elegí **"Editar"** (se abre el Bloc de Notas)
+3. Buscá la línea que dice algo como:
 
-```powershell
-cd $env:USERPROFILE\Desktop
-```
-
-No tendrías que ver ningún error. Si ves una línea nueva con algo como `PS C:\Users\...\Desktop`, está bien.
-
----
-
-## Paso 6 — Verificar el nombre de la impresora
-
-Vamos a confirmar que Windows ve la Zebra. Escribí:
-
-```powershell
-Get-Printer | Format-Table Name
-```
-
-Te va a mostrar una lista de impresoras instaladas. Fijate que aparezca la Zebra. El nombre tiene que **coincidir exactamente** con el que anotaste en el Paso 1.
-
----
-
-## Paso 7 — Configurar el nombre en el programita
-
-Ahora vamos a ajustar el nombre de la impresora en el archivo que descargamos.
-
-En la misma ventana negra de PowerShell, escribí:
-
-```powershell
-notepad zebra-agent.ps1
-```
-
-Se abre el Bloc de Notas con el contenido del archivo.
-
-1. Buscá la línea 38 (o buscá el texto `Zebra ZT411` apretando **Ctrl + B**)
-2. Vas a ver algo como:
-
-   ```powershell
-   $Script:PrinterName   = "Zebra ZT411"
+   ```
+   set PRINTER_NAME=ZDesigner ZT411-203dpi ZPL
    ```
 
-3. Cambiá `"Zebra ZT411"` por el nombre exacto de tu impresora
-   - Por ejemplo: `$Script:PrinterName = "Zebra ZT230"`
-   - **Respetá las comillas**,
- - escribí el nombre exacto que viste en el Paso 1
-4. Apretá **Ctrl + G** para guardar
-5. Cerrate el Bloc de Notas
-6. Volvé a la ventana de PowerShell
+4. Cambiá `ZDesigner ZT411-203dpi ZPL` por el **nombre exacto** que anotaste
+   en el Paso 3. Por ejemplo:
+
+   ```
+   set PRINTER_NAME=Zebra ZT230
+   ```
+
+5. Guardá con **Ctrl + G** (o Archivo > Guardar) y cerralo
+6. **Repetí lo mismo** para `3-INICIAR-AGENTE.cmd`, `4-INSTALAR-INICIO-AUTOMATICO.cmd`
+   y `5-VER-ESTADO.cmd`
 
 ---
 
-## Paso 8 — ¡Probarlo!
+## Paso 5 — Probar la impresora
 
-Vamos a hacer una prueba para ver si todo funciona. En PowerShell escribí:
-
-```powershell
-.\zebra-agent.ps1 -once
-```
-
-Si todo está bien, vas a ver algo como:
+Asegurate que la Zebra esté prendida, con papel, y hacé **doble clic** en:
 
 ```
-[2026-06-23 14:30:00] Zebra Print Agent iniciado
-[2026-06-23 14:30:00] Impresora encontrada: Zebra ZT411
-[2026-06-23 14:30:00] Consultando colas pendientes...
-[2026-06-23 14:30:00] No hay colas pendientes.
-[2026-06-23 14:30:00] Modo -once: finalizado.
+2-TEST-IMPRESION.cmd
 ```
 
-Eso significa que **el programita funciona** y está esperando que alguien mande etiquetas a imprimir.
+Se abre una ventana negra que intenta imprimir una etiqueta de prueba.
 
-> Si ves un error que dice algo como "Impresora no encontrada", revisá que:
-> - El nombre en el Paso 7 sea **exactamente igual** al que te mostró `Get-Printer` en el Paso 6
-> - La impresora esté prendida y conectada por USB
+- ✅ **Si la Zebra imprime** — ¡perfecto! Pasá al Paso 6.
+- ❌ **Si no imprime**:
+  - Verificá que el nombre de la impresora sea **exactamente igual** al del Paso 3
+  - Verificá que la Zebra esté prendida y con papel
+  - Andá a Menú Inicio > "Impresoras" y asegurate que la Zebra esté visible
+  - Volvé a intentar
 
 ---
 
-## Paso 9 — Instalar para que funcione siempre
+## Paso 6 — Probar que llegue al sistema
 
-Ahora vamos a hacer que este programita se active solo, aunque apagues y prendas la PC.
-
-En la misma ventana de PowerShell, escribí:
-
-```powershell
-.\zebra-agent.ps1 -install
-```
-
-Te va a aparecer un mensaje como:
+Hacé **doble clic** en:
 
 ```
-✓ Tarea 'ZebraPrintAgent' instalada correctamente.
-  Se ejecuta al iniciar Windows y cada 1 minuto.
+3-INICIAR-AGENTE.cmd
 ```
 
-**Listo.** Ya está instalado. Desde ahora, la PC:
+Se abre una ventana negra que muestra:
 
-- Apenas se prende, arranca el agente solo
-- Cada 1 minuto pregunta si hay etiquetas para imprimir
-- Cuando hay, las imprime automáticamente
+```
+>>> PASO 1: Verificando impresora ...
+  [OK] Impresora encontrada: Zebra ZT411
+>>> PASO 2: Conectando al servidor ...
+  [OK] Conectado al servidor
+>>> PASO 3: AGENTE ACTIVO
+```
 
-**No hace falta hacer nada más.** Podés cerrar la ventana de PowerShell y olvidarte.
+Si ves eso, **todo funciona**. **NO cierres esta ventana.**
+
+Ahora andá al sistema web, creá un lote de etiquetas y mandalo a imprimir
+en la Zebra. En unos segundos la ventana va a mostrar:
+
+```
+>>> Cola #123 — 5 etiqueta(s) para Zebra ZT411
+  [OK]  Item #1 impreso y reportado
+  [OK]  Item #2 impreso y reportado
+```
+
+La etiqueta sale de la Zebra automáticamente.
+
+> Para detener el agente, apretá **CTRL + C** en la ventana negra.
 
 ---
 
-## Paso 10 — Verificar que funcione bien
+## Paso 7 — Hacer que funcione siempre (automático)
 
-En cualquier momento podés ver el estado del agente. Abrí PowerShell y escribí:
+Cuando estés seguro de que funciona, cerrá la ventana del Paso 6
+(apretá CTRL + C si hace falta).
 
-```powershell
-.\zebra-agent.ps1 -status
-```
-
-Te va a mostrar:
-
-- Si el agente está instalado ✅
-- Si la impresora está conectada ✅
-- Si el sistema está respondiendo ✅
-
-También podés ver el historial de actividad. Es un archivo de texto que está en:
+Ahora andá a la carpeta `agente`, hacé **clic derecho** sobre:
 
 ```
-C:\Users\TU_USUARIO\AppData\Local\Temp\zebra-agent.log
+4-INSTALAR-INICIO-AUTOMATICO.cmd
 ```
 
-Si querés ver las últimas líneas, abrí PowerShell y escribí:
+Y elegí **"Ejecutar como administrador"**.
 
-```powershell
-Get-Content "$env:TEMP\zebra-agent.log" -Tail 10
+Esto hace que el agente se active **cada vez que se prende la PC** y
+cada 1 minuto. No hace falta hacer nada más, funciona solo.
+
+---
+
+## Paso 8 — Verificar que esté todo bien
+
+En cualquier momento podés hacer **doble clic** en:
+
 ```
+5-VER-ESTADO.cmd
+```
+
+Te va a mostrar un resumen de todo:
+
+- ✅ Si el agente automático está instalado
+- ✅ Si la impresora está conectada
+- ✅ Si el sistema está respondiendo
+
+Si ves tres de estos, **está todo listo**.
 
 ---
 
 ## Solución de problemas
 
-### 🙈 "No se pudo conectar con el servidor"
-
-La PC no llega al sistema. Revisá:
-- Que la PC tenga internet
-- Que el sistema esté funcionando (preguntale al que te pasó esta guía)
-
 ### 🖨️ "Impresora no encontrada"
 
 - Verificá que la Zebra esté prendida y conectada por USB
 - Andá a Menú Inicio → "Impresoras" → fijate que aparezca
-- Ejecutá `Get-Printer | Format-Table Name` en PowerShell para ver el nombre exacto
+- Ejecutá `1-VER-IMPRESORAS.cmd` para ver el nombre exacto
+- Asegurate de haber cambiado el nombre en los archivos .cmd (Paso 4)
 
-### ⚠️ "No hay colas pendientes"
+### 🌐 "No se pudo conectar al servidor"
 
-Eso no es un error, significa que no hay nada para imprimir. El agente está esperando.
-Andá al sistema web, creá un lote de etiquetas e imprimilo. El agente lo agarra solo.
+- La PC no llega al sistema. Revisá:
+- Que la PC tenga internet
+- Que el sistema esté funcionando
 
-### ❌ Error de permisos al ejecutar
+### ⏳ "No hay colas pendientes"
 
-Asegurate de haber ejecutado PowerShell como **Administrador** (Paso 3).
+Eso no es un error. Significa que no hay nada para imprimir.
+Andá al sistema web, creá un lote de etiquetas e imprimilo.
+El agente lo agarra solo.
+
+### ❌ "Acceso denegado" al ejecutar 4-INSTALAR-INICIO-AUTOMATICO.cmd
+
+Hacé **clic derecho** sobre el archivo y elegí **"Ejecutar como administrador"**.
 
 ---
 
 ## ¿Cada cuánto imprime?
 
-El agente revisa cada **1 minuto** si hay etiquetas nuevas. Apenas encuentra, las imprime una por una con medio segundo de diferencia. No hace falta hacer nada, todo es automático.
+El agente revisa cada **10 segundos** si hay etiquetas nuevas.
+Apenas encuentra, las imprime una por una. No hace falta hacer nada.
 
-Si imprimiste desde el sistema y la Zebra no reacciona, esperá un minuto. Si pasa más de un minuto, revisá los pasos de arriba.
+Cuando la PC se prende, el agente arranca solo (si instalaste el Paso 7).
 
 ---
 
@@ -274,16 +241,19 @@ Si imprimiste desde el sistema y la Zebra no reacciona, esperá un minuto. Si pa
 
 Si algún día querés sacarlo:
 
-```powershell
-.\zebra-agent.ps1 -uninstall
-```
+1. Apretá **Windows + R**, escribí `taskschd.msc`, Enter
+2. Buscá `ZebraPrintAgent` en la lista
+3. Clic derecho > **Eliminar**
+4. Borrá la carpeta `agente` del Escritorio
 
-Y listo, se borra la tarea programada. El programita deja de funcionar.
+Y listo, el programita deja de funcionar.
 
 ---
 
 ## ¿Necesitás ayuda?
 
-Si algo no funciona, contactate con nosotros. En lo posible mandá una captura de pantalla de la ventana de PowerShell cuando intentaste los pasos, así vemos dónde está el problema.
+Si algo no funciona, contactate con nosotros. En lo posible mandá
+una **captura de pantalla** de lo que ves al ejecutar los pasos,
+así vemos dónde está el problema.
 
 ¡Suerte y gracias!
