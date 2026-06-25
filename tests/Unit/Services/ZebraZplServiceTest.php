@@ -239,7 +239,7 @@ class ZebraZplServiceTest extends TestCase
 
 
     /** @test */
-    public function it_generates_landscape_label_layout_matching_physical_zpl(): void
+    public function it_generates_portrait_label_layout_matching_physical_zpl(): void
     {
         $label = $this->createFullLabel([
             'serial' => '2606-CR SE 090-V-00000016-1',
@@ -262,15 +262,18 @@ class ZebraZplServiceTest extends TestCase
 
         $zpl = $this->service->generateForLabel($label->fresh());
 
-        $this->assertStringContainsString('^PW1594', $zpl);
-        $this->assertStringContainsString('^LL760', $zpl);
-        $this->assertStringContainsString('^FO425,10^GB2,480,2^FS', $zpl);
-        $this->assertStringContainsString('^FO430,250^GB1130,2,2^FS', $zpl);
-        $this->assertStringContainsString('^FO10,493^GB1574,4,4^FS', $zpl);
-        $this->assertStringContainsString('^FO435,10^A0N,18,18^FDN°: 2606-CR SE 090-V-00000016-1^FS', $zpl);
-        $this->assertStringContainsString('^FO435,122^A0N,14,14^FDTipo IV: COL. RES^FS', $zpl);
-        $this->assertStringContainsString('^FO15,505^BQN,2,4^FDQA,http://108.174.152.179:8081/p/2606-CR%20SE%20090-V-00000016-1^FS', $zpl);
-        $this->assertStringContainsString('^FO1540,500^A0R,14,14^FDNO DESPRENDER LA ETIQUETA^FS', $zpl);
+        $this->assertStringContainsString('^PW760', $zpl);
+        $this->assertStringContainsString('^LL1600', $zpl);
+        $this->assertStringContainsString('^FO15,100^GB730,2,2^FS', $zpl);
+        $this->assertStringContainsString('^FO10,295^GB740,4,4^FS', $zpl);
+        $this->assertStringContainsString('^FO10,530^GB740,4,4^FS', $zpl);
+        $this->assertStringContainsString('^FO15,15^A0N,13,13^FDN°: 2606-CR SE 090-V-00000016-1^FS', $zpl);
+        $this->assertStringContainsString('^FO300,35^A0N,12,12^FDTipo IV: COL. RES^FS', $zpl);
+        $this->assertStringContainsString('^FO15,550^BQN,2,5^FDQA,http://108.174.152.179:8081/p/2606-CR%20SE%20090-V-00000016-1^FS', $zpl);
+        $this->assertStringContainsString('^FO735,550^A0R,14,14^FDNO DESPRENDER LA ETIQUETA^FS', $zpl);
+
+        // El barcode no debe invadir la columna derecha (x >= 400) del bloque principal.
+        $this->assertStringContainsString('^FO15,755^BY1', $zpl);
     }
 
     /** @test */
@@ -284,10 +287,10 @@ class ZebraZplServiceTest extends TestCase
         $label = $this->createFullLabel();
         $zpl = $service->generateForLabel($label);
 
-        // Should still generate ZPL with defaults (landscape 1594×760)
+        // Should still generate ZPL with defaults (portrait 760×1600)
         $this->assertStringContainsString('^XA', $zpl);
-        $this->assertStringContainsString('^PW1594', $zpl);
-        $this->assertStringContainsString('^LL760', $zpl);
+        $this->assertStringContainsString('^PW760', $zpl);
+        $this->assertStringContainsString('^LL1600', $zpl);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

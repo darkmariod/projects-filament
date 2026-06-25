@@ -79,11 +79,15 @@ class ZplBuilder
 
     /**
      * Código de barras Code 128.
+     *
+     * $moduleWidth controla el ancho de la barra más angosta (^BY) para evitar
+     * que el código se expanda más de lo previsto y pise el contenido vecino.
      */
-    public function barcode128(int $x, int $y, int $height, string $code): static
+    public function barcode128(int $x, int $y, int $height, string $code, int $moduleWidth = 2): static
     {
         $code = $this->escape($code);
-        $this->zpl .= "^FO{$x},{$y}^BCN,{$height},N,N,N^FD{$code}^FS\n";
+        $this->zpl .= "^FO{$x},{$y}^BY{$moduleWidth}\n";
+        $this->zpl .= "^BCN,{$height},N,N,N^FD{$code}^FS\n";
 
         return $this;
     }

@@ -515,19 +515,23 @@ class ZebraZplService
     // ─────────────────────────────────────────────────────────────────────────
     //  GENERATE FOR LABEL
     //
-    //  Layout LANDSCAPE 1594 × 760 dots  (200mm × 95mm @ 203 DPI)
+    //  Layout PORTRAIT 760 × 1600 dots  (95mm × 200mm @ 203 DPI)
     //
-    //  ^PW1594  = ancho impresión = largo físico etiqueta (200mm)
-    //  ^LL760   = largo impresión = ancho físico etiqueta (95mm)
+    //  ^PW760   = ancho impresión = ancho físico etiqueta (95mm)
+    //  ^LL1600  = largo impresión = largo físico etiqueta (200mm)
     //
-    //  ┌──────────────────────────┬────────────────────────────────┐
-    //  │  ZONA A  x:10-420        │  ZONA B  x:435-1560            │
-    //  │  Composición técnica     │  B1: Trazabilidad  y:10-240    │
-    //  │  col-izq x:10            │────────────────────────────────│
-    //  │  col-der x:220           │  B2: Trazabilidad  y:260-490   │
-    //  ├──────────────────────────┴────────────────────────────────┤
-    //  │  ZONA C  y:498-755                                        │
-    //  │  C1:QR+BC | C2:PARAISO+info | C3:Legal | C4:NO DESPR     │
+    //  ┌───────────────────────────────────────────────────────────┐
+    //  │  STICKER 1 (Ensamble)              y:15-100               │
+    //  ├───────────────────────────────────────────────────────────┤
+    //  │  STICKER 2 (Cerrador/Trazabilidad) y:115-210             │
+    //  ├───────────────────────────────────────────────────────────┤
+    //  │  FILA DE FIRMAS                    y:230                  │
+    //  ╞═══════════════════════════════════════════════════════════╡
+    //  │  INFORMACION DE COMPOSICION        y:315-530             │
+    //  │  col-izq x:15            │  col-der x:400                 │
+    //  ╞═══════════════════════════════════════════════════════════╡
+    //  │  BLOQUE PRINCIPAL                  y:550+                 │
+    //  │  QR+BC x:15  │  PARAISO+info x:400  │  NO DESPR x:735    │
     //  └───────────────────────────────────────────────────────────┘
     // ─────────────────────────────────────────────────────────────────────────
 
