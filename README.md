@@ -43,6 +43,33 @@ El script crea la base SQLite, corre migraciones + seeders (datos demo), compila
 
 Ejecutá `scripts/ejecutar-agente.bat` o el acceso directo *ZEBRA - Sistema Garantías* del escritorio.
 
+## Validación y testing
+
+```bash
+# Instalar dependencias y preparar entorno
+composer setup
+
+# Ejecutar tests (Unit + Feature con SQLite en memoria)
+composer test
+
+# Code style (Laravel Pint)
+vendor/bin/pint --test
+
+# También podés correr tests directamente con Artisan
+php artisan test
+```
+
+## Scripts disponibles
+
+| Script | Uso |
+|--------|-----|
+| `composer setup` | Bootstrap completo: install, .env, key, migrate, npm, build |
+| `composer dev` | Entorno dev: servidor + queue + logs + Vite en paralelo |
+| `composer test` | Suite de tests PHPUnit |
+| `./deploy.sh` | Despliegue a VPS con Docker + MySQL + health check |
+| `zebra-agent.ps1` | Agente de impresión Zebra para Windows |
+| `docker-compose up -d` | Entorno de producción con Docker |
+
 ## Despliegue (VPS)
 
 Ver `deploy.sh` y `docker-compose.yml` para despliegue con Docker y MySQL.

@@ -23,3 +23,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /deploy.sh
+
+# AI tooling config (no subir a GitHub)
+/.atl
+/.opencode
