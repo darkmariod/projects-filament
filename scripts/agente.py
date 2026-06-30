@@ -20,6 +20,7 @@ PRINTER_PORT = 9100
 
 # Impresion por USB (Windows): nombre exacto de la impresora en Windows
 PRINTER_NAME = "ZDesigner ZT411-203dpi ZPL"  # nombre de la impresora Zebra en Windows
+AGENT_KEY    = "change-me-in-production"      # debe coincidir con PRINT_AGENT_KEY en el .env del VPS
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -68,9 +69,12 @@ def send_zpl(zpl: str) -> bool:
         return send_zpl_usb(zpl, PRINTER_NAME)
 
 
+HEADERS = {"X-Agent-Key": AGENT_KEY}
+
+
 def api_get(path: str):
     try:
-        r = requests.get(f"{VPS_URL}/api/agent/{path}", timeout=TIMEOUT)
+        r = requests.get(f"{VPS_URL}/api/agent/{path}", headers=HEADERS, timeout=TIMEOUT)
         r.raise_for_status()
         return r.json()
     except Exception as e:
@@ -80,7 +84,7 @@ def api_get(path: str):
 
 def api_post(path: str):
     try:
-        r = requests.post(f"{VPS_URL}/api/agent/{path}", timeout=TIMEOUT)
+        r = requests.post(f"{VPS_URL}/api/agent/{path}", headers=HEADERS, timeout=TIMEOUT)
         r.raise_for_status()
         return r.json()
     except Exception as e:
