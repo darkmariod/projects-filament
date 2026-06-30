@@ -1,0 +1,57 @@
+AGENTE DE IMPRESION ZEBRA — INSTRUCCIONES
+==========================================
+
+PASO 1 — Instalar Python
+-------------------------
+1. Abri el navegador y entrá a: https://www.python.org/downloads/
+2. Hacé clic en "Download Python" (el boton amarillo grande)
+3. Ejecutá el instalador
+4. MUY IMPORTANTE: tildar "Add Python to PATH" antes de instalar
+5. Clic en "Install Now"
+
+PASO 2 — Instalar dependencias
+--------------------------------
+1. Apretá Windows + R, escribí cmd, Enter
+2. Pegá este comando y apretá Enter:
+
+   pip install requests pywin32
+
+3. Esperá que termine (tarda 1-2 minutos)
+
+PASO 3 — Configurar la impresora
+----------------------------------
+1. Abrí el archivo agente.py con el Bloc de Notas
+2. Buscá la línea que dice:
+   PRINTER_NAME = "ZDesigner ZT411-203dpi ZPL"
+3. Cambiá ese nombre por el nombre exacto de la Zebra
+   (para ver el nombre: Menu Inicio > Impresoras y escáneres)
+4. Guardá el archivo
+
+   Si la Zebra tiene IP en la red, buscá la línea:
+   PRINTER_IP = ""
+   Y ponés la IP, por ejemplo:
+   PRINTER_IP = "192.168.1.200"
+
+PASO 4 — Ejecutar el agente
+-----------------------------
+1. Abrí cmd (Windows + R > cmd > Enter)
+2. Escribí:
+   python C:\Users\USER\Desktop\Agente\agente.py
+   (ajustá la ruta si lo pusiste en otro lado)
+3. Deberías ver:
+   [OK] Servidor conectado. Agente activo
+
+PASO 5 — Probar
+----------------
+1. Entrá al sistema web
+2. Generá un lote de etiquetas y mandalo a imprimir
+3. En el cmd deberías ver:
+   [OK] Item #1 impreso y reportado
+
+Si ves eso, todo funciona.
+
+PROBLEMAS COMUNES
+-----------------
+- "pip no se reconoce" → no se tildó "Add Python to PATH", reinstalar Python
+- "No se pudo conectar al servidor" → verificar internet
+- "Error USB" → verificar que el nombre de la impresora sea exacto
