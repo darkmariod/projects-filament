@@ -27,3 +27,4 @@ Thumbs.db
 # AI tooling config (no subir a GitHub)
 /.atl
 /.opencode
+/.claude
