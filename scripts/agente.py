@@ -20,7 +20,7 @@ PRINTER_PORT = 9100
 
 # Impresion por USB (Windows): nombre exacto de la impresora en Windows
 PRINTER_NAME = "ZDesigner ZT411-203dpi ZPL"  # nombre de la impresora Zebra en Windows
-AGENT_KEY    = "change-me-in-production"      # debe coincidir con PRINT_AGENT_KEY en el .env del VPS
+AGENT_KEY    = "zebra-agent-key-2026"         # debe coincidir con PRINT_AGENT_KEY en el .env del VPS
 # ─────────────────────────────────────────────────────────────────────────────
 
 
