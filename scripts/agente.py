@@ -19,7 +19,7 @@ PRINTER_IP   = ""        # Ej: "192.168.1.200"  — dejar vacio para usar USB
 PRINTER_PORT = 9100
 
 # Impresion por USB (Windows): nombre exacto de la impresora en Windows
-PRINTER_NAME = "ZDesigner ZT411-203dpi ZPL"  # cambiar por el nombre real
+PRINTER_NAME = "pk"  # nombre de la impresora Zebra en Windows
 # ─────────────────────────────────────────────────────────────────────────────
 
 
