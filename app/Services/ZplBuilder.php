@@ -27,6 +27,7 @@ class ZplBuilder
     public function header(int $widthDots, int $heightDots): static
     {
         $this->zpl .= "^XA\n";
+        $this->zpl .= "^PON\n";      // portrait normal (overrides printer stored orientation)
         $this->zpl .= "^PW{$widthDots}\n";
         $this->zpl .= "^LL{$heightDots}\n";
         $this->zpl .= "^MNW\n";      // non-continuous media
