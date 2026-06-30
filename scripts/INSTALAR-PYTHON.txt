@@ -3,55 +3,55 @@ AGENTE DE IMPRESION ZEBRA — INSTRUCCIONES
 
 PASO 1 — Instalar Python
 -------------------------
-1. Abri el navegador y entrá a: https://www.python.org/downloads/
-2. Hacé clic en "Download Python" (el boton amarillo grande)
-3. Ejecutá el instalador
-4. MUY IMPORTANTE: tildar "Add Python to PATH" antes de instalar
-5. Clic en "Install Now"
+1. Abrir el navegador e ingresar a: https://www.python.org/downloads/
+2. Hacer clic en "Download Python" (el boton amarillo grande)
+3. Ejecutar el instalador
+4. MUY IMPORTANTE: marcar la opcion "Add Python to PATH" antes de instalar
+5. Hacer clic en "Install Now"
 
 PASO 2 — Instalar dependencias
 --------------------------------
-1. Apretá Windows + R, escribí cmd, Enter
-2. Pegá este comando y apretá Enter:
+1. Presionar Windows + R, escribir cmd y presionar Enter
+2. Pegar el siguiente comando y presionar Enter:
 
    pip install requests pywin32
 
-3. Esperá que termine (tarda 1-2 minutos)
+3. Esperar que termine (tarda 1 o 2 minutos)
 
 PASO 3 — Configurar la impresora
 ----------------------------------
-1. Abrí el archivo agente.py con el Bloc de Notas
-2. Buscá la línea que dice:
+1. Abrir el archivo agente.py con el Bloc de Notas
+2. Buscar la linea que dice:
    PRINTER_NAME = "ZDesigner ZT411-203dpi ZPL"
-3. Cambiá ese nombre por el nombre exacto de la Zebra
-   (para ver el nombre: Menu Inicio > Impresoras y escáneres)
-4. Guardá el archivo
+3. Cambiar ese nombre por el nombre exacto de la impresora Zebra
+   (para ver el nombre: Menu Inicio > Impresoras y escaneres)
+4. Guardar el archivo
 
-   Si la Zebra tiene IP en la red, buscá la línea:
+   Si la impresora Zebra tiene IP en la red, buscar la linea:
    PRINTER_IP = ""
-   Y ponés la IP, por ejemplo:
+   Y colocar la IP correspondiente, por ejemplo:
    PRINTER_IP = "192.168.1.200"
 
 PASO 4 — Ejecutar el agente
 -----------------------------
-1. Abrí cmd (Windows + R > cmd > Enter)
-2. Escribí:
+1. Abrir cmd (Windows + R, escribir cmd, presionar Enter)
+2. Escribir lo siguiente y presionar Enter:
    python C:\Users\USER\Desktop\Agente\agente.py
-   (ajustá la ruta si lo pusiste en otro lado)
-3. Deberías ver:
+   (ajustar la ruta segun donde se haya guardado el archivo)
+3. Si todo esta correcto, se debe ver el mensaje:
    [OK] Servidor conectado. Agente activo
 
-PASO 5 — Probar
-----------------
-1. Entrá al sistema web
-2. Generá un lote de etiquetas y mandalo a imprimir
-3. En el cmd deberías ver:
+PASO 5 — Probar la impresion
+------------------------------
+1. Ingresar al sistema web
+2. Generar un lote de etiquetas y enviarlo a imprimir
+3. En la ventana del agente se debe ver:
    [OK] Item #1 impreso y reportado
 
-Si ves eso, todo funciona.
+Si aparece ese mensaje, el sistema esta funcionando correctamente.
 
 PROBLEMAS COMUNES
 -----------------
-- "pip no se reconoce" → no se tildó "Add Python to PATH", reinstalar Python
-- "No se pudo conectar al servidor" → verificar internet
-- "Error USB" → verificar que el nombre de la impresora sea exacto
+- "pip no se reconoce"       -> No se marco "Add Python to PATH". Reinstalar Python.
+- "No se pudo conectar"      -> Verificar conexion a internet y que el sistema este activo.
+- "Error USB"                -> Verificar que el nombre de la impresora sea exactamente igual.
