@@ -54,9 +54,9 @@ class ZebraZplRenderer
         $zpl->box(10, 295, 740, 4, 4);
 
         $this->buildComposition($zpl, $data, 315);
-        $zpl->box(10, 530, 740, 4, 4);
+        $zpl->box(10, 620, 740, 4, 4);
 
-        $this->buildMainLabel($zpl, $data, 550);
+        $this->buildMainLabel($zpl, $data, 640);
 
         return $zpl->close();
     }
@@ -128,6 +128,14 @@ class ZebraZplRenderer
         foreach (array_slice($this->splitMultiline($data['conservation'] ?? '', 48), 0, 2) as $line) {
             $zpl->text($leftX, $ly, 11, $line);
             $ly += 16;
+        }
+
+        // Textile care symbols strip (do not wash / bleach / tumble dry / iron / dry clean)
+        $icons = $this->zplGraphic('care-icons.gfa');
+        if ($icons !== null) {
+            $ly += 4;
+            $zpl->raw("^FO{$leftX},{$ly}{$icons}^FS\n");
+            $ly += 52;
         }
 
         $ly += 8;
@@ -254,13 +262,21 @@ class ZebraZplRenderer
     }
 
     /**
-     * ZPL ^GFA graphic of the Paraiso logo (340x96 dots), pre-generated
+     * ZPL ^GFA graphic of the Paraiso logo (320x90 dots), pre-generated
      * from the brand PNG. Returns null when the resource is missing so the
      * renderer can fall back to plain text.
      */
     private function logoZpl(): ?string
     {
-        $path = resource_path('zpl/paraiso-logo.gfa');
+        return $this->zplGraphic('paraiso-logo.gfa');
+    }
+
+    /**
+     * Load a pre-generated ^GFA graphic from resources/zpl.
+     */
+    private function zplGraphic(string $filename): ?string
+    {
+        $path = resource_path('zpl/' . $filename);
 
         if (!is_file($path)) {
             return null;
