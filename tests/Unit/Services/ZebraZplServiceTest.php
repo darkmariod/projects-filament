@@ -99,7 +99,11 @@ class ZebraZplServiceTest extends TestCase
 
         $zpl = $this->service->generateForLabel($label);
 
-        $this->assertStringContainsString('PARAISO', $zpl);
+        // Brand appears as the Paraiso logo graphic (^GFA) with a text fallback
+        $this->assertTrue(
+            str_contains($zpl, '^GFA') || str_contains($zpl, 'PARAISO'),
+            'Expected the Paraiso logo graphic or the PARAISO text fallback in the ZPL'
+        );
         $this->assertStringContainsString('DONDE EMPIEZAN TUS SUEÑOS', $zpl);
         $this->assertStringContainsString('CONTROL DE CALIDAD', $zpl);
         $this->assertStringContainsString($label->product->product_code, $zpl);

@@ -221,8 +221,16 @@ class ZebraZplRenderer
         $zpl->text($leftX, $barcodeY + 88, 12, $data['productCode']);
 
         $ry = $startY;
-        $zpl->text($rightX, $ry, 44, 'PARAISO');
-        $ry += 50;
+        $logo = $this->logoZpl();
+
+        if ($logo !== null) {
+            $zpl->raw("^FO{$rightX},{$ry}{$logo}^FS\n");
+            $ry += 104;
+        } else {
+            $zpl->text($rightX, $ry, 44, 'PARAISO');
+            $ry += 50;
+        }
+
         $zpl->text($rightX, $ry, 11, 'DONDE EMPIEZAN TUS SUEÑOS');
         $ry += 16;
         $zpl->box($rightX, $ry, 440, 2, 2);
@@ -243,6 +251,24 @@ class ZebraZplRenderer
         $this->buildLegalText($zpl, $data, $rightX, $ry);
 
         $zpl->rotatedText(self::WIDTH_DOTS - 25, $startY, 14, 14, 'NO DESPRENDER LA ETIQUETA');
+    }
+
+    /**
+     * ZPL ^GFA graphic of the Paraiso logo (340x96 dots), pre-generated
+     * from the brand PNG. Returns null when the resource is missing so the
+     * renderer can fall back to plain text.
+     */
+    private function logoZpl(): ?string
+    {
+        $path = resource_path('zpl/paraiso-logo.gfa');
+
+        if (!is_file($path)) {
+            return null;
+        }
+
+        $data = trim((string) file_get_contents($path));
+
+        return $data !== '' ? $data : null;
     }
 
     private function buildLegalText(ZplBuilder $zpl, array $data, int $x, int $y): void
@@ -293,7 +319,7 @@ class ZebraZplRenderer
             'address'       => $this->sanitize($composition->manufacturer_address ?? ''),
             'inen'          => $this->sanitize($composition->inen_standard ?? 'NTE INEN 2035'),
             'website'       => $this->sanitize($composition->website ?? ''),
-            'legalText'     => $this->sanitize($composition->legal_text ?? '', 500),
+            'legalText'     => $this->sanitize(preg_replace('/\s+/', ' ', $composition->legal_text ?? '') ?? '', 500),
             'warrantyText'  => $model->warranty_years
                 ? "Garantía: {$model->warranty_years} años"
                 : '',
