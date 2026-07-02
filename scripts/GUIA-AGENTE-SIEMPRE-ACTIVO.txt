@@ -1,0 +1,77 @@
+GUIA — DEJAR EL AGENTE DE IMPRESION SIEMPRE ACTIVO
+====================================================
+
+Con esta guia el agente queda encendido permanentemente:
+se inicia solo al prender el computador y se reinicia solo si falla.
+
+REQUISITO: haber completado antes INSTALAR-PYTHON.txt
+(Python instalado + pip install requests pywin32)
+
+
+PASO 1 — Ubicar los archivos
+-----------------------------
+1. Crear la carpeta C:\Agente (si no existe)
+2. Copiar ahi los dos archivos:
+   - agente.py
+   - iniciar-agente.bat
+   (deben quedar juntos en la misma carpeta)
+
+
+PASO 2 — Probar que funciona
+-----------------------------
+1. Hacer doble clic en iniciar-agente.bat
+2. Debe aparecer una ventana negra con el mensaje:
+   [OK] Servidor conectado. Agente activo
+3. Dejar esa ventana abierta (se puede minimizar)
+
+Si el agente se cae por cualquier motivo, esa ventana lo
+reinicia sola en 10 segundos. No hay que hacer nada.
+
+
+PASO 3 — Que arranque solo al prender el computador
+----------------------------------------------------
+1. Presionar Windows + R
+2. Escribir:  shell:startup   y presionar Enter
+   (se abre la carpeta de inicio de Windows)
+3. Hacer clic derecho DENTRO de esa carpeta:
+   Nuevo > Acceso directo
+4. En la ubicacion escribir:
+   C:\Agente\iniciar-agente.bat
+5. Siguiente > Finalizar
+
+Listo. Cada vez que se prenda el computador, el agente
+arranca solo. Solo debe quedar la sesion de Windows iniciada.
+
+
+QUE SIGNIFICA CADA MENSAJE DEL AGENTE
+--------------------------------------
+[OK] Servidor conectado          -> Todo bien, esperando trabajos
+[INFO] Sin colas pendientes      -> No hay etiquetas por imprimir (normal)
+[OK] Item #N impreso y reportado -> Etiqueta impresa correctamente
+[WARN] Sin conexion al servidor  -> Se corto el internet; reintenta solo
+                                    cada 30 segundos, no cerrar la ventana
+[FALLO] Item #N fallido          -> La etiqueta no salio; revisar impresora
+[ERROR] Error USB                -> Revisar lo siguiente:
+
+
+SI APARECE "Error USB" O NO IMPRIME
+------------------------------------
+1. Verificar que la impresora Zebra este ENCENDIDA
+2. Verificar que el cable USB este conectado
+3. Verificar que tenga papel y la tapa cerrada
+   (pantalla de la Zebra debe decir LISTA, no PAUSA)
+4. Verificar el nombre en Windows:
+   Menu Inicio > Impresoras y escaneres
+   Debe existir: ZDesigner ZT411-203dpi ZPL
+5. Si la Zebra dice PAUSA, presionar el boton PAUSE
+
+El sistema guarda las etiquetas que fallaron. Una vez
+resuelto el problema, el agente las reintenta solo.
+
+
+IMPORTANTE
+----------
+- NO cerrar la ventana negra del agente (minimizarla esta bien)
+- NO tocar el modulo "Configuracion Zebra" del sistema web:
+  ya quedo configurado. Los datos de las etiquetas se cambian
+  desde Productos y Composicion Tecnica.

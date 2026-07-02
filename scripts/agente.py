@@ -147,10 +147,10 @@ def main():
     log(f"Servidor: {VPS_URL}")
     log("Verificando conexion al servidor...")
 
-    if not check_server():
-        log("No se pudo conectar al servidor. Verifica internet y que el sistema este activo.", "ERROR")
-        input("Presiona Enter para salir...")
-        sys.exit(1)
+    # Reintentar hasta que el servidor responda (no cerrar nunca)
+    while not check_server():
+        log("Sin conexion al servidor. Reintentando en 30 segundos...", "WARN")
+        time.sleep(30)
 
     log("[OK] Servidor conectado. Agente activo — revisando cada 10 segundos.")
     log("Presiona Ctrl+C para detener.")
@@ -158,7 +158,10 @@ def main():
 
     try:
         while True:
-            process_queues()
+            try:
+                process_queues()
+            except Exception as e:
+                log(f"Error inesperado: {e} — el agente sigue activo", "ERROR")
             time.sleep(POLL_SECONDS)
     except KeyboardInterrupt:
         log("Agente detenido por el usuario.")
