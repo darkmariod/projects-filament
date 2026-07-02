@@ -276,6 +276,21 @@ class LabelBatchResource extends Resource
                                 return;
                             }
 
+                            // Evitar colas duplicadas: el lote ya se encola al crearse
+                            $activeQueue = PrintQueue::where('label_batch_id', $record->id)
+                                ->whereIn('status', ['pending', 'partial', 'processing'])
+                                ->first();
+
+                            if ($activeQueue) {
+                                Notification::make()
+                                    ->title('Este lote ya está en cola de impresión')
+                                    ->body("La cola #{$activeQueue->id} ya contiene este lote. El agente la imprimirá automáticamente — no es necesario volver a enviarla.")
+                                    ->warning()
+                                    ->seconds(10)
+                                    ->send();
+                                return;
+                            }
+
                             $activeSetting = ZebraPrintSetting::where('active', true)->first();
                             $canUseActiveSetting = $activeSetting && $activeSetting->isAnyPrinterConfigured();
 
