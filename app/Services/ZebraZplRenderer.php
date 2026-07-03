@@ -218,10 +218,11 @@ class ZebraZplRenderer
         $rightX = 400;
 
         if (!empty($data['qrUrl'])) {
-            $zpl->qrCode($leftX, $startY, 5, $data['qrUrl']);
+            // Magnification 6: bigger QR modules scan reliably on thermal print
+            $zpl->qrCode($leftX, $startY, 6, $data['qrUrl']);
         }
 
-        $barcodeY = $startY + 205;
+        $barcodeY = $startY + 250;
         if (!empty($data['barcode'])) {
             $zpl->barcode128($leftX, $barcodeY, 70, $data['barcode'], 1);
         }
