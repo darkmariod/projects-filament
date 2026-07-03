@@ -91,7 +91,11 @@ class LabelPdfServiceTest extends TestCase
 
         $html = $this->invokeBuildLabelHtml($label);
 
-        $this->assertStringContainsString('PARAISO', $html);
+        // Brand appears as the logo image (base64 img) with a text fallback
+        $this->assertTrue(
+            str_contains($html, 'data:image/png;base64,') || str_contains($html, 'PARAISO'),
+            'Expected the Paraiso logo image or the PARAISO text fallback in the HTML'
+        );
         $this->assertStringContainsString('DONDE EMPIEZAN TUS SUEÑOS', $html);
         $this->assertStringContainsString('CONTROL DE CALIDAD', $html);
         $this->assertStringContainsString('HECHO EN ECUADOR', $html);

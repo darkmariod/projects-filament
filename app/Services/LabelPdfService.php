@@ -93,6 +93,22 @@ class LabelPdfService
                 ->generate($qrUrl)
         );
 
+        // Brand logo: image when available, text fallback otherwise
+        $logoHtml = '<div class="muy-grande">PARAISO</div>';
+        $logoPath = resource_path('images/paraiso-logo.png');
+        if (is_file($logoPath)) {
+            $logoBase64 = base64_encode((string) file_get_contents($logoPath));
+            $logoHtml = '<img src="data:image/png;base64,' . $logoBase64 . '" style="width:135px;">';
+        }
+
+        // Textile care symbols strip (matches the ZPL label)
+        $careHtml = '';
+        $carePath = resource_path('images/care-icons.png');
+        if (is_file($carePath)) {
+            $careBase64 = base64_encode((string) file_get_contents($carePath));
+            $careHtml = '<div style="margin-top:2px;"><img src="data:image/png;base64,' . $careBase64 . '" style="width:95px;"></div>';
+        }
+
         $html = <<<HTML
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -201,6 +217,7 @@ class LabelPdfService
                         <div>{$class}: {$measurements} {$plazas}</div>
                         <div style="margin-top:2px; font-weight:bold;">CONDICIONES CONSERVACION</div>
                         <div>{$conservation}</div>
+                        {$careHtml}
                         <div style="margin-top:3px;">Fecha: {$batchDate}</div>
                         <div>Lote: {$batchNumber}</div>
                         <div style="margin-top:4px;">
@@ -239,7 +256,7 @@ class LabelPdfService
                     <div class="barcode-num">{$barcodeNum}</div>
                 </div>
                 <div class="sp-der">
-                    <div class="muy-grande">PARAISO</div>
+                    {$logoHtml}
                     <div style="font-size:7px;">DONDE EMPIEZAN TUS SUEÑOS</div>
                     <hr style="margin:2px 0;">
                     <div style="font-weight:bold; margin-top:2px;">CONTROL DE CALIDAD</div>
