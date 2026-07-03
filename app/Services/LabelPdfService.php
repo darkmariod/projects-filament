@@ -98,7 +98,7 @@ class LabelPdfService
         $logoPath = resource_path('images/paraiso-logo.png');
         if (is_file($logoPath)) {
             $logoBase64 = base64_encode((string) file_get_contents($logoPath));
-            $logoHtml = '<img src="data:image/png;base64,' . $logoBase64 . '" style="width:135px;">';
+            $logoHtml = '<img src="data:image/png;base64,' . $logoBase64 . '" style="width:110px;">';
         }
 
         // Textile care symbols strip (matches the ZPL label)
@@ -106,7 +106,7 @@ class LabelPdfService
         $carePath = resource_path('images/care-icons.png');
         if (is_file($carePath)) {
             $careBase64 = base64_encode((string) file_get_contents($carePath));
-            $careHtml = '<div style="margin-top:2px;"><img src="data:image/png;base64,' . $careBase64 . '" style="width:95px;"></div>';
+            $careHtml = '<div style="margin-top:1px;"><img src="data:image/png;base64,' . $careBase64 . '" style="width:80px;"></div>';
         }
 
         $html = <<<HTML
