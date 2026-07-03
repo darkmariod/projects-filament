@@ -54,9 +54,9 @@ class ZebraZplRenderer
         $zpl->box(10, 295, 740, 4, 4);
 
         $this->buildComposition($zpl, $data, 315);
-        $zpl->box(10, 620, 740, 4, 4);
+        $zpl->box(10, 700, 740, 4, 4);
 
-        $this->buildMainLabel($zpl, $data, 640);
+        $this->buildMainLabel($zpl, $data, 730);
 
         return $zpl->close();
     }
@@ -118,42 +118,42 @@ class ZebraZplRenderer
 
         // ── Columna izquierda ────────────────────────────────────────────
         $ly = $y;
-        $zpl->text($leftX, $ly, 13, "Tipo IV: {$data['type']}");
-        $ly += 18;
-        $zpl->text($leftX, $ly, 13, "{$data['class']}: {$data['measurements']} {$data['plazas']}");
-        $ly += 20;
-        $zpl->text($leftX, $ly, 11, 'CONDICIONES PARA SU CONSERVACION');
-        $ly += 16;
+        $zpl->text($leftX, $ly, 14, "Tipo IV: {$data['type']}");
+        $ly += 24;
+        $zpl->text($leftX, $ly, 14, "{$data['class']}: {$data['measurements']} {$data['plazas']}");
+        $ly += 26;
+        $zpl->text($leftX, $ly, 12, 'CONDICIONES PARA SU CONSERVACION');
+        $ly += 22;
 
         foreach (array_slice($this->splitMultiline($data['conservation'] ?? '', 48), 0, 2) as $line) {
-            $zpl->text($leftX, $ly, 11, $line);
-            $ly += 16;
+            $zpl->text($leftX, $ly, 12, $line);
+            $ly += 20;
         }
 
         // Textile care symbols strip (do not wash / bleach / tumble dry / iron / dry clean)
         $icons = $this->zplGraphic('care-icons.gfa');
         if ($icons !== null) {
-            $ly += 4;
+            $ly += 8;
             $zpl->raw("^FO{$leftX},{$ly}{$icons}^FS\n");
-            $ly += 52;
+            $ly += 64;
         }
 
-        $ly += 8;
-        $zpl->text($leftX, $ly, 12, "Fecha: {$data['batchDate']}");
-        $ly += 16;
-        $zpl->text($leftX, $ly, 12, "Lote: {$data['lote_nro']}");
-        $ly += 20;
-        $zpl->box($leftX, $ly, 150, 2, 2);
         $ly += 10;
+        $zpl->text($leftX, $ly, 13, "Fecha: {$data['batchDate']}");
+        $ly += 22;
+        $zpl->text($leftX, $ly, 13, "Lote: {$data['lote_nro']}");
+        $ly += 26;
+        $zpl->box($leftX, $ly, 150, 2, 2);
+        $ly += 14;
         // El serial se escala según su largo para no invadir la columna derecha (x>=400).
-        $serialFont = $this->fitFont($data['serial'], 375, 26, 14);
+        $serialFont = $this->fitFont($data['serial'], 375, 28, 14);
         $zpl->text($leftX, $ly, $serialFont, $data['serial']);
-        $ly += $serialFont + 8;
-        $zpl->text($leftX, $ly, 11, "Operador: {$data['operator']}   {$data['inen']}");
-        $ly += 16;
+        $ly += $serialFont + 12;
+        $zpl->text($leftX, $ly, 12, "Operador: {$data['operator']}   {$data['inen']}");
+        $ly += 22;
 
         if (!empty($data['website'])) {
-            $zpl->text($leftX, $ly, 11, $data['website']);
+            $zpl->text($leftX, $ly, 12, $data['website']);
         }
 
         // ── Columna derecha ──────────────────────────────────────────────
@@ -161,49 +161,49 @@ class ZebraZplRenderer
         $coverLines = $this->splitMultiline($data['cover'] ?? '', 30);
         if (!empty($coverLines)) {
             $first = array_shift($coverLines);
-            $zpl->text($rightX, $ry, 13, "Forro: {$first}");
-            $ry += 18;
+            $zpl->text($rightX, $ry, 14, "Forro: {$first}");
+            $ry += 24;
             foreach (array_slice($coverLines, 0, 2) as $line) {
-                $zpl->text($rightX, $ry, 13, $line);
-                $ry += 18;
+                $zpl->text($rightX, $ry, 14, $line);
+                $ry += 24;
             }
         }
 
         if (!empty($data['springs'])) {
-            $zpl->text($rightX, $ry, 13, $data['springs']);
+            $zpl->text($rightX, $ry, 14, $data['springs']);
+            $ry += 24;
+        }
+
+        $zpl->text($rightX, $ry, 14, 'Espuma Poliuretano:');
+        $ry += 24;
+
+        foreach (array_slice($this->splitMultiline($data['foam'] ?? '', 32), 0, 3) as $line) {
+            $zpl->text($rightX, $ry, 12, $line);
+            $ry += 20;
+        }
+
+        $ry += 12;
+        $zpl->text($rightX, $ry, 16, 'HECHO EN ECUADOR');
+        $ry += 26;
+        $zpl->text($rightX, $ry, 12, 'FABRICADO POR:');
+        $ry += 20;
+        $zpl->text($rightX, $ry, 12, $data['manufacturer']);
+        $ry += 18;
+
+        if (!empty($data['ruc'])) {
+            $zpl->text($rightX, $ry, 12, "RUC {$data['ruc']}");
             $ry += 18;
         }
 
-        $zpl->text($rightX, $ry, 13, 'Espuma Poliuretano:');
-        $ry += 18;
-
-        foreach (array_slice($this->splitMultiline($data['foam'] ?? '', 32), 0, 3) as $line) {
-            $zpl->text($rightX, $ry, 11, $line);
-            $ry += 16;
-        }
-
-        $ry += 4;
-        $zpl->text($rightX, $ry, 15, 'HECHO EN ECUADOR');
-        $ry += 20;
-        $zpl->text($rightX, $ry, 11, 'FABRICADO POR:');
-        $ry += 15;
-        $zpl->text($rightX, $ry, 11, $data['manufacturer']);
-        $ry += 14;
-
-        if (!empty($data['ruc'])) {
-            $zpl->text($rightX, $ry, 11, "RUC {$data['ruc']}");
-            $ry += 14;
-        }
-
         if (!empty($data['warrantyText'])) {
-            $zpl->text($rightX, $ry, 11, $data['warrantyText']);
-            $ry += 14;
+            $zpl->text($rightX, $ry, 12, $data['warrantyText']);
+            $ry += 18;
         }
 
         if (!empty($data['address'])) {
             foreach (array_slice($this->splitMultiline($data['address'], 34), 0, 2) as $line) {
-                $zpl->text($rightX, $ry, 11, $line);
-                $ry += 14;
+                $zpl->text($rightX, $ry, 12, $line);
+                $ry += 18;
             }
         }
     }
@@ -218,48 +218,48 @@ class ZebraZplRenderer
         $rightX = 400;
 
         if (!empty($data['qrUrl'])) {
-            // Magnification 6: bigger QR modules scan reliably on thermal print
-            $zpl->qrCode($leftX, $startY, 6, $data['qrUrl']);
+            // Magnification 8: ~33mm QR modules scan reliably on thermal print
+            $zpl->qrCode($leftX, $startY, 8, $data['qrUrl']);
         }
 
-        $barcodeY = $startY + 250;
+        $barcodeY = $startY + 330;
         if (!empty($data['barcode'])) {
-            $zpl->barcode128($leftX, $barcodeY, 70, $data['barcode'], 1);
+            $zpl->barcode128($leftX, $barcodeY, 90, $data['barcode'], 1);
         }
 
-        $zpl->text($leftX, $barcodeY + 88, 12, $data['productCode']);
+        $zpl->text($leftX, $barcodeY + 108, 13, $data['productCode']);
 
         $ry = $startY;
         $logo = $this->logoZpl();
 
         if ($logo !== null) {
             $zpl->raw("^FO{$rightX},{$ry}{$logo}^FS\n");
-            $ry += 104;
+            $ry += 118;
         } else {
             $zpl->text($rightX, $ry, 44, 'PARAISO');
-            $ry += 50;
+            $ry += 56;
         }
 
-        $zpl->text($rightX, $ry, 11, 'DONDE EMPIEZAN TUS SUEÑOS');
-        $ry += 16;
-        $zpl->box($rightX, $ry, 440, 2, 2);
-        $ry += 12;
-        $zpl->text($rightX, $ry, 16, 'CONTROL DE CALIDAD');
-        $ry += 22;
-        $zpl->text($rightX, $ry, 14, "N°: {$data['serial']}");
-        $ry += 18;
-        $zpl->text($rightX, $ry, 12, $data['productCode']);
-        $ry += 16;
-        $zpl->text($rightX, $ry, 12, "Tipo IV: {$data['type']}");
+        $zpl->text($rightX, $ry, 12, 'DONDE EMPIEZAN TUS SUEÑOS');
         $ry += 20;
-        $zpl->text($rightX, $ry, 26, $data['modelName']);
-        $ry += 34;
-        $zpl->text($rightX, $ry, 13, "({$data['measurements']}) - {$data['class']} {$data['plazas']}");
-        $ry += 30;
+        $zpl->box($rightX, $ry, 340, 2, 2);
+        $ry += 18;
+        $zpl->text($rightX, $ry, 18, 'CONTROL DE CALIDAD');
+        $ry += 28;
+        $zpl->text($rightX, $ry, 15, "N°: {$data['serial']}");
+        $ry += 22;
+        $zpl->text($rightX, $ry, 13, $data['productCode']);
+        $ry += 20;
+        $zpl->text($rightX, $ry, 13, "Tipo IV: {$data['type']}");
+        $ry += 26;
+        $zpl->text($rightX, $ry, 30, $data['modelName']);
+        $ry += 42;
+        $zpl->text($rightX, $ry, 15, "({$data['measurements']}) - {$data['class']} {$data['plazas']}");
+        $ry += 36;
 
         $this->buildLegalText($zpl, $data, $rightX, $ry);
 
-        $zpl->rotatedText(self::WIDTH_DOTS - 25, $startY, 14, 14, 'NO DESPRENDER LA ETIQUETA');
+        $zpl->rotatedText(self::WIDTH_DOTS - 25, $startY, 16, 16, 'NO DESPRENDER LA ETIQUETA');
     }
 
     /**
@@ -291,16 +291,16 @@ class ZebraZplRenderer
     private function buildLegalText(ZplBuilder $zpl, array $data, int $x, int $y): void
     {
         if (!empty($data['legalText'])) {
-            foreach (array_slice($this->wordWrap($data['legalText'], 50), 0, 6) as $line) {
-                $zpl->text($x, $y, 10, $line);
-                $y += 13;
+            foreach (array_slice($this->wordWrap($data['legalText'], 48), 0, 6) as $line) {
+                $zpl->text($x, $y, 11, $line);
+                $y += 16;
             }
-            $y += 8;
         }
 
-        $zpl->text($x, $y, 10, 'Etiqueta elaborada 100% con material reciclado post-consumo');
-        $y += 13;
-        $zpl->text($x, $y, 11, 'COMPROMETIDOS CON EL MEDIO AMBIENTE');
+        // Eco footer anchored at the bottom edge, like the client reference
+        $footY = self::HEIGHT_DOTS - 92;
+        $zpl->text(120, $footY, 12, 'Etiqueta elaborada 100% con material reciclado post-consumo');
+        $zpl->text(150, $footY + 22, 13, 'COMPROMETIDOS CON EL MEDIO AMBIENTE');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
