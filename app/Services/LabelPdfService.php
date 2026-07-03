@@ -116,40 +116,26 @@ class LabelPdfService
             .etiqueta { width: 100%; page-break-after: always; }
 
             /* ── Secciones ── */
-            .seccion { padding: 4px 5px; }
+            .seccion { padding: 3px 5px; }
             .sep { border-top: 1px solid #000; margin: 2px 0; }
-            .sep-grueso { border-top: 3px solid #000; margin: 3px 0; }
+            .sep-grueso { border-top: 3px solid #000; margin: 2px 0; }
 
-            /* ── Layout ── */
-            .fila { display: flex; justify-content: space-between; }
-            .col { width: 48%; }
-            .col-full { width: 100%; text-align: center; }
-            .fila-footer { display: flex; justify-content: space-between; margin-top: 4px; }
+            /* ── Layout (tablas: dompdf no soporta flex) ── */
+            table.fila { width: 100%; border-collapse: collapse; }
+            table.fila td { vertical-align: top; }
+            td.col { width: 50%; }
 
             /* ── Tipografía ── */
             .negrita { font-weight: bold; }
-            .grande { font-size: 14px; font-weight: bold; }
-            .muy-grande { font-size: 24px; font-weight: bold; }
-            .titulo-sec { font-weight: bold; font-size: 10px; text-align: center; margin-bottom: 3px; }
+            .grande { font-size: 13px; font-weight: bold; }
+            .titulo-sec { font-weight: bold; font-size: 10px; text-align: center; margin-bottom: 2px; }
             .legal { font-size: 6px; margin-top: 2px; }
 
             /* ── Firmas ── */
             .linea-firma { border-bottom: 1px solid #000; width: 90px; margin-top: 2px; display: inline-block; }
-            .firma-row { display: flex; gap: 6px; margin-top: 4px; }
-            .firma-row .linea { border-bottom: 1px solid #000; width: 65px; }
 
-            /* ── QR / Barcode ── */
-            .qr-img { width: 100px; height: 100px; }
-
-            /* ── Sección 3 ── */
-            .seccion-principal { display: flex; padding: 4px 5px; }
-            .sp-izq { width: 115px; text-align: center; }
-            .sp-der { flex: 1; padding-left: 5px; text-align: center; }
-            .sp-vert { writing-mode: vertical-rl; text-orientation: mixed; font-size: 7px; font-weight: bold;
-                        border-left: 1px solid #000; padding-left: 2px; margin-left: 3px; }
-
-            .barcode-num { font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; margin-top: 4px; }
-            .ambiental { font-size: 6.5px; margin-top: 2px; }
+            .barcode-num { font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; margin-top: 2px; }
+            .ambiental { font-size: 6.5px; margin-top: 1px; }
         </style>
         <div class="etiqueta">
 
@@ -157,22 +143,22 @@ class LabelPdfService
                  SECTION 1A — TRAZABILIDAD
                  ══════════════════════════════════════════════════════════════ -->
             <div class="seccion">
-                <div class="negrita" style="margin-bottom:3px;">Lote: {$batchNumber} ({$measurements}) {$class} {$plazas}</div>
-                <div class="fila">
-                    <div class="col">
+                <div class="negrita" style="margin-bottom:2px;">Lote: {$batchNumber} ({$measurements}) {$class} {$plazas}</div>
+                <table class="fila"><tr>
+                    <td class="col">
                         <div>N°: <span class="negrita">{$serial}</span></div>
                         <div>{$productCode}</div>
                         <div>Fecha: {$batchDate}</div>
                         <div>Lote: {$batchNumber}</div>
-                    </div>
-                    <div class="col">
+                    </td>
+                    <td class="col">
                         <div class="negrita">CONTROL DE CALIDAD</div>
                         <div>{$type}</div>
                         <div class="negrita">{$modelName}</div>
                         <div>({$measurements}) {$class} {$plazas}</div>
-                        <div style="margin-top:3px;">Operador Ensamble: <span class="linea-firma"></span></div>
-                    </div>
-                </div>
+                        <div style="margin-top:2px;">Operador Ensamble: <span class="linea-firma"></span></div>
+                    </td>
+                </tr></table>
             </div>
 
             <div class="sep"></div>
@@ -181,27 +167,27 @@ class LabelPdfService
                  SECTION 1B — TRAZABILIDAD REPETIDA (con firmas)
                  ══════════════════════════════════════════════════════════════ -->
             <div class="seccion">
-                <div class="fila">
-                    <div class="col">
+                <table class="fila"><tr>
+                    <td class="col">
                         <div>N°: <span class="negrita">{$serial}</span></div>
                         <div>{$productCode}</div>
                         <div>Fecha: {$batchDate}</div>
                         <div>Lote: {$batchNumber}</div>
-                    </div>
-                    <div class="col">
+                    </td>
+                    <td class="col">
                         <div class="negrita">CONTROL DE CALIDAD</div>
                         <div>{$type}</div>
                         <div class="negrita">{$modelName}</div>
                         <div>({$measurements}) {$class} {$plazas}</div>
-                        <div style="margin-top:3px;">Cerrador: <span class="linea-firma"></span></div>
+                        <div style="margin-top:2px;">Cerrador: <span class="linea-firma"></span></div>
                         <div style="margin-top:2px;">Trazabilidad: <span class="linea-firma"></span></div>
-                    </div>
-                </div>
-                <div class="firma-row">
-                    <span class="linea"></span>
-                    <span class="linea"></span>
-                    <span class="linea"></span>
-                </div>
+                    </td>
+                </tr></table>
+                <table class="fila" style="margin-top:3px;"><tr>
+                    <td style="width:33%; padding-right:8px;"><div style="border-bottom:1px solid #000;">&nbsp;</div></td>
+                    <td style="width:33%; padding-right:8px;"><div style="border-bottom:1px solid #000;">&nbsp;</div></td>
+                    <td style="width:33%;"><div style="border-bottom:1px solid #000;">&nbsp;</div></td>
+                </tr></table>
             </div>
 
             <div class="sep-grueso"></div>
@@ -211,66 +197,68 @@ class LabelPdfService
                  ══════════════════════════════════════════════════════════════ -->
             <div class="seccion">
                 <div class="titulo-sec">Informacion de Composicion</div>
-                <div class="fila">
-                    <div class="col">
+                <table class="fila"><tr>
+                    <td class="col">
                         <div>{$type}</div>
                         <div>{$class}: {$measurements} {$plazas}</div>
                         <div style="margin-top:2px; font-weight:bold;">CONDICIONES CONSERVACION</div>
                         <div>{$conservation}</div>
                         {$careHtml}
-                        <div style="margin-top:3px;">Fecha: {$batchDate}</div>
+                        <div style="margin-top:2px;">Fecha: {$batchDate}</div>
                         <div>Lote: {$batchNumber}</div>
-                        <div style="margin-top:4px;">
+                        <div style="margin-top:3px;">
                             <span style="display:inline-block; border-bottom:1px solid #000; width:100px;"></span>
                         </div>
                         <div>Operador: ________________</div>
-                    </div>
-                    <div class="col">
+                    </td>
+                    <td class="col">
                         <div>Forro: {$cover}</div>
                         {$resortesHtml}
                         <div>Espuma Poliuretano:</div>
                         <div>{$foam}</div>
-                        <div style="margin-top:3px; font-weight:bold;">HECHO EN ECUADOR</div>
-                        <div style="margin-top:2px;">FABRICADO POR:</div>
+                        <div style="margin-top:2px; font-weight:bold;">HECHO EN ECUADOR</div>
+                        <div style="margin-top:1px;">FABRICADO POR:</div>
                         <div>{$manufacturer}</div>
                         {$rucHtml}
                         <div>{$warrantyText}</div>
                         <div>{$address}</div>
-                    </div>
-                </div>
-                <div class="fila-footer">
-                    <span>Operador {$operator}</span>
-                    <span>{$inen}</span>
-                    <span>{$website}</span>
-                </div>
+                    </td>
+                </tr></table>
+                <table class="fila" style="margin-top:3px;"><tr>
+                    <td>Operador {$operator}</td>
+                    <td style="text-align:center;">{$inen}</td>
+                    <td style="text-align:right;">{$website}</td>
+                </tr></table>
             </div>
 
             <div class="sep-grueso"></div>
 
             <!-- ══════════════════════════════════════════════════════════════
-                 SECTION 3 — PRINCIPAL CON QR
+                 SECTION 3 — PRINCIPAL CON QR (tabla: QR izq, marca der)
                  ══════════════════════════════════════════════════════════════ -->
-            <div class="seccion-principal">
-                <div class="sp-izq">
-                    <img src="data:image/svg+xml;base64,{$qrBase64}" class="qr-img">
-                    <div class="barcode-num">{$barcodeNum}</div>
-                </div>
-                <div class="sp-der">
-                    {$logoHtml}
-                    <div style="font-size:7px;">DONDE EMPIEZAN TUS SUEÑOS</div>
-                    <hr style="margin:2px 0;">
-                    <div style="font-weight:bold; margin-top:2px;">CONTROL DE CALIDAD</div>
-                    <div style="margin-top:2px;">N°: <span class="negrita">{$serial}</span></div>
-                    <div>{$productCode}</div>
-                    <div>{$type}</div>
-                    <div>({$measurements}) - {$class} {$plazas}</div>
-                    <div class="grande">{$modelName}</div>
-                    <hr style="margin:2px 0;">
-                    <div class="legal">{$legalText}</div>
-                    <div class="ambiental">Etiqueta elaborada 100% con material reciclado post-consumo</div>
-                    <div class="ambiental negrita">COMPROMETIDOS CON EL MEDIO AMBIENTE</div>
-                </div>
-                <div class="sp-vert">NO DESPRENDER LA ETIQUETA</div>
+            <div class="seccion">
+                <table class="fila"><tr>
+                    <td style="width:115px; text-align:center; vertical-align:top;">
+                        <img src="data:image/svg+xml;base64,{$qrBase64}" style="width:100px; height:100px;">
+                        <div class="barcode-num">{$barcodeNum}</div>
+                    </td>
+                    <td style="text-align:center; vertical-align:top; padding-left:5px;">
+                        {$logoHtml}
+                        <div style="font-size:7px;">DONDE EMPIEZAN TUS SUEÑOS</div>
+                        <hr style="margin:2px 0;">
+                        <div style="font-weight:bold;">CONTROL DE CALIDAD</div>
+                        <div style="margin-top:1px;">N°: <span class="negrita">{$serial}</span></div>
+                        <div>{$productCode}</div>
+                        <div>{$type}</div>
+                        <div>({$measurements}) - {$class} {$plazas}</div>
+                        <div class="grande">{$modelName}</div>
+                        <hr style="margin:2px 0;">
+                        <div class="legal">{$legalText}</div>
+                        <div class="ambiental">Etiqueta elaborada 100% con material reciclado post-consumo</div>
+                        <div class="ambiental negrita">COMPROMETIDOS CON EL MEDIO AMBIENTE</div>
+                        <div class="ambiental negrita" style="margin-top:2px;">NO DESPRENDER LA ETIQUETA</div>
+                    </td>
+                </tr></table>
             </div>
 
         </div>
