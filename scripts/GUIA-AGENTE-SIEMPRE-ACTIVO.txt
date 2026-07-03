@@ -11,21 +11,31 @@ REQUISITO: haber completado antes INSTALAR-PYTHON.txt
 PASO 1 — Ubicar los archivos
 -----------------------------
 1. Crear la carpeta C:\Agente (si no existe)
-2. Copiar ahi los dos archivos:
+2. Copiar ahi los tres archivos:
    - agente.py
-   - iniciar-agente.bat
+   - supervisor-agente.pyw   (recomendado: corre oculto)
+   - iniciar-agente.bat      (alternativa: corre con ventana)
    (deben quedar juntos en la misma carpeta)
 
 
 PASO 2 — Probar que funciona
 -----------------------------
+OPCION A (recomendada) — supervisor-agente.pyw:
+1. Hacer doble clic en supervisor-agente.pyw
+2. No aparece ninguna ventana: corre oculto en segundo plano
+3. Esperar 30 segundos y abrir C:\Agente\agente.log
+   con el Bloc de Notas. Debe decir:
+   [OK] Servidor conectado. Agente activo
+4. Toda la actividad queda guardada en ese agente.log
+
+OPCION B — iniciar-agente.bat:
 1. Hacer doble clic en iniciar-agente.bat
-2. Debe aparecer una ventana negra con el mensaje:
+2. Aparece una ventana negra con el mensaje:
    [OK] Servidor conectado. Agente activo
 3. Dejar esa ventana abierta (se puede minimizar)
 
-Si el agente se cae por cualquier motivo, esa ventana lo
-reinicia sola en 10 segundos. No hay que hacer nada.
+En ambos casos, si el agente se cae por cualquier motivo,
+se reinicia solo en 10 segundos. No hay que hacer nada.
 
 
 PASO 3 — Que arranque solo al prender el computador
@@ -36,11 +46,17 @@ PASO 3 — Que arranque solo al prender el computador
 3. Hacer clic derecho DENTRO de esa carpeta:
    Nuevo > Acceso directo
 4. En la ubicacion escribir:
-   C:\Agente\iniciar-agente.bat
+   C:\Agente\supervisor-agente.pyw
+   (o C:\Agente\iniciar-agente.bat si prefieren ver la ventana)
 5. Siguiente > Finalizar
 
 Listo. Cada vez que se prenda el computador, el agente
-arranca solo. Solo debe quedar la sesion de Windows iniciada.
+arranca solo y oculto. Solo debe quedar la sesion de
+Windows iniciada.
+
+IMPORTANTE: verificar que se abra con Python. Si al hacer
+doble clic en supervisor-agente.pyw se abre el Bloc de Notas,
+clic derecho > Abrir con > Python (pythonw).
 
 
 QUE SIGNIFICA CADA MENSAJE DEL AGENTE
@@ -71,7 +87,10 @@ resuelto el problema, el agente las reintenta solo.
 
 IMPORTANTE
 ----------
-- NO cerrar la ventana negra del agente (minimizarla esta bien)
+- Con supervisor-agente.pyw no hay ventana: la actividad se
+  revisa en C:\Agente\agente.log (abrir con Bloc de Notas)
+- Con iniciar-agente.bat NO cerrar la ventana negra
+  (minimizarla esta bien)
 - NO tocar el modulo "Configuracion Zebra" del sistema web:
   ya quedo configurado. Los datos de las etiquetas se cambian
   desde Productos y Composicion Tecnica.
