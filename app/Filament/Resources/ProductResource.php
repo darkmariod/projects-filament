@@ -219,7 +219,21 @@ class ProductResource extends Resource
                     ->visible(fn(Product $record): bool => Auth::user()?->can('update', $record) ?? false),
                 DeleteAction::make()
                     ->label('Eliminar')
-                    ->visible(fn(Product $record): bool => Auth::user()?->can('delete', $record) ?? false),
+                    ->visible(fn(Product $record): bool => Auth::user()?->can('delete', $record) ?? false)
+                    ->action(function (Product $record, DeleteAction $action): void {
+                        try {
+                            $record->delete();
+                        } catch (\Throwable $e) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('No se pudo eliminar el producto')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->seconds(8)
+                                ->send();
+
+                            $action->halt();
+                        }
+                    }),
             ])
             ->bulkActions([]);
     }

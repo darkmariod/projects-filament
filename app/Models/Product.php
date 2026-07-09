@@ -11,6 +11,26 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Product extends Model
 {
     use HasFactory;
+
+    /**
+     * Al eliminar un producto, quitar primero su composición técnica (1:1) para
+     * no chocar con la FK RESTRICT. Los lotes se protegen aparte: si el producto
+     * ya tiene lotes, la eliminación se bloquea con un mensaje claro.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Product $product): void {
+            if ($product->labelBatches()->exists()) {
+                throw new \RuntimeException(
+                    'No se puede eliminar el producto porque tiene lotes de etiquetas asociados. ' .
+                    'Eliminá o reasigná esos lotes primero.'
+                );
+            }
+
+            $product->technicalComposition()->delete();
+        });
+    }
+
     protected $fillable = [
         'product_model_id',
         'name',
