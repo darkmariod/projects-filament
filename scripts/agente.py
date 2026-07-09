@@ -40,12 +40,42 @@ def send_zpl_network(zpl: str, ip: str, port: int) -> bool:
         return False
 
 
+def check_printer_status(win32print, handle) -> str:
+    """
+    Revisa el estado de la impresora antes de imprimir.
+    Devuelve '' si esta lista, o un mensaje claro del problema.
+    """
+    flags = {
+        0x00000002: "SIN PAPEL — cargue papel en la Zebra",
+        0x00000080: "EN PAUSA — presione el boton de pausa en la Zebra",
+        0x00000400: "TAPA ABIERTA — cierre la tapa de la Zebra",
+        0x00000008: "ERROR de impresora — revise la Zebra",
+        0x00000020: "SIN CONEXION — revise el cable USB y que este encendida",
+        0x00200000: "ATASCO DE PAPEL — revise la Zebra",
+        0x00000800: "SIN TONER/RIBBON — revise el ribbon de la Zebra",
+    }
+    try:
+        info = win32print.GetPrinter(handle, 2)
+        status = info.get("Status", 0)
+        problems = [msg for bit, msg in flags.items() if status & bit]
+        return " | ".join(problems)
+    except Exception:
+        return ""  # si no se puede leer el estado, intentamos imprimir igual
+
+
 def send_zpl_usb(zpl: str, printer_name: str) -> bool:
     """Manda ZPL a impresora USB en Windows via win32print."""
     try:
         import win32print
         handle = win32print.OpenPrinter(printer_name)
         try:
+            # Pre-chequeo: si la impresora tiene un problema fisico, avisar y NO
+            # marcar como impresa (el sistema la reintenta cuando se resuelva).
+            problem = check_printer_status(win32print, handle)
+            if problem:
+                log(f"Impresora no lista — {problem}", "WARN")
+                return False
+
             job = win32print.StartDocPrinter(handle, 1, ("ZPL", None, "RAW"))
             win32print.StartPagePrinter(handle)
             win32print.WritePrinter(handle, zpl.encode("utf-8"))

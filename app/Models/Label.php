@@ -19,6 +19,12 @@ class Label extends Model
                 $label->zpl_generated = false;
             }
         });
+
+        // Al eliminar una etiqueta, quitar primero su garantía (FK RESTRICT).
+        // Los items de cola se borran solos (FK cascade).
+        static::deleting(function (self $label) {
+            $label->warranty()->delete();
+        });
     }
 
     protected $fillable = [

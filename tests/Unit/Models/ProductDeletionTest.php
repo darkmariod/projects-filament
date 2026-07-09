@@ -66,15 +66,7 @@ class ProductDeletionTest extends TestCase
     {
         $product = $this->makeProduct();
 
-        LabelBatch::create([
-            'product_id'            => $product->id,
-            'internal_batch_code'   => 'LB-' . substr(uniqid(), -6),
-            'customer_batch_number' => 'LOTE-1',
-            'customer_batch_date'   => now(),
-            'quantity'              => 1,
-            'generated_by_user_id'  => User::factory()->create()->id,
-            'status'                => 'generated',
-        ]);
+        $this->makeBatch($product);
 
         $this->expectException(\RuntimeException::class);
 
@@ -84,5 +76,45 @@ class ProductDeletionTest extends TestCase
             // El producto debe seguir existiendo tras el intento fallido
             $this->assertDatabaseHas('products', ['id' => $product->id]);
         }
+    }
+
+    /** @test */
+    public function it_deletes_a_batch_together_with_its_labels_and_warranties(): void
+    {
+        $product = $this->makeProduct();
+        $batch   = $this->makeBatch($product);
+
+        $label = \App\Models\Label::create([
+            'label_batch_id'  => $batch->id,
+            'product_id'      => $product->id,
+            'serial'          => 'SN-DEL-1',
+            'sequence_number' => 1,
+            'barcode'         => '7861191234260',
+            'qr_url'          => 'http://x/p/SN-DEL-1',
+            'status'          => 'generated',
+        ]);
+
+        \App\Models\Warranty::factory()->create([
+            'label_id' => $label->id,
+        ]);
+
+        $batch->delete();
+
+        $this->assertDatabaseMissing('label_batches', ['id' => $batch->id]);
+        $this->assertDatabaseMissing('labels', ['id' => $label->id]);
+        $this->assertDatabaseMissing('warranties', ['label_id' => $label->id]);
+    }
+
+    private function makeBatch(Product $product): LabelBatch
+    {
+        return LabelBatch::create([
+            'product_id'            => $product->id,
+            'internal_batch_code'   => 'LB-' . substr(uniqid(), -6),
+            'customer_batch_number' => 'LOTE-' . substr(uniqid(), -4),
+            'customer_batch_date'   => now(),
+            'quantity'              => 1,
+            'generated_by_user_id'  => User::factory()->create()->id,
+            'status'                => 'generated',
+        ]);
     }
 }

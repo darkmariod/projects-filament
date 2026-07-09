@@ -56,6 +56,17 @@ class LabelBatch extends Model
                 $batch->internal_batch_code = $batch->generateInternalCode();
             }
         });
+
+        // Al eliminar un lote, limpiar en orden lo que la FK protege (RESTRICT):
+        // garantías de sus etiquetas → etiquetas. Las colas se borran en cascada.
+        static::deleting(function (LabelBatch $batch) {
+            $labelIds = $batch->labels()->pluck('id');
+
+            if ($labelIds->isNotEmpty()) {
+                Warranty::whereIn('label_id', $labelIds)->delete();
+                $batch->labels()->delete();
+            }
+        });
     }
 
     protected $fillable = [
