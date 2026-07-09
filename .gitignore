@@ -28,3 +28,7 @@ Thumbs.db
 /.atl
 /.opencode
 /.claude
+
+# Python
+__pycache__/
+*.pyc
