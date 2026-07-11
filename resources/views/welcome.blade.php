@@ -125,6 +125,7 @@
 #cb button:hover { background: #e5e7eb; }
 #cb.h { display: none; }
     </style>
+    @include('partials.pwa')
 </head>
 <body>
 

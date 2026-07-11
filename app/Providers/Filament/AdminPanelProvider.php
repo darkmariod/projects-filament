@@ -31,6 +31,10 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Red,
             ])
             ->brandName('Productos Paraíso')
+            ->renderHook(
+                'panels::head.end',
+                fn (): string => view('partials.pwa')->render(),
+            )
             ->discoverResources(
                 in: app_path('Filament/Resources'),
                 for: 'App\\Filament\\Resources'

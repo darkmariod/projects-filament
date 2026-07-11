@@ -34,6 +34,7 @@
         .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .footer { padding: 20px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; }
     </style>
+    @include('partials.pwa')
 </head>
 <body>
 <div class="container">

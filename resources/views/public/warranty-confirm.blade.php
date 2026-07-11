@@ -34,6 +34,7 @@
         .actions { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
         .footer { padding: 20px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; }
     </style>
+    @include('partials.pwa')
 </head>
 <body>
 <div class="container">

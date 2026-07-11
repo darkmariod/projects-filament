@@ -39,6 +39,7 @@
         .footer { padding: 20px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; }
         .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     </style>
+    @include('partials.pwa')
 </head>
 <body>
 <div class="container">
