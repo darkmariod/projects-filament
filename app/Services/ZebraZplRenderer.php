@@ -118,42 +118,42 @@ class ZebraZplRenderer
 
         // ── Columna izquierda ────────────────────────────────────────────
         $ly = $y;
-        $zpl->text($leftX, $ly, 14, "Tipo IV: {$data['type']}");
-        $ly += 24;
-        $zpl->text($leftX, $ly, 14, "{$data['class']}: {$data['measurements']} {$data['plazas']}");
-        $ly += 26;
-        $zpl->text($leftX, $ly, 12, 'CONDICIONES PARA SU CONSERVACION');
-        $ly += 22;
+        $zpl->text($leftX, $ly, 12, "Tipo IV: {$data['type']}");
+        $ly += 18;
+        $zpl->text($leftX, $ly, 12, "{$data['class']}: {$data['measurements']} {$data['plazas']}");
+        $ly += 20;
+        $zpl->text($leftX, $ly, 10, 'CONDICIONES PARA SU CONSERVACION');
+        $ly += 16;
 
         foreach (array_slice($this->splitMultiline($data['conservation'] ?? '', 48), 0, 2) as $line) {
-            $zpl->text($leftX, $ly, 12, $line);
-            $ly += 20;
+            $zpl->text($leftX, $ly, 10, $line);
+            $ly += 14;
         }
 
         // Textile care symbols strip (do not wash / bleach / tumble dry / iron / dry clean)
         $icons = $this->zplGraphic('care-icons.gfa');
         if ($icons !== null) {
-            $ly += 8;
+            $ly += 6;
             $zpl->raw("^FO{$leftX},{$ly}{$icons}^FS\n");
-            $ly += 64;
+            $ly += 56;
         }
 
-        $ly += 10;
-        $zpl->text($leftX, $ly, 13, "Fecha: {$data['batchDate']}");
-        $ly += 22;
-        $zpl->text($leftX, $ly, 13, "Lote: {$data['lote_nro']}");
-        $ly += 26;
+        $ly += 6;
+        $zpl->text($leftX, $ly, 11, "Fecha: {$data['batchDate']}");
+        $ly += 16;
+        $zpl->text($leftX, $ly, 11, "Lote: {$data['lote_nro']}");
+        $ly += 18;
         $zpl->box($leftX, $ly, 150, 2, 2);
-        $ly += 14;
+        $ly += 10;
         // El serial se escala según su largo para no invadir la columna derecha (x>=400).
-        $serialFont = $this->fitFont($data['serial'], 375, 28, 14);
+        $serialFont = $this->fitFont($data['serial'], 375, 24, 13);
         $zpl->text($leftX, $ly, $serialFont, $data['serial']);
-        $ly += $serialFont + 12;
-        $zpl->text($leftX, $ly, 12, "Operador: {$data['operator']}   {$data['inen']}");
-        $ly += 22;
+        $ly += $serialFont + 8;
+        $zpl->text($leftX, $ly, 10, "Operador: {$data['operator']}   {$data['inen']}");
+        $ly += 16;
 
         if (!empty($data['website'])) {
-            $zpl->text($leftX, $ly, 12, $data['website']);
+            $zpl->text($leftX, $ly, 10, $data['website']);
         }
 
         // ── Columna derecha ──────────────────────────────────────────────
@@ -161,49 +161,49 @@ class ZebraZplRenderer
         $coverLines = $this->splitMultiline($data['cover'] ?? '', 30);
         if (!empty($coverLines)) {
             $first = array_shift($coverLines);
-            $zpl->text($rightX, $ry, 14, "Forro: {$first}");
-            $ry += 24;
+            $zpl->text($rightX, $ry, 12, "Forro: {$first}");
+            $ry += 18;
             foreach (array_slice($coverLines, 0, 2) as $line) {
-                $zpl->text($rightX, $ry, 14, $line);
-                $ry += 24;
+                $zpl->text($rightX, $ry, 12, $line);
+                $ry += 18;
             }
         }
 
         if (!empty($data['springs'])) {
-            $zpl->text($rightX, $ry, 14, $data['springs']);
-            $ry += 24;
+            $zpl->text($rightX, $ry, 12, $data['springs']);
+            $ry += 18;
         }
 
-        $zpl->text($rightX, $ry, 14, 'Espuma Poliuretano:');
-        $ry += 24;
-
-        foreach (array_slice($this->splitMultiline($data['foam'] ?? '', 32), 0, 3) as $line) {
-            $zpl->text($rightX, $ry, 12, $line);
-            $ry += 20;
-        }
-
-        $ry += 12;
-        $zpl->text($rightX, $ry, 16, 'HECHO EN ECUADOR');
-        $ry += 26;
-        $zpl->text($rightX, $ry, 12, 'FABRICADO POR:');
-        $ry += 20;
-        $zpl->text($rightX, $ry, 12, $data['manufacturer']);
+        $zpl->text($rightX, $ry, 12, 'Espuma Poliuretano:');
         $ry += 18;
 
+        foreach (array_slice($this->splitMultiline($data['foam'] ?? '', 32), 0, 3) as $line) {
+            $zpl->text($rightX, $ry, 10, $line);
+            $ry += 14;
+        }
+
+        $ry += 8;
+        $zpl->text($rightX, $ry, 13, 'HECHO EN ECUADOR');
+        $ry += 20;
+        $zpl->text($rightX, $ry, 10, 'FABRICADO POR:');
+        $ry += 15;
+        $zpl->text($rightX, $ry, 10, $data['manufacturer']);
+        $ry += 14;
+
         if (!empty($data['ruc'])) {
-            $zpl->text($rightX, $ry, 12, "RUC {$data['ruc']}");
-            $ry += 18;
+            $zpl->text($rightX, $ry, 10, "RUC {$data['ruc']}");
+            $ry += 14;
         }
 
         if (!empty($data['warrantyText'])) {
-            $zpl->text($rightX, $ry, 12, $data['warrantyText']);
-            $ry += 18;
+            $zpl->text($rightX, $ry, 10, $data['warrantyText']);
+            $ry += 14;
         }
 
         if (!empty($data['address'])) {
             foreach (array_slice($this->splitMultiline($data['address'], 34), 0, 2) as $line) {
-                $zpl->text($rightX, $ry, 12, $line);
-                $ry += 18;
+                $zpl->text($rightX, $ry, 10, $line);
+                $ry += 14;
             }
         }
     }
@@ -240,22 +240,22 @@ class ZebraZplRenderer
             $ry += 56;
         }
 
-        $zpl->text($rightX, $ry, 12, 'DONDE EMPIEZAN TUS SUEÑOS');
-        $ry += 20;
-        $zpl->box($rightX, $ry, 340, 2, 2);
+        $zpl->text($rightX, $ry, 11, 'DONDE EMPIEZAN TUS SUEÑOS');
         $ry += 18;
-        $zpl->text($rightX, $ry, 18, 'CONTROL DE CALIDAD');
-        $ry += 28;
-        $zpl->text($rightX, $ry, 15, "N°: {$data['serial']}");
-        $ry += 22;
-        $zpl->text($rightX, $ry, 13, $data['productCode']);
+        $zpl->box($rightX, $ry, 340, 2, 2);
+        $ry += 14;
+        $zpl->text($rightX, $ry, 16, 'CONTROL DE CALIDAD');
+        $ry += 24;
+        $zpl->text($rightX, $ry, 14, "N°: {$data['serial']}");
         $ry += 20;
-        $zpl->text($rightX, $ry, 13, "Tipo IV: {$data['type']}");
-        $ry += 26;
-        $zpl->text($rightX, $ry, 30, $data['modelName']);
-        $ry += 42;
-        $zpl->text($rightX, $ry, 15, "({$data['measurements']}) - {$data['class']} {$data['plazas']}");
-        $ry += 36;
+        $zpl->text($rightX, $ry, 12, $data['productCode']);
+        $ry += 17;
+        $zpl->text($rightX, $ry, 12, "Tipo IV: {$data['type']}");
+        $ry += 24;
+        $zpl->text($rightX, $ry, 28, $data['modelName']);
+        $ry += 38;
+        $zpl->text($rightX, $ry, 13, "({$data['measurements']}) - {$data['class']} {$data['plazas']}");
+        $ry += 28;
 
         $this->buildLegalText($zpl, $data, $rightX, $ry);
 
@@ -291,16 +291,17 @@ class ZebraZplRenderer
     private function buildLegalText(ZplBuilder $zpl, array $data, int $x, int $y): void
     {
         if (!empty($data['legalText'])) {
-            foreach (array_slice($this->wordWrap($data['legalText'], 48), 0, 6) as $line) {
-                $zpl->text($x, $y, 11, $line);
-                $y += 16;
+            foreach (array_slice($this->wordWrap($data['legalText'], 54), 0, 6) as $line) {
+                $zpl->text($x, $y, 9, $line);
+                $y += 12;
             }
         }
 
-        // Eco footer anchored at the bottom edge, like the client reference
+        // Pie ecológico anclado al borde inferior: cierra la etiqueta y evita
+        // que quede un salto en blanco al final del papel de 200 mm.
         $footY = self::HEIGHT_DOTS - 92;
-        $zpl->text(120, $footY, 12, 'Etiqueta elaborada 100% con material reciclado post-consumo');
-        $zpl->text(150, $footY + 22, 13, 'COMPROMETIDOS CON EL MEDIO AMBIENTE');
+        $zpl->text(120, $footY, 10, 'Etiqueta elaborada 100% con material reciclado post-consumo');
+        $zpl->text(150, $footY + 20, 11, 'COMPROMETIDOS CON EL MEDIO AMBIENTE');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -336,7 +337,12 @@ class ZebraZplRenderer
             'address'       => $this->sanitize($composition->manufacturer_address ?? ''),
             'inen'          => $this->sanitize($composition->inen_standard ?? 'NTE INEN 2035'),
             'website'       => $this->sanitize($composition->website ?? ''),
-            'legalText'     => $this->sanitize(preg_replace('/\s+/', ' ', $composition->legal_text ?? '') ?? '', 500),
+            // El panel guarda los saltos como "\n" literal: convertirlos a espacio
+            // antes de sanitizar, si no la barra se escapa y ensucia la etiqueta.
+            'legalText'     => $this->sanitize(
+                preg_replace('/\s+/', ' ', str_replace(['\n', "\r\n", "\r", "\n"], ' ', $composition->legal_text ?? '')) ?? '',
+                500,
+            ),
             'warrantyText'  => $model->warranty_years
                 ? "Garantía: {$model->warranty_years} años"
                 : '',
