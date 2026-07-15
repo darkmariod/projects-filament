@@ -188,9 +188,16 @@
 
                 <div class="form-group">
                     <label for="city">Ciudad *</label>
-                    <select id="city" name="city" class="form-control" required>
-                        <option value="">Seleccioná una provincia primero...</option>
-                    </select>
+                    <input
+                        type="text"
+                        id="city"
+                        name="city"
+                        class="form-control"
+                        value="{{ old('city') }}"
+                        placeholder="Escribí tu ciudad"
+                        maxlength="100"
+                        required
+                    >
                     @error('city') <div class="form-error">{{ $message }}</div> @enderror
                 </div>
             </div>
@@ -230,39 +237,6 @@
 
             <button type="submit" class="btn">Registrar garantía</button>
 
-            <script>
-            const ecuadorCities = @json(App\Data\EcuadorGeographicData::provinces());
-
-            document.addEventListener('DOMContentLoaded', function() {
-                const provinceSelect = document.getElementById('province');
-                const citySelect = document.getElementById('city');
-
-                function updateCities() {
-                    const selectedProvince = provinceSelect.value;
-                    const cities = ecuadorCities[selectedProvince] || [];
-
-                    const currentCity = citySelect.value;
-
-                    citySelect.innerHTML = '<option value="">Seleccioná una ciudad...</option>';
-
-                    cities.forEach(function(city) {
-                        const option = document.createElement('option');
-                        option.value = city;
-                        option.textContent = city;
-                        if (city === currentCity) option.selected = true;
-                        citySelect.appendChild(option);
-                    });
-
-                    citySelect.disabled = cities.length === 0;
-                }
-
-                if (provinceSelect.value) {
-                    updateCities();
-                }
-
-                provinceSelect.addEventListener('change', updateCities);
-            });
-            </script>
         </form>
 
     </div>
