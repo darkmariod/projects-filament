@@ -18,6 +18,7 @@ services:
     environment:
       DB_HOST: garantias-mysql
       DB_USERNAME: garantias_user
+      TZ: America/Guayaquil
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.garantias.rule=Host(`108.174.152.179`)"
@@ -57,6 +58,8 @@ services:
       - --queue=default,print,emails
     env_file:
       - .env
+    environment:
+      TZ: America/Guayaquil
     depends_on:
       mysql:
         condition: service_healthy
@@ -71,6 +74,7 @@ services:
     image: mysql:8.0
     container_name: garantias-mysql
     environment:
+      TZ: America/Guayaquil
       MYSQL_DATABASE: ${DB_DATABASE:-sistema_garantias}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_changeme}
       MYSQL_USER: garantias_user
