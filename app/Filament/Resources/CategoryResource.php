@@ -24,6 +24,9 @@ class CategoryResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Configuración';
     protected static ?int $navigationSort = 1;
 
+    // Consolidado dentro de "Productos": se maneja desde ahí, no como ítem suelto del menú.
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function canAccess(): bool
     {
         return Auth::user()?->can('viewAny', Category::class) ?? false;

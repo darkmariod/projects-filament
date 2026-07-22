@@ -25,6 +25,10 @@ class TechnicalCompositionResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Configuración';
     protected static ?int $navigationSort = 4;
 
+    // Consolidado dentro de "Productos": los datos de composición se cargan desde el
+    // formulario de Producto, no como ítem suelto del menú.
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function canAccess(): bool
     {
         return Auth::user()?->can('viewAny', TechnicalComposition::class) ?? false;

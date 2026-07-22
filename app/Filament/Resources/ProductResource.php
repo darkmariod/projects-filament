@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductModel;
 use Filament\Actions\DeleteAction;
@@ -40,7 +41,26 @@ class ProductResource extends Resource
                             ->label('Modelo')
                             ->options(ProductModel::pluck('name', 'id'))
                             ->required()
-                            ->searchable(),
+                            ->searchable()
+                            // Menú consolidado: crear un Modelo (y su Categoría) sin salir de Producto.
+                            ->createOptionForm([
+                                Forms\Components\Select::make('category_id')
+                                    ->label('Categoría')
+                                    ->options(Category::pluck('name', 'id'))
+                                    ->required()
+                                    ->searchable()
+                                    ->createOptionForm([
+                                        Forms\Components\TextInput::make('name')->label('Nombre')->required(),
+                                        Forms\Components\TextInput::make('code')->label('Código')->required(),
+                                    ])
+                                    ->createOptionUsing(fn (array $data) => Category::create($data)->id),
+                                Forms\Components\TextInput::make('name')->label('Nombre del modelo')->required(),
+                                Forms\Components\TextInput::make('code')->label('Código')->required(),
+                                Forms\Components\TextInput::make('type')->label('Tipo')->nullable(),
+                                Forms\Components\TextInput::make('class')->label('Clase')->nullable(),
+                                Forms\Components\TextInput::make('warranty_years')->label('Garantía (años)')->numeric()->default(1),
+                            ])
+                            ->createOptionUsing(fn (array $data) => ProductModel::create($data)->id),
 
                         Forms\Components\TextInput::make('name')
                             ->label('Nombre del producto')
