@@ -39,12 +39,11 @@ class CreateLabel extends CreateRecord
             }
         }
 
-        // Auto-generar barcode desde el producto si está vacío
-        if (empty($data['barcode']) && !empty($data['product_id'])) {
-            $product = \App\Models\Product::find($data['product_id']);
-            if ($product && $product->barcode) {
-                $data['barcode'] = $product->barcode;
-            }
+        // El código de barras usa el SERIAL ÚNICO de cada etiqueta. Antes se copiaba
+        // $product->barcode, que era el mismo para todas las etiquetas del producto
+        // (código duplicado). Cada colchón debe tener su código único para validar.
+        if (empty($data['barcode']) && !empty($data['serial'])) {
+            $data['barcode'] = $data['serial'];
         }
 
         // Si no se proveyó qr_url, auto-generarla desde el serial

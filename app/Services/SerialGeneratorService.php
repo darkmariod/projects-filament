@@ -126,7 +126,6 @@ class SerialGeneratorService
                 return false;
             }
 
-            $product = Product::findOrFail($batch->product_id);
             $serials = $this->generateForBatch($batch);
 
             $labelsToInsert = [];
@@ -140,7 +139,9 @@ class SerialGeneratorService
                     'product_id'      => $batch->product_id,
                     'serial'          => $item['serial'],
                     'sequence_number' => $item['sequence_number'],
-                    'barcode'         => $product->barcode,
+                    // Código de barras = serial único de cada etiqueta (no $product->barcode,
+                    // que se repetía en todas las etiquetas del mismo producto).
+                    'barcode'         => $item['serial'],
                     'qr_url'          => $qrUrl,
                     'zpl_generated'   => null,
                     'status'          => 'available',
