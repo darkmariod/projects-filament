@@ -230,7 +230,8 @@ class ZebraZplRenderer
         $zpl->text($leftX, $barcodeY + 108, 13, $data['productCode']);
 
         $ry = $startY;
-        $logo = $this->logoZpl();
+        // Imagen de la empresa del producto si tiene; si no, el logo Paraíso; si no, texto.
+        $logo = $data['productImageZpl'] ?? $this->logoZpl();
 
         if ($logo !== null) {
             $zpl->raw("^FO{$rightX},{$ry}{$logo}^FS\n");
@@ -319,6 +320,8 @@ class ZebraZplRenderer
             'serial'        => $this->sanitize($label->serial),
             'qrUrl'         => $this->sanitize($label->qr_url ?? '', 200),
             'productCode'   => $this->sanitize($product->product_code ?? ''),
+            // Imagen propia del producto (empresa) → ^GFA; null si el producto no tiene imagen.
+            'productImageZpl' => app(ImageToZplService::class)->forPublicImage($product->image ?? null),
             'modelName'     => $this->sanitize($model->name ?? ''),
             'measurements'  => $this->sanitize($product->measurements_text ?? ''),
             'lote_nro'      => $this->sanitize($batch->customer_batch_number ?? ''),
