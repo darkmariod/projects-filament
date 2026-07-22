@@ -142,13 +142,9 @@ class ZebraZplRenderer
         $zpl->text($leftX, $ly, 11, "Fecha: {$data['batchDate']}");
         $ly += 16;
         $zpl->text($leftX, $ly, 11, "Lote: {$data['lote_nro']}");
-        $ly += 18;
-        $zpl->box($leftX, $ly, 150, 2, 2);
-        $ly += 10;
-        // El serial se escala según su largo para no invadir la columna derecha (x>=400).
-        $serialFont = $this->fitFont($data['serial'], 375, 24, 13);
-        $zpl->text($leftX, $ly, $serialFont, $data['serial']);
-        $ly += $serialFont + 8;
+        $ly += 22;
+        // (Se quitó el serial suelto aquí: ya aparece en los stickers y en el bloque
+        //  principal. Reduce la repetición del código de serie en la etiqueta.)
         $zpl->text($leftX, $ly, 10, "Operador: {$data['operator']}   {$data['inen']}");
         $ly += 16;
 
@@ -426,19 +422,6 @@ class ZebraZplRenderer
         }
 
         return $lines;
-    }
-
-    /**
-     * Calcula el tamaño de fuente A0 más grande que entra en $maxWidth dots,
-     * acotado entre $min y $max. En A0N el ancho de glifo ≈ alto de fuente,
-     * así que se aproxima por (maxWidth / nº caracteres).
-     */
-    private function fitFont(string $text, int $maxWidth, int $max, int $min): int
-    {
-        $len = max(1, mb_strlen(trim($text)));
-        $fit = (int) floor($maxWidth / $len);
-
-        return max($min, min($max, $fit));
     }
 
     private function normalizeClass(string $value): string
