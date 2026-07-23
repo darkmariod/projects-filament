@@ -131,7 +131,7 @@ class ProductResource extends Resource
                             ->label('Medidas en texto')
                             ->nullable()
                             ->maxLength(100),
-                    ])->columns(2),
+                    ])->columns(4),
 
                 Section::make('Materiales')
                     ->description('Completá los datos UNA vez y se auto-completarán en la Composición Técnica. Por producto se puede editar sin afectar a los demás.')
@@ -189,8 +189,10 @@ class ProductResource extends Resource
                             ->nullable()
                             ->maxLength(255)
                             ->default(fn() => static::getDefaultManufacturer('website')),
-                    ])->columns(2),
-            ]);
+                    ])->columns(3),
+            ])
+            // Secciones a todo el ancho, apiladas: evita huecos al lado de las cortas.
+            ->columns(1);
     }
 
     public static function table(Table $table): Table
