@@ -268,11 +268,16 @@ class ZebraZplServiceTest extends TestCase
 
         $this->assertStringContainsString('^PW760', $zpl);
         $this->assertStringContainsString('^LL1600', $zpl);
-        $this->assertStringContainsString('^FO15,100^GB730,2,2^FS', $zpl);
+        $this->assertStringContainsString('^FO15,120^GB730,2,2^FS', $zpl);
         $this->assertStringContainsString('^FO10,295^GB740,4,4^FS', $zpl);
         $this->assertStringContainsString('^FO10,700^GB740,4,4^FS', $zpl);
-        $this->assertStringContainsString('^FO15,15^A0N,13,13^FDN°: 2606-CR SE 090-V-00000016-1^FS', $zpl);
-        $this->assertStringContainsString('^FO300,35^A0N,12,12^FDTipo IV: COL. RES^FS', $zpl);
+        $this->assertStringContainsString('^FO15,20^A0N,13,13^FDN°: 2606-CR SE 090-V-00000016-1^FS', $zpl);
+        $this->assertStringContainsString('^FO300,40^A0N,12,12^FDTipo IV: COL. RES^FS', $zpl);
+        // Un solo bloque de control de calidad arriba: el N° del sticker no se repite a y=115.
+        $this->assertStringNotContainsString('^FO15,115^A0N,13,13^FDN°:', $zpl);
+        // La fila de firmas rotula los tres roles.
+        $this->assertStringContainsString('Ensamble', $zpl);
+        $this->assertStringContainsString('Cerrador', $zpl);
         $this->assertStringContainsString('^FO15,730^BQN,2,8^FDQA,http://108.174.152.179:8081/p/2606-CR%20SE%20090-V-00000016-1^FS', $zpl);
         $this->assertStringContainsString('^FO735,730^A0R,16,16^FDNO DESPRENDER LA ETIQUETA^FS', $zpl);
 

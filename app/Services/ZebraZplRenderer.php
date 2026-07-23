@@ -44,13 +44,12 @@ class ZebraZplRenderer
 
         $zpl->header(self::WIDTH_DOTS, self::HEIGHT_DOTS);
 
-        $this->buildQualitySticker($zpl, $data, 15, 'Operador', 'Ensamble');
-        $zpl->box(self::MARGIN_X, 100, 730, 2, 2);
+        // Un solo bloque de control de calidad (antes se repetía dos veces).
+        $this->buildQualitySticker($zpl, $data, 20);
+        $zpl->box(self::MARGIN_X, 120, 730, 2, 2);
 
-        $this->buildQualitySticker($zpl, $data, 115, 'Operador', 'Cerrador', 'Trazabilidad');
-        $zpl->box(self::MARGIN_X, 210, 730, 2, 2);
-
-        $this->buildSignatureRow($zpl, 230);
+        // Fila de firmas: Ensamble / Cerrador / Trazabilidad.
+        $this->buildSignatureRow($zpl, 215);
         $zpl->box(10, 295, 740, 4, 4);
 
         $this->buildComposition($zpl, $data, 315);
@@ -65,14 +64,8 @@ class ZebraZplRenderer
     //  STICKERS (repetidos x2)
     // ─────────────────────────────────────────────────────────────────────────
 
-    private function buildQualitySticker(
-        ZplBuilder $zpl,
-        array $data,
-        int $y,
-        string $signatureLabel,
-        string $signatureRole,
-        ?string $secondSignatureRole = null,
-    ): void {
+    private function buildQualitySticker(ZplBuilder $zpl, array $data, int $y): void
+    {
         $col1 = self::MARGIN_X;
         $col2 = 300;
         $col3 = 610;
@@ -87,21 +80,24 @@ class ZebraZplRenderer
         $zpl->text($col2, $y + 38, 16, $data['modelName']);
         $zpl->text($col2, $y + 60, 12, "({$data['measurements']}) {$data['class']} {$data['plazas']}");
 
-        $zpl->text($col3, $y, 11, $signatureLabel);
-        $zpl->text($col3, $y + 16, 11, $signatureRole);
-        $zpl->box($col3, $y + 34, 110, 2, 2);
-
-        if ($secondSignatureRole !== null) {
-            $zpl->text($col3, $y + 44, 11, $secondSignatureRole);
-            $zpl->box($col3, $y + 62, 110, 2, 2);
-        }
+        $zpl->text($col3, $y, 11, 'Operador');
     }
 
+    /**
+     * Fila de firmas con tres roles: Ensamble, Cerrador, Trazabilidad.
+     */
     private function buildSignatureRow(ZplBuilder $zpl, int $y): void
     {
-        $zpl->box(60, $y, 180, 2, 2);
-        $zpl->box(290, $y, 180, 2, 2);
-        $zpl->box(520, $y, 180, 2, 2);
+        $columns = [
+            [self::MARGIN_X, 'Ensamble'],
+            [285, 'Cerrador'],
+            [545, 'Trazabilidad'],
+        ];
+
+        foreach ($columns as [$x, $label]) {
+            $zpl->box($x, $y, 190, 2, 2);
+            $zpl->text($x, $y + 8, 11, $label);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
