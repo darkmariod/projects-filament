@@ -1,0 +1,213 @@
+================================================================================
+                    GUÍA VISUAL - DEMO DEL SISTEMA
+================================================================================
+
+NAVEGACIÓN - ANTES vs DESPUÉS
+================================================================================
+
+ANTES:
+------
+Configuración
+  ├── Productos           (VISIBLE)
+  ├── Configuración Zebra (VISIBLE)
+  ├── Categorías          (OCULTO)
+  ├── Modelos             (OCULTO)
+  └── Composiciones       (OCULTO)
+
+DESPUÉS:
+--------
+Productos              ← NUEVO GRUPO
+  ├── 1. Categorías     (AHORA VISIBLE con heroicon-o-tag)
+  ├── 2. Modelos        (AHORA VISIBLE con heroicon-o-squares-2x2)
+  └── 3. Productos      (MOVIDO CON heroicon-o-cube)
+
+Configuración          ← SIMPLIFICADO
+  └── Configuración Zebra (MANTIENE heroicon-o-printer)
+
+================================================================================
+FORMULARIO DE PRODUCTOS - ANTES vs DESPUÉS
+================================================================================
+
+ANTES - Orden confuso:
+  1. Modelo*         (Select - tenías que elegir modelo sin saber qué categoría)
+  2. Categoría*      (Select - después de haber elegido modelo)
+  3. Nombre...
+
+DESPUÉS - Orden lógico:
+  1. Categoría/Empresa*    (Select - primero elegir empresa/categoría)
+  2. Modelo de colchón*    (Select - luego elegir modelo de esa empresa)
+  3. Nombre del producto*
+  4. Nombre comercial*
+  ...
+  7. Imagen de la etiqueta (logo)  ← Ahora dice "imagen de LA ETIQUETA" (claro)
+
+================================================================================
+FLUJO DE DEMO - CÓMO MOSTRAR A CLIENTE
+================================================================================
+
+PASO 1: Crear nueva empresa/categoría
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Admin → Productos → Categorías → [+ Crear]
+
+Rellenar:
+  Nombre: "FLEX COLCHONES"
+  Código: "FLEX"
+  Descripción: "Línea FLEX de la empresa"
+  Logo: [Cargar logo-flex.png]  ← IMPORTANTE: El usuario sube el logo de su empresa
+  Activo: ON
+
+Resultado: Se ve logo pequeño en la tabla de categorías
+
+
+PASO 2: Crear modelo (opcional)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Admin → Productos → Modelos → [+ Crear]
+
+Rellenar:
+  Categoría: FLEX COLCHONES
+  Nombre: "FLEX SUPER KING"
+  Código: "FSK"
+  Tipo: "Colchón"
+  Clase: "Clase A"
+  Años de garantía: 3
+
+Resultado: Nuevo modelo disponible para productos
+
+
+PASO 3: Crear producto con logo de empresa
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Admin → Productos → Productos → [+ Crear]
+
+Rellenar:
+  Categoría/Empresa*: FLEX COLCHONES
+  Modelo de colchón*: FLEX SUPER KING
+  Nombre del producto: "FLEX SUPER KING 200x200"
+  Código de producto: "FLEX-SK-200"
+  Imagen de la etiqueta (logo): [VACÍO - usará logo de FLEX]
+  Otros campos...
+
+Resultado: Producto creado. Cuando se imprima etiqueta, mostrará logo FLEX
+
+
+PASO 4: Probar etiqueta de prueba con logo dinámico
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Admin → Configuración → Configuración Zebra → [Test de impresión] (botón amarillo)
+
+Modal "Test de impresión Zebra":
+  Producto (opcional): FLEX SUPER KING 200x200
+  [Confirmar]
+
+Resultado: 
+  ✓ Se envía ETIQUETA DE PRUEBA a impresora
+  ✓ Muestra "ETIQUETA DE PRUEBA" como título
+  ✓ Muestra logo FLEX (no logo Paraíso)
+  ✓ Muestra datos del producto:
+     - Modelo: FLEX SUPER KING
+     - Código: FLEX-SK-200
+     - Medidas: 200x190x22 cm (o lo que esté configurado)
+     - Categoría: FLEX COLCHONES
+  ✓ Muestra datos de conexión (IP/USB)
+  ✓ Muestra fecha/hora
+  ✓ Tiene borde visible
+
+
+PASO 5: Crear lote de etiquetas (producción real)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Admin → Etiquetas → Lotes de Etiquetas → [+ Crear]
+
+Rellenar:
+  Producto: FLEX SUPER KING 200x200
+  Cantidad: 50
+  [Guardar]
+
+Resultado:
+  ✓ Se generan 50 etiquetas con seriales únicos
+  ✓ Cada etiqueta mostrará LOGO FLEX (no Paraíso)
+  ✓ Se auto-imprimen (según configuración)
+  ✓ En "Lotes de Etiquetas" ves el lote con estado "Impreso"
+
+================================================================================
+DIFERENCIA VISUAL EN ETIQUETA IMPRESA
+================================================================================
+
+ANTES:
+┌─────────────────────────────────────────────────┐
+│  Serial...                                      │
+│  Lote...                                        │
+│  Operador: Administrator                        │
+│  ...                                            │
+│                                      ╔═══════╗ │
+│                                      ║PARAISO║ │  ← Siempre PARAISO
+│                                      ║ECUADOR║ │
+│                                      ╚═══════╝ │
+│  QR Code        Barcode             Control... │
+│  ...                                           │
+└─────────────────────────────────────────────────┘
+
+DESPUÉS (Categoría FLEX):
+┌─────────────────────────────────────────────────┐
+│  Serial...                                      │
+│  Lote...                                        │
+│  Operador: Administrator                        │
+│  ...                                            │
+│                                      ╔═══════╗ │
+│                                      ║ FLEX  ║ │  ← Logo de FLEX (dinámico)
+│                                      ║ Logo  ║ │
+│                                      ╚═══════╝ │
+│  QR Code        Barcode             Control... │
+│  ...                                           │
+└─────────────────────────────────────────────────┘
+
+================================================================================
+PUNTOS CLAVE PARA LA DEMO
+================================================================================
+
+✅ Mostrar que Categorías y Modelos están VISIBLES en el menú (antes estaban ocultos)
+
+✅ Mostrar que el formulario es más lógico: primero Categoría, luego Modelo
+
+✅ Demostrar crear una categoría con logo de cliente (ej: "FLEX COLCHONES" con logo)
+
+✅ Demostrar crear producto con esa categoría
+
+✅ Enviar etiqueta de PRUEBA → mostrará logo FLEX (no Paraíso)
+
+✅ Mencionar que cuando se imprima un LOTE real, también usará logo FLEX
+
+✅ Explicar fallback: Imagen producto > Logo categoría > Logo Paraíso > Texto
+
+================================================================================
+ESTADOS FINALES ESPERADOS
+================================================================================
+
+En la navigación lateral:
+  ✓ Debe verse grupo "Productos" con 3 items:
+    1. Categorías (rojo/tag)
+    2. Modelos (cuadrado)
+    3. Productos (cubo)
+
+En formulario de Productos:
+  ✓ Primera pregunta: "Categoría/Empresa" (con ayuda: permite crear empresa nueva)
+  ✓ Segunda pregunta: "Modelo de colchón" (con ayuda: permite crear modelo nuevo)
+  ✓ Campo de imagen dice: "Imagen de la etiqueta (logo)"
+
+En categorías:
+  ✓ Se puede subir logo (PNG/WEBP max 5MB)
+  ✓ Logo aparece en tabla cuando existe
+
+En etiqueta de prueba:
+  ✓ Modal "Test de impresión" permite seleccionar producto
+  ✓ Sin producto: muestra etiqueta básica
+  ✓ Con producto: muestra logo de su categoría + datos
+
+================================================================================
+
+LISTO PARA DEMO - Todos los cambios están en VPS, sin afectar .git
+Usuario puede hacer git push cuando esté seguro.
+
+================================================================================
