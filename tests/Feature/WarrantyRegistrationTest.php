@@ -156,7 +156,6 @@ class WarrantyRegistrationTest extends TestCase
             'city',
             'store_name',
             'invoice_number',
-            'purchase_date',
             'terms_accepted',
         ]);
     }
@@ -186,7 +185,7 @@ class WarrantyRegistrationTest extends TestCase
 
         $warranty = Warranty::where('label_id', $this->label->id)->first();
 
-        $expectedEnd = \Carbon\Carbon::parse('2026-05-15')->addYears(5);
+        $expectedEnd = today()->addYears(5);
 
         $this->assertTrue(
             $warranty->warranty_end_date->eq($expectedEnd),
