@@ -91,12 +91,63 @@ class LabelPdfServiceTest extends TestCase
 
         $html = $this->invokeBuildLabelHtml($label);
 
-        $this->assertStringContainsString('PARAISO', $html);
+        // Logo can render as text "PARAISO" or as an embedded <img> (when
+        // paraiso-logo.png / product / category logo exists). Either is valid.
+        $hasLogo = str_contains($html, 'PARAISO') || str_contains($html, 'data:image');
+        $this->assertTrue($hasLogo, 'Debe contener el logo como texto PARAISO o como imagen embebida');
         $this->assertStringContainsString('DONDE EMPIEZAN TUS SUEÑOS', $html);
         $this->assertStringContainsString('CONTROL DE CALIDAD', $html);
         $this->assertStringContainsString('HECHO EN ECUADOR', $html);
         $this->assertStringContainsString('Informacion de Composicion', $html);
         $this->assertStringContainsString('Trazabilidad', $html);
+    }
+
+    /** @test */
+    public function corrupt_category_logo_does_not_break_pdf(): void
+    {
+        // Simula subir el logo de otra empresa con un archivo dañado.
+        // El PDF debe generarse igual (cae al logo Paraíso), no romperse.
+        $label = $this->createFullLabel();
+
+        $relative = 'categories/corrupto-' . substr(uniqid(), -6) . '.png';
+        $absolute = storage_path('app/public/' . $relative);
+        @mkdir(dirname($absolute), 0755, true);
+        file_put_contents($absolute, 'esto no es una imagen valida');
+
+        $label->product->productModel->category->update(['logo' => $relative]);
+        $label->load('product.productModel.category');
+
+        $pdfContent = $this->service->generateForLabel($label->fresh());
+
+        $this->assertNotEmpty($pdfContent);
+        $this->assertStringContainsString('%PDF', $pdfContent);
+
+        @unlink($absolute);
+    }
+
+    /** @test */
+    public function valid_category_logo_is_embedded_in_html(): void
+    {
+        // Sube un logo válido de otra empresa y verifica que se embebe en el HTML.
+        $label = $this->createFullLabel();
+        $label->product->update(['image' => null]);
+
+        $relative = 'categories/valido-' . substr(uniqid(), -6) . '.png';
+        $absolute = storage_path('app/public/' . $relative);
+        @mkdir(dirname($absolute), 0755, true);
+        $img = imagecreatetruecolor(100, 40);
+        imagefill($img, 0, 0, imagecolorallocate($img, 255, 255, 255));
+        imagepng($img, $absolute);
+        imagedestroy($img);
+
+        $label->product->productModel->category->update(['logo' => $relative]);
+        $label->load('product.productModel.category');
+
+        $html = $this->invokeBuildLabelHtml($label->fresh());
+
+        $this->assertStringContainsString('data:image', $html);
+
+        @unlink($absolute);
     }
 
     /** @test */
