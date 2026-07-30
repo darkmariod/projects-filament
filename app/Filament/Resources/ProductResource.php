@@ -4,8 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
-use App\Models\ProductModel;
-use App\Models\Category;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Illuminate\Support\Facades\Auth;
@@ -36,50 +34,68 @@ class ProductResource extends Resource
         return $schema
             ->schema([
                 Section::make('Identificación')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
-                        Forms\Components\Select::make('productModel.category_id')
-                            ->label('Categoría/Empresa')
-                            ->options(Category::pluck('name', 'id'))
-                            ->searchable()
+                        // ── Categoría ─────────────────────────────────────
+                        Forms\Components\TextInput::make('category_name')
+                            ->label('Categoría')
                             ->required()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('name')
-                                    ->label('Nombre de la categoría/empresa')
-                                    ->required(),
-                                Forms\Components\TextInput::make('code')
-                                    ->label('Código')
-                                    ->required(),
-                            ]),
+                            ->maxLength(255)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, $set) {
+                                if (!$state) return;
+                                $code = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $state);
+                                $code = strtoupper($code);
+                                $code = preg_replace('/[^A-Z0-9]+/', '_', $code);
+                                $code = trim($code, '_');
+                                $set('category_code', $code);
+                            }),
 
-                        Forms\Components\Select::make('product_model_id')
-                            ->label('Modelo de colchón')
-                            ->options(ProductModel::pluck('name', 'id'))
+                        Forms\Components\TextInput::make('category_code')
+                            ->label('Código categoría')
                             ->required()
-                            ->searchable()
-                            ->createOptionForm([
-                                Forms\Components\Select::make('category_id')
-                                    ->label('Categoría')
-                                    ->options(Category::pluck('name', 'id'))
-                                    ->required(),
-                                Forms\Components\TextInput::make('name')
-                                    ->label('Nombre del modelo')
-                                    ->required(),
-                                Forms\Components\TextInput::make('code')
-                                    ->label('Código')
-                                    ->required(),
-                                Forms\Components\TextInput::make('type')
-                                    ->label('Tipo')
-                                    ->nullable(),
-                                Forms\Components\TextInput::make('class')
-                                    ->label('Clase')
-                                    ->nullable(),
-                                Forms\Components\TextInput::make('warranty_years')
-                                    ->label('Años de garantía')
-                                    ->numeric()
-                                    ->default(1),
-                            ]),
+                            ->maxLength(50)
+                            ->helperText('Se genera solo desde el nombre'),
 
+                        // ── Modelo ────────────────────────────────────────
+                        Forms\Components\TextInput::make('model_name')
+                            ->label('Modelo')
+                            ->required()
+                            ->maxLength(255)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, $set) {
+                                if (!$state) return;
+                                $code = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $state);
+                                $code = strtoupper($code);
+                                $code = preg_replace('/[^A-Z0-9]+/', '_', $code);
+                                $code = trim($code, '_');
+                                $set('model_code', $code);
+                            }),
+
+                        Forms\Components\TextInput::make('model_code')
+                            ->label('Código modelo')
+                            ->required()
+                            ->maxLength(50)
+                            ->helperText('Se genera solo desde el nombre'),
+
+                        Forms\Components\TextInput::make('model_type')
+                            ->label('Tipo')
+                            ->nullable()
+                            ->maxLength(100),
+
+                        Forms\Components\TextInput::make('model_class')
+                            ->label('Clase')
+                            ->nullable()
+                            ->maxLength(100),
+
+                        Forms\Components\TextInput::make('model_warranty_years')
+                            ->label('Años de garantía')
+                            ->numeric()
+                            ->default(1)
+                            ->required(),
+
+                        // ── Producto ──────────────────────────────────────
                         Forms\Components\TextInput::make('product_code')
                             ->label('Código de producto')
                             ->required()
@@ -120,6 +136,7 @@ class ProductResource extends Resource
                     ]),
 
                 Section::make('Imagen de la etiqueta')
+                    ->columnSpanFull()
                     ->schema([
                         Forms\Components\FileUpload::make('image')
                             ->label('Logo del producto')
@@ -132,6 +149,7 @@ class ProductResource extends Resource
                     ]),
 
                 Section::make('Medidas (Plaza)')
+                    ->columnSpanFull()
                     ->columns(4)
                     ->schema([
                         Forms\Components\TextInput::make('width_cm')
@@ -156,6 +174,7 @@ class ProductResource extends Resource
                     ]),
 
                 Section::make('Materiales y conservación')
+                    ->columnSpanFull()
                     ->columns(2)
                     ->collapsible()
                     ->schema([
@@ -178,6 +197,7 @@ class ProductResource extends Resource
                     ]),
 
                 Section::make('Datos del fabricante')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->collapsible()
                     ->collapsed()

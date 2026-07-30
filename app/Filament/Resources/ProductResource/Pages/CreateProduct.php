@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\ProductResource\Pages;
 
 use App\Filament\Resources\ProductResource;
+use App\Models\Category;
 use App\Models\LabelBatch;
+use App\Models\ProductModel;
 use App\Models\TechnicalComposition;
 use App\Services\SerialGeneratorService;
 use Filament\Resources\Pages\CreateRecord;
@@ -27,6 +29,35 @@ class CreateProduct extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        // ── Resolver o crear Categoría ────────────────────────────────
+        $category = Category::firstOrCreate(
+            ['code' => $data['category_code']],
+            ['name' => $data['category_name'], 'active' => true],
+        );
+
+        // ── Resolver o crear Modelo ────────────────────────────────────
+        $model = ProductModel::firstOrCreate(
+            ['code' => $data['model_code']],
+            [
+                'category_id'    => $category->id,
+                'name'           => $data['model_name'],
+                'type'           => $data['model_type'] ?? null,
+                'class'          => $data['model_class'] ?? null,
+                'warranty_years' => $data['model_warranty_years'] ?? 1,
+                'active'         => true,
+            ],
+        );
+
+        $data['product_model_id'] = $model->id;
+
+        // Limpiar campos virtuales de categoría/modelo
+        unset(
+            $data['category_name'], $data['category_code'],
+            $data['model_name'], $data['model_code'],
+            $data['model_type'], $data['model_class'], $data['model_warranty_years'],
+        );
+
+        // ── Datos para TechnicalComposition ────────────────────────────
         $this->productTcFields = [
             'commercial_name'           => $data['commercial_name'] ?? null,
             'product_family'            => $data['product_family'] ?? null,
