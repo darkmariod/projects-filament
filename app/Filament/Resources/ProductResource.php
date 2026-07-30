@@ -35,7 +35,8 @@ class ProductResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make('Datos del producto')
+                Section::make('Identificación')
+                    ->columns(3)
                     ->schema([
                         Forms\Components\Select::make('productModel.category_id')
                             ->label('Categoría/Empresa')
@@ -79,6 +80,12 @@ class ProductResource extends Resource
                                     ->default(1),
                             ]),
 
+                        Forms\Components\TextInput::make('product_code')
+                            ->label('Código de producto')
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(50),
+
                         Forms\Components\TextInput::make('name')
                             ->label('Nombre del producto')
                             ->required()
@@ -94,29 +101,10 @@ class ProductResource extends Resource
                             ->nullable()
                             ->maxLength(255),
 
-                        Forms\Components\TextInput::make('product_code')
-                            ->label('Código de producto')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(50),
-
                         Forms\Components\TextInput::make('barcode')
                             ->label('Código de barras')
                             ->nullable()
                             ->maxLength(50),
-
-                        Forms\Components\FileUpload::make('image')
-                            ->label('Imagen de la etiqueta (logo)')
-                            ->image()
-                            ->disk('public')
-                            ->directory('products')
-                            ->maxSize(5120)
-                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                            ->columnSpanFull(),
-
-                        Forms\Components\Toggle::make('active')
-                            ->label('Activo')
-                            ->default(true),
 
                         Forms\Components\TextInput::make('default_label_quantity')
                             ->label('Cantidad de etiquetas (default)')
@@ -125,9 +113,26 @@ class ProductResource extends Resource
                             ->minValue(1)
                             ->nullable()
                             ->maxLength(6),
-                    ])->columns(2),
 
-                Section::make('Plaza')
+                        Forms\Components\Toggle::make('active')
+                            ->label('Activo')
+                            ->default(true),
+                    ]),
+
+                Section::make('Imagen de la etiqueta')
+                    ->schema([
+                        Forms\Components\FileUpload::make('image')
+                            ->label('Logo del producto')
+                            ->image()
+                            ->disk('public')
+                            ->directory('products')
+                            ->maxSize(5120)
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Medidas (Plaza)')
+                    ->columns(4)
                     ->schema([
                         Forms\Components\TextInput::make('width_cm')
                             ->label('Ancho (cm)')
@@ -148,10 +153,11 @@ class ProductResource extends Resource
                             ->label('Medidas en texto')
                             ->nullable()
                             ->maxLength(100),
-                    ])->columns(2),
+                    ]),
 
-                Section::make('Materiales')
-                    ->description('Completá los datos UNA vez y se auto-completarán en la Composición Técnica. Por producto se puede editar sin afectar a los demás.')
+                Section::make('Materiales y conservación')
+                    ->columns(2)
+                    ->collapsible()
                     ->schema([
                         Forms\Components\TextInput::make('springs')
                             ->label('Resortes')
@@ -163,10 +169,7 @@ class ProductResource extends Resource
                             ->label('Espuma')
                             ->nullable()
                             ->maxLength(255),
-                    ])->columns(2),
 
-                Section::make('Cuidado y conservación')
-                    ->schema([
                         Forms\Components\Textarea::make('conservation_instructions')
                             ->label('Instrucciones de conservación')
                             ->nullable()
@@ -175,7 +178,9 @@ class ProductResource extends Resource
                     ]),
 
                 Section::make('Datos del fabricante')
-                    ->description('Completá los datos UNA vez y se auto-completarán en los próximos productos. Por producto se puede editar sin afectar a los demás.')
+                    ->columns(3)
+                    ->collapsible()
+                    ->collapsed()
                     ->schema([
                         Forms\Components\TextInput::make('manufacturer')
                             ->label('Fabricante')
@@ -184,19 +189,19 @@ class ProductResource extends Resource
                             ->default(fn() => static::getDefaultManufacturer('manufacturer')),
 
                         Forms\Components\TextInput::make('manufacturer_ruc')
-                            ->label('RUC del fabricante')
+                            ->label('RUC')
                             ->nullable()
                             ->maxLength(50)
                             ->default(fn() => static::getDefaultManufacturer('manufacturer_ruc')),
 
                         Forms\Components\TextInput::make('manufacturer_address')
-                            ->label('Dirección del fabricante')
+                            ->label('Dirección')
                             ->nullable()
                             ->maxLength(255)
                             ->default(fn() => static::getDefaultManufacturer('manufacturer_address')),
 
                         Forms\Components\TextInput::make('manufacturing_country')
-                            ->label('País de fabricación')
+                            ->label('País')
                             ->nullable()
                             ->maxLength(100)
                             ->default(fn() => static::getDefaultManufacturer('manufacturing_country')),
@@ -204,9 +209,10 @@ class ProductResource extends Resource
                         Forms\Components\TextInput::make('website')
                             ->label('Sitio web')
                             ->nullable()
+                            ->columnSpan(2)
                             ->maxLength(255)
                             ->default(fn() => static::getDefaultManufacturer('website')),
-                    ])->columns(2),
+                    ]),
             ]);
     }
 

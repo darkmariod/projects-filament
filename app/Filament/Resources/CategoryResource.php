@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CategoryResource\Pages;
+use App\Filament\Resources\CategoryResource\RelationManagers;
 use App\Models\Category;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -119,6 +120,13 @@ class CategoryResource extends Resource
                     ->visible(fn(Category $record): bool => Auth::user()?->can('delete', $record) ?? false),
             ])
             ->bulkActions([]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\ProductModelsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

@@ -20,9 +20,9 @@ class ProductResourceConsolidationTest extends TestCase
             'CategoryResource debe ser visible en la navegación'
         );
 
-        $this->assertFalse(
+        $this->assertTrue(
             $this->getHiddenNavigation(ProductModelResource::class),
-            'ProductModelResource debe ser visible en la navegación'
+            'ProductModelResource debe estar oculta ahora — se gestiona desde Categoría'
         );
 
         // Composiciones Técnicas se sigue editando dentro del producto → oculta
