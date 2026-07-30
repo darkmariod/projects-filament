@@ -49,7 +49,10 @@ class ZebraZplRenderer
 
         $zpl->header(self::WIDTH_DOTS, self::HEIGHT_DOTS);
 
-        $this->buildQualityBlock($zpl, $data, 15);
+        $this->buildQualitySticker($zpl, $data, 15, 'Operador', 'Ensamble');
+        $zpl->box(self::MARGIN_X, 85, 730, 2, 2);
+
+        $this->buildQualitySticker($zpl, $data, 100, 'Operador', 'Cerrador', 'Trazabilidad');
         $zpl->box(self::MARGIN_X, 180, 730, 2, 2);
 
         $this->buildSignatureRow($zpl, 195);
@@ -64,45 +67,48 @@ class ZebraZplRenderer
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    //  BLOQUE DE CONTROL DE CALIDAD (único — sin duplicar la cabecera)
+    //  STICKERS (repetidos x2)
     // ─────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Un solo bloque de control de calidad: la cabecera del producto y los datos
-     * de trazabilidad aparecen UNA vez. En la columna derecha se apilan las tres
-     * firmas: Operador/Ensamble, Cerrador y Trazabilidad.
-     */
-    private function buildQualityBlock(ZplBuilder $zpl, array $data, int $y): void
-    {
+    private function buildQualitySticker(
+        ZplBuilder $zpl,
+        array $data,
+        int $y,
+        string $signatureLabel,
+        string $signatureRole,
+        ?string $secondSignatureRole = null,
+    ): void {
         $col1 = self::MARGIN_X;
         $col2 = 300;
         $col3 = 610;
 
-        // Columna izquierda: código + datos del lote (una sola vez)
+        // Left column: product info + operator
         $zpl->text($col1, $y, 12, $data['productCode']);
         $zpl->text($col1, $y + 18, 11, "Operador: {$data['operator']}");
         $zpl->text($col1, $y + 32, 11, "Lote: {$data['lote_nro']}");
         $zpl->text($col1, $y + 46, 11, "Fecha: {$data['batchDate']}");
-        // Trazabilidad (una sola vez)
-        $zpl->text($col1, $y + 64, 11, "Serial: {$data['serial']}");
-        $zpl->text($col1, $y + 78, 11, "Seq: {$data['sequence_number']}");
 
-        // Columna central: control de calidad (una sola vez)
+        // Center column: quality control
         $zpl->text($col2, $y, 14, 'CONTROL DE CALIDAD');
         $zpl->text($col2, $y + 20, 12, "Tipo IV: {$data['type']}");
         $zpl->text($col2, $y + 38, 16, $data['modelName']);
         $zpl->text($col2, $y + 58, 12, "({$data['measurements']}) {$data['class']} {$data['plazas']}");
-        // Trazabilidad (una sola vez)
-        $zpl->text($col2, $y + 78, 11, "Lote: {$data['internal_batch_code']}");
-        $zpl->text($col2, $y + 92, 11, "Gen: {$data['generated_by_name']}");
 
-        // Columna derecha: las tres firmas apiladas
-        $zpl->text($col3, $y, 11, 'Operador / Ensamble');
-        $zpl->box($col3, $y + 14, 135, 2, 2);
-        $zpl->text($col3, $y + 34, 11, 'Cerrador');
-        $zpl->box($col3, $y + 48, 135, 2, 2);
-        $zpl->text($col3, $y + 68, 11, 'Trazabilidad');
-        $zpl->box($col3, $y + 82, 135, 2, 2);
+        // Right column: signature area
+        $zpl->text($col3, $y, 11, $signatureLabel);
+        $zpl->text($col3, $y + 14, 11, $signatureRole);
+        $zpl->box($col3, $y + 28, 110, 2, 2);
+
+        if ($secondSignatureRole !== null) {
+            // Sticker 2: add traceability data below signature
+            $zpl->text($col1, $y + 62, 11, "Serial: {$data['serial']}");
+            $zpl->text($col1, $y + 76, 11, "Seq: {$data['sequence_number']}");
+            $zpl->text($col2, $y + 62, 11, "Lote: {$data['internal_batch_code']}");
+            $zpl->text($col2, $y + 76, 11, "Gen: {$data['generated_by_name']}");
+
+            $zpl->text($col3, $y + 38, 11, $secondSignatureRole);
+            $zpl->box($col3, $y + 52, 110, 2, 2);
+        }
     }
 
     private function buildSignatureRow(ZplBuilder $zpl, int $y): void
