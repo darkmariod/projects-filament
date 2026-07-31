@@ -42,17 +42,9 @@ class ProductResourceConsolidationTest extends TestCase
 
     private function getHiddenNavigation(string $resourceClass): bool
     {
-        $reflection = new \ReflectionClass($resourceClass);
-
-        // Si la propiedad ya no existe, el recurso es visible por defecto.
-        if (! $reflection->hasProperty('shouldHideNavigation')) {
-            return false;
-        }
-
-        $property = $reflection->getProperty('shouldHideNavigation');
-        $property->setAccessible(true);
-
-        return $property->getValue() === true;
+        // Verifica el comportamiento REAL de Filament: si shouldRegisterNavigation()
+        // devuelve false, el recurso NO aparece en el menú.
+        return $resourceClass::shouldRegisterNavigation() === false;
     }
 
     private function getNavigationGroup(string $resourceClass): ?string

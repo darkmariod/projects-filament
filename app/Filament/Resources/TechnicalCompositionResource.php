@@ -17,7 +17,7 @@ use Filament\Tables\Table;
 
 class TechnicalCompositionResource extends Resource
 {
-    protected static bool $shouldHideNavigation = true;
+    protected static bool $shouldRegisterNavigation = false;
     protected static ?string $model = TechnicalComposition::class;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-beaker';
     protected static ?string $navigationLabel = 'Composiciones';

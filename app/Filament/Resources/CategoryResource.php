@@ -25,7 +25,7 @@ class CategoryResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Productos';
     protected static ?int $navigationSort = 1;
     // Se gestiona desde el formulario de Producto (registro único). Oculta del menú.
-    protected static bool $shouldHideNavigation = true;
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function canAccess(): bool
     {

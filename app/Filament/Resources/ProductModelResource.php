@@ -24,7 +24,7 @@ class ProductModelResource extends Resource
     protected static ?string $pluralModelLabel = 'Modelos';
     protected static string|\UnitEnum|null $navigationGroup = 'Productos';
     protected static ?int $navigationSort = 2;
-    protected static bool $shouldHideNavigation = true;
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function canAccess(): bool
     {
