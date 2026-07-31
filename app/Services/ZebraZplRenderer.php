@@ -49,10 +49,7 @@ class ZebraZplRenderer
 
         $zpl->header(self::WIDTH_DOTS, self::HEIGHT_DOTS);
 
-        $this->buildQualitySticker($zpl, $data, 15, 'Operador', 'Ensamble');
-        $zpl->box(self::MARGIN_X, 85, 730, 2, 2);
-
-        $this->buildQualitySticker($zpl, $data, 100, 'Operador', 'Cerrador', 'Trazabilidad');
+        $this->buildQualityBlock($zpl, $data, 15);
         $zpl->box(self::MARGIN_X, 180, 730, 2, 2);
 
         $this->buildSignatureRow($zpl, 195);
@@ -67,48 +64,46 @@ class ZebraZplRenderer
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    //  STICKERS (repetidos x2)
+    //  BLOQUE DE CONTROL DE CALIDAD (único — datos una sola vez)
     // ─────────────────────────────────────────────────────────────────────────
 
-    private function buildQualitySticker(
-        ZplBuilder $zpl,
-        array $data,
-        int $y,
-        string $signatureLabel,
-        string $signatureRole,
-        ?string $secondSignatureRole = null,
-    ): void {
+    /**
+     * Un solo bloque de control de calidad: la cabecera del producto y los datos
+     * de trazabilidad aparecen UNA vez. En la columna derecha se apilan las tres
+     * firmas: Operador/Ensamble, Cerrador y Trazabilidad. Espaciado amplio para
+     * que ninguna línea se encime.
+     */
+    private function buildQualityBlock(ZplBuilder $zpl, array $data, int $y): void
+    {
         $col1 = self::MARGIN_X;
         $col2 = 300;
         $col3 = 610;
 
-        // Left column: product info + operator
+        // Columna izquierda: código + datos del lote (una sola vez)
         $zpl->text($col1, $y, 12, $data['productCode']);
         $zpl->text($col1, $y + 18, 11, "Operador: {$data['operator']}");
-        $zpl->text($col1, $y + 32, 11, "Lote: {$data['lote_nro']}");
-        $zpl->text($col1, $y + 46, 11, "Fecha: {$data['batchDate']}");
+        $zpl->text($col1, $y + 34, 11, "Lote: {$data['lote_nro']}");
+        $zpl->text($col1, $y + 50, 11, "Fecha: {$data['batchDate']}");
+        // Trazabilidad (una sola vez)
+        $zpl->text($col1, $y + 72, 11, "Serial: {$data['serial']}");
+        $zpl->text($col1, $y + 88, 11, "Seq: {$data['sequence_number']}");
 
-        // Center column: quality control
+        // Columna central: control de calidad (una sola vez)
         $zpl->text($col2, $y, 14, 'CONTROL DE CALIDAD');
         $zpl->text($col2, $y + 20, 12, "Tipo IV: {$data['type']}");
         $zpl->text($col2, $y + 38, 16, $data['modelName']);
-        $zpl->text($col2, $y + 58, 12, "({$data['measurements']}) {$data['class']} {$data['plazas']}");
+        $zpl->text($col2, $y + 60, 12, "({$data['measurements']}) {$data['class']} {$data['plazas']}");
+        // Trazabilidad (una sola vez)
+        $zpl->text($col2, $y + 84, 11, "Lote: {$data['internal_batch_code']}");
+        $zpl->text($col2, $y + 100, 11, "Gen: {$data['generated_by_name']}");
 
-        // Right column: signature area
-        $zpl->text($col3, $y, 11, $signatureLabel);
-        $zpl->text($col3, $y + 14, 11, $signatureRole);
-        $zpl->box($col3, $y + 28, 110, 2, 2);
-
-        if ($secondSignatureRole !== null) {
-            // Sticker 2: add traceability data below signature
-            $zpl->text($col1, $y + 62, 11, "Serial: {$data['serial']}");
-            $zpl->text($col1, $y + 76, 11, "Seq: {$data['sequence_number']}");
-            $zpl->text($col2, $y + 62, 11, "Lote: {$data['internal_batch_code']}");
-            $zpl->text($col2, $y + 76, 11, "Gen: {$data['generated_by_name']}");
-
-            $zpl->text($col3, $y + 38, 11, $secondSignatureRole);
-            $zpl->box($col3, $y + 52, 110, 2, 2);
-        }
+        // Columna derecha: las tres firmas apiladas y separadas
+        $zpl->text($col3, $y, 11, 'Operador / Ensamble');
+        $zpl->box($col3, $y + 16, 135, 2, 2);
+        $zpl->text($col3, $y + 42, 11, 'Cerrador');
+        $zpl->box($col3, $y + 58, 135, 2, 2);
+        $zpl->text($col3, $y + 84, 11, 'Trazabilidad');
+        $zpl->box($col3, $y + 100, 135, 2, 2);
     }
 
     private function buildSignatureRow(ZplBuilder $zpl, int $y): void

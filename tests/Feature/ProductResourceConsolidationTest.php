@@ -12,17 +12,18 @@ use Tests\TestCase;
 class ProductResourceConsolidationTest extends TestCase
 {
     /** @test */
-    public function it_shows_categories_and_models_but_hides_composition(): void
+    public function it_hides_categories_models_and_composition_leaving_only_products(): void
     {
-        // Categorías y Modelos ahora son visibles en el menú "Productos"
-        $this->assertFalse(
+        // Registro único desde el formulario de Producto → Categorías oculta del menú
+        $this->assertTrue(
             $this->getHiddenNavigation(CategoryResource::class),
-            'CategoryResource debe ser visible en la navegación'
+            'CategoryResource debe estar oculta — se registra desde el formulario de Producto'
         );
 
+        // Modelos oculta — se registra desde el formulario de Producto
         $this->assertTrue(
             $this->getHiddenNavigation(ProductModelResource::class),
-            'ProductModelResource debe estar oculta ahora — se gestiona desde Categoría'
+            'ProductModelResource debe estar oculta — se registra desde el formulario de Producto'
         );
 
         // Composiciones Técnicas se sigue editando dentro del producto → oculta
