@@ -81,7 +81,7 @@ class LabelPdfService
         $address      = e($composition->manufacturer_address ?? '');
         $inen         = e($composition->inen_standard ?? 'NTE INEN 2035');
         $website      = e($composition->website ?? '');
-        $legalText    = e($composition->legal_text ?? '');
+        $legalText    = $resolveNewlines($composition->legal_text ?? '');
         $warrantyText = $model->warranty_years ? "Garantía: {$model->warranty_years} años" : '';
 
         $resortesHtml = $springs ? '<div>Resortes: ' . $springs . '</div>' : '';

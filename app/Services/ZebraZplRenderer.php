@@ -365,7 +365,10 @@ class ZebraZplRenderer
             'address'             => $this->sanitize($composition->manufacturer_address ?? ''),
             'inen'                => $this->sanitize($composition->inen_standard ?? 'NTE INEN 2035'),
             'website'             => $this->sanitize($composition->website ?? ''),
-            'legalText'           => $this->sanitize(preg_replace('/\s+/', ' ', $composition->legal_text ?? '') ?? '', 500),
+            'legalText'           => $this->sanitize(
+                preg_replace('/\s+/', ' ', str_replace(['\\n', '\\r', '\\t', '\\'], ' ', $composition->legal_text ?? '')) ?? '',
+                500
+            ),
             'warrantyText'        => $model->warranty_years
                 ? "Garantía: {$model->warranty_years} años"
                 : '',
