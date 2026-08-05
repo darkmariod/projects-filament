@@ -23,7 +23,7 @@ class LabelLogResource extends Resource
     protected static ?string $modelLabel = 'Registro';
     protected static ?string $pluralModelLabel = 'Bitácora de etiquetas';
     protected static string|\UnitEnum|null $navigationGroup = 'Etiquetas';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 
     public static function canAccess(): bool
     {
