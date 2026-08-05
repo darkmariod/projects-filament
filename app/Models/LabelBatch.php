@@ -121,18 +121,14 @@ class LabelBatch extends Model
             return $base;
         }
 
-        // Buscar el sufijo más alto existente para este código base
-        $latest = static::where('internal_batch_code', 'like', $base . '-%')
-            ->orderByRaw('CAST(SUBSTRING_INDEX(internal_batch_code, \'-\', -1) AS UNSIGNED) DESC')
-            ->first();
+        // Buscar el sufijo más alto existente para este código base.
+        // El cálculo se hace en PHP porque SUBSTRING_INDEX sólo existe en MySQL.
+        $highestSuffix = static::where('internal_batch_code', 'like', $base . '-%')
+            ->pluck('internal_batch_code')
+            ->map(fn (string $code): int => (int) substr($code, strlen($base) + 1))
+            ->max();
 
-        if ($latest) {
-            $parts = explode('-', $latest->internal_batch_code);
-            $lastSuffix = (int) end($parts);
-            return $base . '-' . ($lastSuffix + 1);
-        }
-
-        return $base . '-2';
+        return $base . '-' . (($highestSuffix ?: 1) + 1);
     }
 
     // ── Relaciones ────────────────────────────────────────────────────────
