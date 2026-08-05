@@ -74,30 +74,6 @@ class LabelLogResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('action')
-                    ->label('Acción')
-                    ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'generated'         => 'info',
-                        'printed'           => 'success',
-                        'printed_network'   => 'success',
-                        'printed_queue'     => 'success',
-                        'anulled'           => 'danger',
-                        'registrar_garantia' => 'warning',
-                        default             => 'gray',
-                    })
-                    ->formatStateUsing(fn(string $state): string => match ($state) {
-                        'generated'          => 'Lote generado',
-                        'printed'            => 'Marcado como impreso',
-                        'printed_network'    => 'Impreso por red',
-                        'printed_queue'      => 'Impreso por cola',
-                        'anulled'            => 'Anulado',
-                        'registrar_garantia' => 'Garantía registrada',
-                        default              => $state,
-                    })
-                    ->searchable()
-                    ->sortable(),
-
                 Tables\Columns\TextColumn::make('description')
                     ->label('Descripción')
                     ->limit(80)
@@ -109,10 +85,6 @@ class LabelLogResource extends Resource
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('action')
-                    ->label('Acción')
-                    ->options(fn(): array => LabelLog::distinct()->pluck('action', 'action')->toArray()),
-
                 Tables\Filters\SelectFilter::make('user_id')
                     ->label('Usuario')
                     ->relationship('user', 'name'),

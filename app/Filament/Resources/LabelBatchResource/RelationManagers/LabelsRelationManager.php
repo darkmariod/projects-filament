@@ -8,6 +8,7 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -25,6 +26,11 @@ class LabelsRelationManager extends RelationManager
             ->recordTitleAttribute('serial')
             ->defaultSort('sequence_number')
             ->columns([
+                ImageColumn::make('qr')
+                    ->label('QR')
+                    ->getStateUsing(fn (Label $record): string => route('public.qr.image', $record->serial))
+                    ->size(56),
+
                 TextColumn::make('serial')
                     ->label('Serial')
                     ->searchable()
