@@ -32,6 +32,9 @@ class LabelResource extends Resource
     protected static ?string $pluralModelLabel = 'Etiquetas';
     protected static string|\UnitEnum|null $navigationGroup = 'Etiquetas';
     protected static ?int $navigationSort = 3;
+    // Las etiquetas se consultan dentro de cada lote (LabelsRelationManager),
+    // por eso el módulo duplicado se oculta del menú.
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function canAccess(): bool
     {
