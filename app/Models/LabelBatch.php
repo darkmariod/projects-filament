@@ -20,8 +20,9 @@ class LabelBatch extends Model
             }
 
             // Auto-generar customer_batch_number si está vacío
+            // Formato: MMYY-secuencial → 0826-001, 0826-002, ... (rota cada mes)
             if (empty($batch->customer_batch_number)) {
-                $prefix = 'LOTE-' . now()->format('Ym');
+                $prefix = now()->format('my');
                 $last = static::where('customer_batch_number', 'like', $prefix . '-%')
                     ->orderBy('customer_batch_number', 'desc')
                     ->first();

@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\SerialGeneratorService;
 use App\Services\ZebraZplService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class LabelBatchFlowTest extends TestCase
@@ -147,5 +148,41 @@ class LabelBatchFlowTest extends TestCase
         $this->assertCount(3, $batch->labels);
         $this->assertStringContainsString('00000001', $batch->labels[0]->serial);
         $this->assertStringContainsString('00000003', $batch->labels[2]->serial);
+    }
+
+    /** @test */
+    public function customer_batch_number_uses_mmyy_format_and_rotates_monthly(): void
+    {
+        // Agosto 2026 → prefijo 0826
+        Carbon::setTestNow('2026-08-15 10:00:00');
+
+        $first = LabelBatch::create([
+            'product_id'         => $this->product->id,
+            'internal_batch_code' => 'INT-0826-001',
+            'quantity'           => 1,
+            'status'             => 'active',
+        ]);
+        $this->assertSame('0826-001', $first->customer_batch_number);
+
+        $second = LabelBatch::create([
+            'product_id'         => $this->product->id,
+            'internal_batch_code' => 'INT-0826-002',
+            'quantity'           => 1,
+            'status'             => 'active',
+        ]);
+        $this->assertSame('0826-002', $second->customer_batch_number);
+
+        // Septiembre 2026 → rota a 0926 y reinicia el secuencial
+        Carbon::setTestNow('2026-09-01 08:00:00');
+
+        $sept = LabelBatch::create([
+            'product_id'         => $this->product->id,
+            'internal_batch_code' => 'INT-0926-001',
+            'quantity'           => 1,
+            'status'             => 'active',
+        ]);
+        $this->assertSame('0926-001', $sept->customer_batch_number);
+
+        Carbon::setTestNow();
     }
 }
