@@ -22,10 +22,12 @@
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-size: 13px; font-weight: bold; color: #333; margin-bottom: 4px; }
         .form-group label .optional { font-weight: normal; color: #999; font-size: 11px; }
-        .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; color: #333; background: #fff; }
+        /* 16px evita que iOS haga zoom automatico al enfocar el campo */
+        .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; color: #333; background: #fff; max-width: 100%; }
         .form-control:focus { outline: none; border-color: #8B0000; box-shadow: 0 0 0 2px rgba(139,0,0,0.1); }
         select.form-control { appearance: auto; }
         .form-error { font-size: 12px; color: #dc3545; margin-top: 4px; }
+        .form-hint { font-size: 11px; color: #999; margin-top: 4px; }
         .form-check { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 16px; }
         .form-check input { margin-top: 2px; }
         .form-check label { font-size: 12px; color: #666; line-height: 1.4; }
@@ -38,6 +40,16 @@
         .section-label { font-size: 12px; color: #8B0000; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin-bottom: 16px; }
         .footer { padding: 20px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; }
         .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* En celulares angostos los pares de campos se apilan para no quedar
+           aplastados, y el serial largo se parte en vez de desbordar. */
+        @media (max-width: 400px) {
+            .row-2 { grid-template-columns: 1fr; gap: 0; }
+            .product-bar .prod-row { flex-wrap: wrap; gap: 4px; }
+            .product-bar .serial { word-break: break-all; }
+            .header h1 { font-size: 20px; letter-spacing: 1px; }
+            .content { padding: 16px; }
+        }
     </style>
     @include('partials.pwa')
 </head>
@@ -137,7 +149,9 @@
             <div class="row-2">
                 <div class="form-group">
                     <label for="birth_date">Fecha de nacimiento <span class="optional">(opcional)</span></label>
-                    <input type="date" id="birth_date" name="birth_date" class="form-control" value="{{ old('birth_date') }}">
+                    <input type="date" id="birth_date" name="birth_date" class="form-control"
+                           lang="es-EC" max="{{ now()->toDateString() }}" value="{{ old('birth_date') }}">
+                    <div class="form-hint">Día / Mes / Año</div>
                     @error('birth_date') <div class="form-error">{{ $message }}</div> @enderror
                 </div>
 
