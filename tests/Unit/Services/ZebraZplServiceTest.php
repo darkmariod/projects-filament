@@ -267,8 +267,9 @@ class ZebraZplServiceTest extends TestCase
         $this->assertStringContainsString('^PW760', $zpl);
         $this->assertStringContainsString('^LL1600', $zpl);
         // Bloque único de control de calidad: separador inferior en y=180
-        $this->assertStringContainsString('^FO15,180^GB730,2,2^FS', $zpl);
-        $this->assertStringContainsString('^FO10,295^GB740,4,4^FS', $zpl);
+        // Separadores compactados: sin espacios vacíos entre secciones
+        $this->assertStringContainsString('^FO15,140^GB730,2,2^FS', $zpl);
+        $this->assertStringContainsString('^FO10,195^GB740,4,4^FS', $zpl);
         $this->assertStringContainsString('^FO10,700^GB740,4,4^FS', $zpl);
         // Serial no longer in stickers — must NOT appear at sticker Y
         $this->assertStringNotContainsString('^FO15,15^A0N,13,13^FDN°: 2606-CR SE 090-V-00000016-1^FS', $zpl);

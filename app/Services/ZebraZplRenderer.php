@@ -49,13 +49,15 @@ class ZebraZplRenderer
 
         $zpl->header(self::WIDTH_DOTS, self::HEIGHT_DOTS);
 
+        // El bloque de calidad termina cerca de y=126; los separadores van justo
+        // debajo para no dejar espacios vacíos entre secciones.
         $this->buildQualityBlock($zpl, $data, 15);
-        $zpl->box(self::MARGIN_X, 180, 730, 2, 2);
+        $zpl->box(self::MARGIN_X, 140, 730, 2, 2);
 
-        $this->buildSignatureRow($zpl, 195);
-        $zpl->box(10, 295, 740, 4, 4);
+        $this->buildSignatureRow($zpl, 158);
+        $zpl->box(10, 195, 740, 4, 4);
 
-        $this->buildComposition($zpl, $data, 315);
+        $this->buildComposition($zpl, $data, 215);
         $zpl->box(10, 700, 740, 4, 4);
 
         $this->buildMainLabel($zpl, $data, 730);
