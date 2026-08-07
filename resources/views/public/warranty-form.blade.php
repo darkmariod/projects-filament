@@ -22,16 +22,29 @@
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-size: 13px; font-weight: bold; color: #333; margin-bottom: 4px; }
         .form-group label .optional { font-weight: normal; color: #999; font-size: 11px; }
-        /* 16px evita que iOS haga zoom automatico al enfocar el campo */
-        .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; color: #333; background: #fff; max-width: 100%; }
+        /* 16px evita que iOS haga zoom automatico al enfocar el campo.
+           min-height 48px da un area tactil comoda en Android e iOS. */
+        .form-control { width: 100%; max-width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px;
+                        font-size: 16px; font-family: inherit; color: #333; background: #fff; min-height: 48px; }
         .form-control:focus { outline: none; border-color: #8B0000; box-shadow: 0 0 0 2px rgba(139,0,0,0.1); }
-        select.form-control { appearance: auto; }
+        /* Solo los campos de texto pierden el estilo nativo: iOS les agrega
+           sombra interna y bordes propios. El select y la fecha conservan su
+           flecha y su icono de calendario. */
+        input[type="text"].form-control,
+        input[type="email"].form-control,
+        input[type="tel"].form-control { -webkit-appearance: none; appearance: none; }
+        select.form-control { -webkit-appearance: auto; appearance: auto; }
+        /* iOS Safari colapsa la altura del campo de fecha si no se fuerza */
+        input[type="date"].form-control { line-height: normal; display: block; }
         .form-error { font-size: 12px; color: #dc3545; margin-top: 4px; }
         .form-hint { font-size: 11px; color: #999; margin-top: 4px; }
         .form-check { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 16px; }
-        .form-check input { margin-top: 2px; }
+        /* Casilla mas grande para tocarla comodo con el dedo */
+        .form-check input { margin-top: 2px; width: 20px; height: 20px; flex-shrink: 0; accent-color: #8B0000; }
         .form-check label { font-size: 12px; color: #666; line-height: 1.4; }
-        .btn { display: block; width: 100%; padding: 16px; background: #8B0000; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; text-align: center; text-decoration: none; cursor: pointer; }
+        .btn { display: block; width: 100%; padding: 16px; background: #8B0000; color: #fff; border: none; border-radius: 8px;
+               font-size: 16px; font-family: inherit; font-weight: bold; text-align: center; text-decoration: none; cursor: pointer;
+               min-height: 52px; -webkit-appearance: none; appearance: none; }
         .btn:hover { background: #6B0000; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; }
