@@ -2,12 +2,13 @@
 
 namespace App\Filament\Resources\CategoryResource\RelationManagers;
 
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables;
-use Filament\Tables\Actions\EditAction;
+use Filament\Actions\EditAction;
 use Filament\Tables\Table;
 
 class ProductModelsRelationManager extends RelationManager
@@ -105,7 +106,7 @@ class ProductModelsRelationManager extends RelationManager
                     ->boolean(),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Crear Modelo'),
             ])
             ->actions([

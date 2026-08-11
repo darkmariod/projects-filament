@@ -4,12 +4,13 @@ namespace App\Filament\Resources\ProductResource\RelationManagers;
 
 use App\Models\TechnicalComposition;
 use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables\Actions\EditAction;
+use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -152,7 +153,7 @@ class TechnicalCompositionRelationManager extends RelationManager
                     ->boolean(),
             ])
             ->headerActions([
-                \Filament\Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Crear Composición Técnica')
                     ->visible(fn(): bool => $this->getOwnerRecord()->technicalComposition === null),
             ])
