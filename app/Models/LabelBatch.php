@@ -77,6 +77,8 @@ class LabelBatch extends Model
         'customer_batch_date',
         'quantity',
         'operator',
+        'closer',
+        'tracer',
         'observations',
         'generated_by_user_id',
         'generated_at',

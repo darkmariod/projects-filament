@@ -772,4 +772,47 @@ class ZebraZplServiceTest extends TestCase
         // Must contain ^GB (box) command for visible border
         $this->assertStringContainsString('^GB', $zpl);
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  Responsables de control de calidad (nombre impreso + línea de firma)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /** @test */
+    public function quality_block_prints_the_three_responsibles(): void
+    {
+        $label = $this->createFullLabel();
+        $label->labelBatch->update([
+            'operator' => 'Juan Perez',
+            'closer'   => 'Maria Lopez',
+            'tracer'   => 'Carlos Ruiz',
+        ]);
+        $label->load('labelBatch.generatedBy');
+
+        $zpl = $this->service->generateForLabel($label->fresh());
+
+        // Los tres nombres se imprimen
+        $this->assertStringContainsString('Juan Perez', $zpl);
+        $this->assertStringContainsString('Maria Lopez', $zpl);
+        $this->assertStringContainsString('Carlos Ruiz', $zpl);
+
+        // Y se conservan los rótulos con su línea de firma
+        $this->assertStringContainsString('Operador / Ensamble', $zpl);
+        $this->assertStringContainsString('Cerrador', $zpl);
+        $this->assertStringContainsString('Trazabilidad', $zpl);
+    }
+
+    /** @test */
+    public function quality_block_without_closer_and_tracer_still_renders(): void
+    {
+        $label = $this->createFullLabel();
+        $label->labelBatch->update(['closer' => null, 'tracer' => null]);
+        $label->load('labelBatch.generatedBy');
+
+        $zpl = $this->service->generateForLabel($label->fresh());
+
+        // Sin nombres, los rótulos y las líneas de firma siguen presentes
+        $this->assertStringContainsString('^XA', $zpl);
+        $this->assertStringContainsString('Cerrador', $zpl);
+        $this->assertStringContainsString('Trazabilidad', $zpl);
+    }
 }

@@ -119,6 +119,29 @@ class LabelBatchResource extends Resource
                             ->default(100)
                             ->columnSpan(1),
 
+                        // Responsables de control de calidad: se imprimen en la
+                        // etiqueta sobre la línea de firma de cada uno.
+                        Forms\Components\TextInput::make('operator')
+                            ->label('Operador / Ensamble')
+                            ->helperText('Se imprime en la etiqueta. Si se deja vacío, se usa el usuario actual.')
+                            ->nullable()
+                            ->maxLength(255)
+                            ->columnSpan(1),
+
+                        Forms\Components\TextInput::make('closer')
+                            ->label('Cerrador')
+                            ->helperText('Se imprime en la etiqueta.')
+                            ->nullable()
+                            ->maxLength(255)
+                            ->columnSpan(1),
+
+                        Forms\Components\TextInput::make('tracer')
+                            ->label('Trazabilidad')
+                            ->helperText('Se imprime en la etiqueta.')
+                            ->nullable()
+                            ->maxLength(255)
+                            ->columnSpan(1),
+
                         Forms\Components\Textarea::make('observations')
                             ->label('Observaciones')
                             ->nullable()

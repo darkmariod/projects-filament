@@ -99,13 +99,23 @@ class ZebraZplRenderer
         $zpl->text($col2, $y + 84, 11, "Lote: {$data['internal_batch_code']}");
         $zpl->text($col2, $y + 100, 11, "Gen: {$data['generated_by_name']}");
 
-        // Columna derecha: las tres firmas apiladas y separadas
-        $zpl->text($col3, $y, 11, 'Operador / Ensamble');
-        $zpl->box($col3, $y + 16, 135, 2, 2);
-        $zpl->text($col3, $y + 42, 11, 'Cerrador');
-        $zpl->box($col3, $y + 58, 135, 2, 2);
-        $zpl->text($col3, $y + 84, 11, 'Trazabilidad');
-        $zpl->box($col3, $y + 100, 135, 2, 2);
+        // Columna derecha: los tres responsables. Bajo cada rótulo va el nombre
+        // registrado en el lote y debajo la línea para la firma manual.
+        $firmas = [
+            ['Operador / Ensamble', $data['operator']],
+            ['Cerrador',            $data['closer']],
+            ['Trazabilidad',        $data['tracer']],
+        ];
+
+        $fy = $y;
+        foreach ($firmas as [$rotulo, $nombre]) {
+            $zpl->text($col3, $fy, 11, $rotulo);
+            if ($nombre !== '') {
+                $zpl->text($col3, $fy + 13, 11, $nombre);
+            }
+            $zpl->box($col3, $fy + 26, 135, 2, 2);
+            $fy += 38;
+        }
     }
 
     private function buildSignatureRow(ZplBuilder $zpl, int $y): void
@@ -354,6 +364,8 @@ class ZebraZplRenderer
             'lote_nro'            => $this->sanitize($batch->customer_batch_number ?? ''),
             'batchDate'           => $batch->customer_batch_date?->format('d/m/Y') ?? '',
             'operator'            => $this->sanitize($batch->operator ?? ''),
+            'closer'              => $this->sanitize($batch->closer ?? ''),
+            'tracer'              => $this->sanitize($batch->tracer ?? ''),
             'type'                => $this->withoutPrefix($this->sanitize($model->type ?? ''), 'Tipo IV:'),
             'class'               => $this->normalizeClass($this->sanitize($product->class ?? ($model->class ?? ''))),
             'plazas'              => $this->sanitize($product->plazas ?? ''),
