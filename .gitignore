@@ -28,3 +28,6 @@ Thumbs.db
 /.atl
 /.opencode
 /.claude
+
+# Guion de demo: material de preparacion, no forma parte del sistema
+GUION-DEMO.md
