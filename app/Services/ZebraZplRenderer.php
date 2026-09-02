@@ -15,9 +15,8 @@ use App\Models\ZebraPrintSetting;
  * Sin lógica de envío, sin estado de impresora, sin IO.
  *
  * Layout portrait (95×200mm @203dpi ≈ 760×1600 dots), de arriba hacia abajo:
- * - Sticker 1: control de calidad (Ensamble).
- * - Sticker 2: control de calidad (Cerrador / Trazabilidad).
- * - Fila de firmas en blanco.
+ * - Bloque de control de calidad (datos una sola vez) con las tres firmas:
+ *   Operador/Ensamble, Cerrador y Trazabilidad.
  * - Información de composición técnica (dos columnas).
  * - Bloque principal: QR, código de barras, marca y texto legal.
  */
@@ -49,15 +48,13 @@ class ZebraZplRenderer
 
         $zpl->header(self::WIDTH_DOTS, self::HEIGHT_DOTS);
 
-        // El bloque de calidad termina cerca de y=126; los separadores van justo
-        // debajo para no dejar espacios vacíos entre secciones.
+        // Cada responsable ya lleva su propia línea de firma dentro del bloque
+        // de calidad, por eso no hay una fila de firmas suelta.
         $this->buildQualityBlock($zpl, $data, 15);
         $zpl->box(self::MARGIN_X, 140, 730, 2, 2);
+        $zpl->box(10, 165, 740, 4, 4);
 
-        $this->buildSignatureRow($zpl, 158);
-        $zpl->box(10, 195, 740, 4, 4);
-
-        $this->buildComposition($zpl, $data, 215);
+        $this->buildComposition($zpl, $data, 185);
         $zpl->box(10, 700, 740, 4, 4);
 
         $this->buildMainLabel($zpl, $data, 730);
@@ -118,12 +115,6 @@ class ZebraZplRenderer
         }
     }
 
-    private function buildSignatureRow(ZplBuilder $zpl, int $y): void
-    {
-        $zpl->box(60, $y, 180, 2, 2);
-        $zpl->box(290, $y, 180, 2, 2);
-        $zpl->box(520, $y, 180, 2, 2);
-    }
 
     // ─────────────────────────────────────────────────────────────────────────
     //  COMPOSICION TECNICA
