@@ -31,3 +31,8 @@ Thumbs.db
 
 # Guion de demo: material de preparacion, no forma parte del sistema
 GUION-DEMO.md
+
+# Registro del agente de impresion (se genera en la PC de la fabrica)
+scripts/agente-zebra-python/agente.log
+scripts/agente-zebra-python/agente.log.old
+scripts/agente-zebra-python/__pycache__/

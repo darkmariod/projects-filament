@@ -1,0 +1,9 @@
+{
+  "vps_url": "http://108.174.152.179:8081",
+  "poll_seconds": 10,
+  "timeout": 10,
+  "printer_ip": "",
+  "printer_port": 9100,
+  "printer_name": "ZDesigner ZT411-203dpi ZPL",
+  "agent_key": "zebra-agent-key-2026"
+}

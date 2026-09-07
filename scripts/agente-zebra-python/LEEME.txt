@@ -1,0 +1,173 @@
+AGENTE DE IMPRESION ZEBRA - Sistema de Garantias (Productos Paraiso)
+=======================================================================
+
+QUE HACE ESTE PROGRAMA
+----------------------
+Es un vigilante que corre en la PC de la fabrica. Cada 10 segundos le
+pregunta al sistema: "hay etiquetas para imprimir?". Si las hay, las manda
+a la Zebra y avisa al sistema que ya salieron.
+
+Nadie tiene que abrirlo ni tocarlo todos los dias. Se instala una vez, se
+prende solo con la PC, y trabaja todo el dia.
+
+
+LOS TRES COMANDOS (es todo lo que hay que saber)
+================================================
+
+    python setup.py                 Instala el agente
+    python setup.py estado          Muestra si esta funcionando
+    python setup.py desinstalar     Saca el arranque automatico
+
+Se escriben en el simbolo del sistema (CMD), parado en esta carpeta.
+
+
+INSTALACION (una sola vez)
+==========================
+
+PASO 1 - Tener Python en la PC
+   Si la PC no tiene Python, bajarlo de python.org
+   IMPORTANTE: al instalarlo, marcar la casilla "Add Python to PATH".
+   Si no se marca esa casilla, nada de esto funciona.
+
+PASO 2 - Copiar esta carpeta a la PC
+   Por ejemplo al Escritorio. Que quede completa, con todos los archivos.
+
+PASO 3 - Abrir el simbolo del sistema en esta carpeta
+   Abrir la carpeta en el explorador de Windows, hacer clic en la barra
+   de direcciones (arriba, donde dice la ruta), escribir cmd y Enter.
+   Se abre una ventana negra ya parada en esta carpeta.
+
+PASO 4 - Escribir:  python setup.py
+
+   Windows va a mostrar un cartel pidiendo permiso de administrador:
+   aceptar. Se abre una ventana nueva y el trabajo sigue ahi.
+   (El permiso hace falta para dejar el agente encendido con la PC.)
+
+   El instalador hace tres cosas y va avisando en pantalla:
+     1. Instala lo que falta (requests y pywin32).
+     2. Busca la impresora Zebra. Si encuentra varias, pregunta cual es:
+        escribir el numero y Enter.
+     3. Imprime una etiqueta de prueba.
+        Si la etiqueta sale: escribir "s" y Enter.
+        Si no sale: escribir "n" y revisar que la Zebra este prendida,
+        conectada y con etiquetas cargadas.
+
+   Cuando termina muestra "LISTO". Ahi ya quedo.
+
+PASO 5 - Reiniciar la PC una vez
+   Es la unica forma de comprobar que arranca solo de verdad.
+   Despues de reiniciar, escribir:  python setup.py estado
+   Tiene que decir OK en los dos primeros puntos.
+
+
+COMO FUNCIONA LO DE LAS 24 HORAS
+================================
+
+Hay tres seguros para que nunca se quede sin funcionar:
+
+1. ARRANQUE CON LA PC
+   Se registra una tarea en Windows que lo enciende apenas prende la
+   computadora, antes de que nadie inicie sesion.
+
+2. VIGILANTE CADA MINUTO
+   Windows intenta encenderlo una vez por minuto, todo el dia. Si el
+   agente se cayo por cualquier motivo, vuelve solo en menos de un minuto.
+   Nadie tiene que hacer nada.
+
+3. SEGURO CONTRA COPIAS
+   Como se intenta encender cada minuto, podrian quedar muchas copias
+   corriendo juntas e imprimir etiquetas repetidas. Para evitarlo, el
+   agente reserva un lugar en la PC al arrancar. Si ya hay uno
+   funcionando, la copia nueva se cierra sola de inmediato.
+
+Ademas, si al prender la PC todavia no hay internet, el agente NO se
+cierra: espera y reintenta hasta que la conexion aparece. Lo mismo si el
+internet se corta en mitad del turno.
+
+
+COMO SABER SI ESTA FUNCIONANDO
+==============================
+
+    python setup.py estado
+
+Muestra cuatro cosas:
+   [1] Si el arranque automatico esta instalado.
+   [2] Si el agente esta corriendo en este momento.
+   [3] Que impresora tiene configurada.
+   [4] Las ultimas 15 lineas del registro.
+
+En el registro, si aparece una linea "Agente vivo" con la hora de hace
+pocos minutos, esta todo bien. El agente deja esa senal cada 5 minutos.
+
+
+SI ALGO FALLA
+=============
+
+Primero:  python setup.py estado    y leer el punto [4].
+Ahi el agente escribe en castellano que fue lo que paso. Los mensajes
+mas comunes:
+
+  "401 No autorizado"
+      La clave del archivo config.json no coincide con la del servidor.
+      Hay que corregir "agent_key" en config.json.
+
+  "Servidor no disponible, reintento"
+      No hay internet o el sistema esta caido. El agente sigue esperando
+      solo, no hace falta tocar nada. Cuando vuelve la conexion, sigue.
+
+  "Error USB ... "
+      La impresora esta apagada, desconectada, sin etiquetas, o cambio
+      de nombre en Windows. Revisar la Zebra.
+
+  El registro no existe o esta viejo
+      El agente nunca arranco. Correr de nuevo:  python setup.py
+
+El registro completo queda en el archivo agente.log, en esta misma
+carpeta. Cuando pasa de 5 MB se guarda como agente.log.old y empieza uno
+nuevo, para que no llene el disco.
+
+
+QUE HAY EN ESTA CARPETA
+=======================
+  agente.py          El agente. Es el que imprime. No se toca.
+  setup.py           Instalador, estado y desinstalacion.
+  config.json        Servidor, clave e impresora. Se puede editar.
+  requirements.txt   Librerias que necesita (requests, pywin32).
+  LEEME.txt          Esta guia.
+  agente.log         Registro. Aparece solo, cuando el agente arranca.
+
+
+DATOS TECNICOS (para soporte)
+=============================
+  Servidor:        http://108.174.152.179:8081
+  Revisa cada:     10 segundos
+  Senal de vida:   cada 5 minutos
+  Registro:        agente.log (rota a los 5 MB)
+  Tareas Windows:  ZebraPrintAgentPython
+                   ZebraPrintAgentPython-Watchdog
+
+  Nota: el panel de administracion se abre por el puerto 80
+  (http://108.174.152.179) y la API del agente por el 8081. No se
+  intercambian: cada uno responde solo por su puerto.
+
+
+QUE ESTA PROBADO Y QUE FALTA PROBAR EN LA PC REAL
+=================================================
+Probado con ejecucion real, no solo leyendo el codigo:
+  - La logica de impresion es identica a la que ya funciono en la Zebra
+    real la vez pasada (se comparo archivo contra archivo).
+  - La clave y la conexion al servidor funcionan: se probo contra el
+    sistema en linea y responde correctamente.
+  - El seguro contra copias duplicadas funciona (probado con dos procesos
+    al mismo tiempo).
+  - El registro en archivo funciona (probado escribiendo y leyendo).
+
+Falta probar en la PC de la fabrica, porque esto se preparo en una Mac y
+no hay forma de simular Windows:
+  - Que encuentre la Zebra automaticamente en esa PC.
+  - Que la tarea de Windows arranque el agente al prender, en esa version
+    de Windows.
+  - Que el pedido de permiso de administrador se comporte bien ahi.
+
+Por eso el PASO 5 (reiniciar y revisar el estado) no es opcional: es la
+prueba de que quedo bien.
