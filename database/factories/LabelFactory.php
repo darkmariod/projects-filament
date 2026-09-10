@@ -23,6 +23,7 @@ class LabelFactory extends Factory
             'label_batch_id' => $labelBatch->id,
             'product_id' => $labelBatch->product_id,
             'serial' => strtoupper(fake()->unique()->bothify('SN-??-#####-V-########-#')),
+            'public_token' => strtoupper(fake()->unique()->bothify('??-????-????-????-????')),
             'sequence_number' => fake()->unique()->numberBetween(1, 99999999),
             'barcode' => fake()->unique()->ean13(),
             'qr_url' => fake()->url() . '/p/' . fake()->uuid(),

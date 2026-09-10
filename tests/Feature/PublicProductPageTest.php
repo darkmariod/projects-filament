@@ -22,7 +22,7 @@ class PublicProductPageTest extends TestCase
             'status' => 'available',
         ]);
 
-        $response = $this->get("/p/{$label->serial}");
+        $response = $this->get("/p/{$label->public_token}");
 
         $response->assertStatus(200);
         $response->assertSee($label->serial);
@@ -46,7 +46,7 @@ class PublicProductPageTest extends TestCase
             'serial' => '2605-CNCL-V-00000001-1',
         ]);
 
-        $response = $this->get("/p/{$label->serial}");
+        $response = $this->get("/p/{$label->public_token}");
 
         $response->assertStatus(200);
         $response->assertSee('Etiqueta anulada');
@@ -60,7 +60,7 @@ class PublicProductPageTest extends TestCase
 
         $label = $warranty->label;
 
-        $response = $this->get("/p/{$label->serial}");
+        $response = $this->get("/p/{$label->public_token}");
 
         $response->assertStatus(200);
         $response->assertSee('Garantía registrada');
@@ -72,7 +72,7 @@ class PublicProductPageTest extends TestCase
     {
         $label = Label::factory()->create();
 
-        $response = $this->get("/p/{$label->serial}");
+        $response = $this->get("/p/{$label->public_token}");
 
         $response->assertStatus(200);
         $response->assertSee($label->labelBatch->customer_batch_number);
@@ -84,9 +84,9 @@ class PublicProductPageTest extends TestCase
         $warranty = Warranty::factory()->create();
         $label = $warranty->label;
 
-        $response = $this->get("/garantia/{$label->serial}/registrar");
+        $response = $this->get("/garantia/{$label->public_token}/registrar");
 
-        $response->assertRedirect("/p/{$label->serial}");
+        $response->assertRedirect("/p/{$label->public_token}");
         $response->assertSessionHas('error', 'Esta garantía ya fue registrada.');
     }
 
@@ -97,9 +97,9 @@ class PublicProductPageTest extends TestCase
             'serial' => '2605-CNCL2-V-00000001-1',
         ]);
 
-        $response = $this->get("/garantia/{$label->serial}/registrar");
+        $response = $this->get("/garantia/{$label->public_token}/registrar");
 
-        $response->assertRedirect("/p/{$label->serial}");
+        $response->assertRedirect("/p/{$label->public_token}");
         $response->assertSessionHas('error', 'Esta etiqueta ha sido anulada.');
     }
 
@@ -111,7 +111,7 @@ class PublicProductPageTest extends TestCase
             'status' => 'available',
         ]);
 
-        $response = $this->get("/garantia/{$label->serial}/registrar");
+        $response = $this->get("/garantia/{$label->public_token}/registrar");
 
         $response->assertStatus(200);
         $response->assertSee('REGISTRO DE GARANTÍA');

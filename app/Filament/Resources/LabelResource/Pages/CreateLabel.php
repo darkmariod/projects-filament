@@ -39,14 +39,23 @@ class CreateLabel extends CreateRecord
             }
         }
 
-        // Auto-generar barcode desde el serial si está vacío
+        // El código de barras usa el SERIAL ÚNICO de cada etiqueta. Antes se copiaba
+        // $product->barcode, que era el mismo para todas las etiquetas del producto
+        // (código duplicado). Cada colchón debe tener su código único para validar.
         if (empty($data['barcode']) && !empty($data['serial'])) {
             $data['barcode'] = $data['serial'];
         }
 
-        // Si no se proveyó qr_url, auto-generarla desde el serial
-        if (empty($data['qr_url']) && !empty($data['serial'])) {
-            $data['qr_url'] = app(SerialGeneratorService::class)->buildQrUrl($data['serial']);
+        $service = app(SerialGeneratorService::class);
+
+        // Generar token público no adivinable si falta
+        if (empty($data['public_token'])) {
+            $data['public_token'] = $service->generatePublicToken();
+        }
+
+        // Si no se proveyó qr_url, auto-generarla desde el token (nuevo esquema seguro)
+        if (empty($data['qr_url']) && !empty($data['public_token'])) {
+            $data['qr_url'] = $service->buildPublicUrl($data['public_token']);
         }
 
         return $data;

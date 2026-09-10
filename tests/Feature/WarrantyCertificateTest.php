@@ -19,7 +19,7 @@ class WarrantyCertificateTest extends TestCase
         $warranty = Warranty::factory()->create();
         $label = $warranty->label;
 
-        $response = $this->get("/garantia/{$label->serial}/certificado");
+        $response = $this->get("/garantia/{$label->public_token}/certificado");
 
         $response->assertStatus(200);
         $response->assertSee($label->serial);
@@ -33,9 +33,9 @@ class WarrantyCertificateTest extends TestCase
             'status' => 'available',
         ]);
 
-        $response = $this->get("/garantia/{$label->serial}/certificado");
+        $response = $this->get("/garantia/{$label->public_token}/certificado");
 
-        $response->assertRedirect("/p/{$label->serial}");
+        $response->assertRedirect("/p/{$label->public_token}");
     }
 
     /** @test */
@@ -52,12 +52,12 @@ class WarrantyCertificateTest extends TestCase
         $warranty = Warranty::factory()->create();
         $label = $warranty->label;
 
-        $response = $this->get("/garantia/{$label->serial}/certificado?download=1");
+        $response = $this->get("/garantia/{$label->public_token}/certificado?download=1");
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringContainsString(
-            'certificado-garantia-' . $label->serial . '.pdf',
+            'certificado-garantia-' . $label->public_token . '.pdf',
             $response->headers->get('Content-Disposition') ?? ''
         );
     }
@@ -69,7 +69,7 @@ class WarrantyCertificateTest extends TestCase
         $label = $warranty->label;
         $customer = $warranty->customer;
 
-        $response = $this->get("/garantia/{$label->serial}/certificado");
+        $response = $this->get("/garantia/{$label->public_token}/certificado");
 
         $response->assertStatus(200);
         $response->assertSee($customer->first_name);
@@ -82,7 +82,7 @@ class WarrantyCertificateTest extends TestCase
         $warranty = Warranty::factory()->create();
         $label = $warranty->label;
 
-        $response = $this->get("/garantia/{$label->serial}/certificado");
+        $response = $this->get("/garantia/{$label->public_token}/certificado");
 
         $response->assertStatus(200);
         $response->assertSee('download');

@@ -31,6 +31,7 @@ class Label extends Model
         'label_batch_id',
         'product_id',
         'serial',
+        'public_token',
         'sequence_number',
         'barcode',
         'qr_url',

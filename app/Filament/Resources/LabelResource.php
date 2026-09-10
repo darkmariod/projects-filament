@@ -32,6 +32,7 @@ class LabelResource extends Resource
     protected static ?string $pluralModelLabel = 'Etiquetas';
     protected static string|\UnitEnum|null $navigationGroup = 'Etiquetas';
     protected static ?int $navigationSort = 3;
+
     // Las etiquetas se consultan dentro de cada lote (LabelsRelationManager),
     // por eso el módulo duplicado se oculta del menú.
     protected static bool $shouldRegisterNavigation = false;
@@ -109,7 +110,7 @@ class LabelResource extends Resource
                     ->label('QR')
                     ->size(64)
                     ->square()
-                    ->getStateUsing(fn (Label $record): string => route('public.qr.image', $record->serial))
+                    ->getStateUsing(fn (Label $record): string => route('public.qr.image', $record->public_token))
                     ->url(fn (Label $record): string => $record->qr_url)
                     ->openUrlInNewTab(),
 

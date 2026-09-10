@@ -13,9 +13,9 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PublicController extends Controller
 {
-    public function qrImage(string $serial)
+    public function qrImage(string $token)
     {
-        $label = Label::where('serial', $serial)->firstOrFail();
+        $label = Label::where('public_token', $token)->firstOrFail();
 
         $qrSvg = QrCode::format('svg')
             ->size(250)
@@ -26,9 +26,9 @@ class PublicController extends Controller
             ->header('Cache-Control', 'public, max-age=86400');
     }
 
-    public function product(string $serial)
+    public function product(string $token)
     {
-        $label = Label::where('serial', $serial)
+        $label = Label::where('public_token', $token)
             ->with([
                 'product.productModel.category',
                 'product.technicalComposition',
@@ -40,44 +40,47 @@ class PublicController extends Controller
         return view('public.product', compact('label'));
     }
 
-    public function warrantyForm(string $serial)
+    public function warrantyForm(string $token)
     {
-        $label = Label::where('serial', $serial)
+        $label = Label::where('public_token', $token)
             ->with(['product.productModel', 'labelBatch'])
             ->firstOrFail();
 
         if ($label->status === 'registered') {
-            return redirect()->route('public.product', $serial)
+            return redirect()->route('public.product', $label->public_token)
                 ->with('error', 'Esta garantía ya fue registrada.');
         }
 
         if ($label->status === 'anulled') {
-            return redirect()->route('public.product', $serial)
+            return redirect()->route('public.product', $label->public_token)
                 ->with('error', 'Esta etiqueta ha sido anulada.');
         }
 
         return view('public.warranty-form', compact('label'));
     }
 
-    public function warrantyStore(Request $request, string $serial)
+    public function warrantyStore(Request $request, string $token)
     {
-        $label = Label::where('serial', $serial)
+        $label = Label::where('public_token', $token)
             ->with(['product.productModel'])
             ->firstOrFail();
 
         if ($label->status === 'registered') {
-            return redirect()->route('public.product', $serial)
+            return redirect()->route('public.product', $label->public_token)
                 ->with('error', 'Esta garantía ya fue registrada.');
         }
 
         if ($label->status === 'anulled') {
-            return redirect()->route('public.product', $serial)
+            return redirect()->route('public.product', $label->public_token)
                 ->with('error', 'Esta etiqueta ha sido anulada.');
         }
 
-        // The form does not collect a purchase date: registration always happens
-        // on the day of purchase, so it is set here before validation.
-        $request->merge(['purchase_date' => now()->toDateString()]);
+        // The public form does not collect a purchase date: registration always
+        // happens on the day of purchase, so default it here before validation
+        // unless the caller already provided one.
+        if (! $request->filled('purchase_date')) {
+            $request->merge(['purchase_date' => now()->toDateString()]);
+        }
 
         $request->validate([
             'first_name'       => 'required|string|max:100',
@@ -164,12 +167,12 @@ class PublicController extends Controller
             ]);
         });
 
-        return redirect()->route('public.warranty.certificate', $serial);
+        return redirect()->route('public.warranty.certificate', $label->public_token);
     }
 
-    public function warrantyCertificate(string $serial)
+    public function warrantyCertificate(string $token)
     {
-        $label = Label::where('serial', $serial)
+        $label = Label::where('public_token', $token)
             ->with([
                 'product.productModel',
                 'product.technicalComposition',
@@ -179,14 +182,14 @@ class PublicController extends Controller
             ->firstOrFail();
 
         if (!$label->warranty) {
-            return redirect()->route('public.product', $serial);
+            return redirect()->route('public.product', $label->public_token);
         }
 
         if (request()->query('download') === '1') {
             $pdf = Pdf::loadView('public.certificate-pdf', compact('label'))
                 ->setPaper('a4', 'portrait');
 
-            return $pdf->download('certificado-garantia-' . $serial . '.pdf');
+            return $pdf->download('certificado-garantia-' . $label->public_token . '.pdf');
         }
 
         return view('public.warranty-confirm', compact('label'));
