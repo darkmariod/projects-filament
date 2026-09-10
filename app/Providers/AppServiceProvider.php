@@ -42,5 +42,14 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('warranty-register', function (Request $request) {
             return Limit::perMinute(3)->by($request->ip());
         });
+
+        // Consultas públicas de etiqueta. El token es de 20 caracteres sobre un
+        // alfabeto de 32, así que adivinarlo es inviable; este límite existe
+        // para que nadie pueda barrer el sistema a ciegas ni saturarlo con
+        // millones de intentos. Un cliente que escanea el QR de su colchón hace
+        // una consulta, no sesenta.
+        RateLimiter::for('public-label', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip());
+        });
     }
 }
