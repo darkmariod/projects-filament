@@ -23,7 +23,7 @@ class LabelLogResource extends Resource
     protected static ?string $modelLabel = 'Registro';
     protected static ?string $pluralModelLabel = 'Bitácora de etiquetas';
     protected static string|\UnitEnum|null $navigationGroup = 'Etiquetas';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     public static function canAccess(): bool
     {
@@ -74,6 +74,38 @@ class LabelLogResource extends Resource
                     ->searchable()
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('action')
+                    ->label('Acción')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'generated'         => 'info',
+                        'printed'           => 'success',
+                        'printed_network'   => 'success',
+                        'printed_queue'     => 'success',
+                        'anulled'           => 'danger',
+                        'registrar_garantia' => 'warning',
+                        'print_queue_created',
+                        'agent_queue_created' => 'info',
+                        'agent_print_completed' => 'success',
+                        default             => 'gray',
+                    })
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                        'generated'          => 'Lote generado',
+                        'printed'            => 'Marcado como impreso',
+                        'printed_network'    => 'Impreso por red',
+                        'printed_queue'      => 'Impreso por cola',
+                        'anulled'            => 'Anulado',
+                        'registrar_garantia' => 'Garantía registrada',
+                        // Sin estas tres, la bitácora mostraba el código interno
+                        // en crudo: "print_queue_created", "agent_queue_created".
+                        'print_queue_created'   => 'Cola de impresión creada',
+                        'agent_queue_created'   => 'Enviado al agente',
+                        'agent_print_completed' => 'Impresión terminada',
+                        default              => $state,
+                    })
+                    ->searchable()
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('description')
                     ->label('Descripción')
                     ->limit(80)
@@ -85,6 +117,10 @@ class LabelLogResource extends Resource
                     ->sortable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('action')
+                    ->label('Acción')
+                    ->options(fn(): array => LabelLog::distinct()->pluck('action', 'action')->toArray()),
+
                 Tables\Filters\SelectFilter::make('user_id')
                     ->label('Usuario')
                     ->relationship('user', 'name'),
