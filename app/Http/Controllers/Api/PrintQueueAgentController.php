@@ -23,8 +23,12 @@ class PrintQueueAgentController extends Controller
      */
     public function pending(): JsonResponse
     {
-        // Buscar colas USB en estado pending o partial
-        $queues = PrintQueue::whereIn('status', ['pending', 'partial'])
+        // Se incluye 'processing' para que el agente pueda RETOMAR un lote que
+        // quedo a medias: si se corta la red, se reinicia la PC o el vigilante
+        // relanza el agente, la cola queda en 'processing' y sin esto no vuelve
+        // a ser visible nunca — sus etiquetas quedan sin imprimir para siempre.
+        // 'paused' queda fuera a proposito: esa se detuvo por decision de alguien.
+        $queues = PrintQueue::whereIn('status', ['pending', 'partial', 'processing'])
             ->where('connection_type', 'usb')
             ->whereNotNull('printer_name')
             ->with(['items' => function ($q) {
