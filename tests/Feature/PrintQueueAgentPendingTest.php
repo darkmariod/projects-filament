@@ -117,4 +117,49 @@ class PrintQueueAgentPendingTest extends TestCase
 
         $this->getJson(self::ENDPOINT)->assertUnauthorized();
     }
+
+    /**
+     * Retomar una cola implica que el agente puede avisar dos veces por la misma
+     * etiqueta: si se corta justo despues de imprimirla, al volver la recibe de
+     * nuevo. Contar los dos avisos deja lotes que dicen haber impreso mas
+     * etiquetas de las que tienen.
+     *
+     * @test
+     */
+    public function reporting_the_same_label_twice_counts_it_once(): void
+    {
+        $queue = $this->crearCola('processing', pendientes: 3);
+        $item  = $queue->items()->first();
+        $url   = "/api/agent/{$queue->id}/item/{$item->id}/complete";
+
+        $this->withHeaders($this->headers())->postJson($url)->assertOk();
+        $this->withHeaders($this->headers())->postJson($url)->assertOk();
+
+        $this->assertSame(
+            1,
+            $queue->fresh()->printed_labels,
+            'Dos avisos de la misma etiqueta se cuentan una sola vez'
+        );
+    }
+
+    /** @test */
+    public function the_printed_count_never_exceeds_the_size_of_the_batch(): void
+    {
+        $queue = $this->crearCola('processing', pendientes: 2);
+
+        foreach ($queue->items as $item) {
+            $url = "/api/agent/{$queue->id}/item/{$item->id}/complete";
+            $this->withHeaders($this->headers())->postJson($url);
+            $this->withHeaders($this->headers())->postJson($url);
+            $this->withHeaders($this->headers())->postJson($url);
+        }
+
+        $queue->refresh();
+
+        $this->assertLessThanOrEqual(
+            $queue->total_labels,
+            $queue->printed_labels,
+            'Un lote no puede reportar mas impresas que su propio total'
+        );
+    }
 }

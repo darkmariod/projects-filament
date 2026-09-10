@@ -101,6 +101,11 @@ class PrintQueueAgentController extends Controller
         $item = PrintQueueItem::where('print_queue_id', $queueId)
             ->findOrFail($itemId);
 
+        // El agente puede reportar dos veces la misma etiqueta: si se corta
+        // justo despues de imprimir, al retomar la cola vuelve a mandarla. Solo
+        // se cuenta el primer aviso, o el total impreso supera al del lote.
+        $yaEstabaImpreso = $item->status === 'printed';
+
         $item->markAsPrinted();
 
         // Actualizar label
@@ -111,7 +116,9 @@ class PrintQueueAgentController extends Controller
             ]);
         }
 
-        $item->printQueue->increment('printed_labels');
+        if (! $yaEstabaImpreso) {
+            $item->printQueue->increment('printed_labels');
+        }
 
         Log::info('PrintAgent: item completado', [
             'queue_id' => $queueId,
