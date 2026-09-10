@@ -161,10 +161,12 @@ class ImageToZplConverter
                 $rowBits .= str_repeat('1', 8 - $remainder);
             }
 
-            // Convert 8-bit groups to hex
+            // Convert 8-bit groups to hex. Cada byte SIEMPRE ocupa dos digitos:
+            // dechex(0) devuelve "0", y sin el relleno los bytes menores a 16
+            // aportan un solo caracter y desplazan toda la imagen.
             for ($i = 0; $i < strlen($rowBits); $i += 8) {
                 $byte = substr($rowBits, $i, 8);
-                $hex .= dechex(bindec($byte));
+                $hex .= str_pad(dechex(bindec($byte)), 2, '0', STR_PAD_LEFT);
             }
         }
 
@@ -179,7 +181,10 @@ class ImageToZplConverter
         $rowBytes   = (int) ceil($width / 8);
         $totalBytes = $rowBytes * $height;
 
-        return "^GFA,{$totalBytes},{$totalBytes},{$height},{$hexData}";
+        // El tercer parametro de ^GFA es bytes POR FILA, no la altura. Enviar la
+        // altura hace que la impresora reinterprete el ancho del grafico: una
+        // imagen de 288x120 se dibuja como 960x36 y se sale de la etiqueta.
+        return "^GFA,{$totalBytes},{$totalBytes},{$rowBytes},{$hexData}";
     }
 
     /**
