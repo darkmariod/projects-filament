@@ -1,7 +1,7 @@
 # Contexto del proyecto — Sistema de Garantías, Productos Paraíso
 
 > Pegá este archivo al inicio de una sesión nueva para retomar el trabajo sin
-> volver a explicar nada. Última actualización: 10 de septiembre de 2026.
+> volver a explicar nada. Última actualización: 11 de septiembre de 2026.
 
 ---
 
@@ -80,7 +80,7 @@ Archivos: `SerialGeneratorService::generatePublicToken()`, `PublicController`,
 `routes/web.php`, migración `2026_09_03_000001_add_public_token_to_labels_table`.
 Pruebas: `tests/Feature/PublicTokenSecurityTest.php`.
 
-### Tarea 2 — Etiquetas generadas que no se produjeron `A MEDIAS`
+### Tarea 2 — Etiquetas generadas que no se produjeron `RESUELTO`
 
 Escenario que describió el cliente: se planifica un lote de 100, se fabrican 70
 porque entró una producción urgente, y las 30 restantes se retoman el lunes con
@@ -93,9 +93,10 @@ día que se retome.
 etiquetas → abrir el lote → pestaña de etiquetas*, y en la demo se buscó dentro
 de la Bitácora, que es solo de consulta. Fue confusión de ubicación.
 
-**Lo que falta:** un lote de 100 con 30 anuladas todavía figura como «100
-fabricadas» en el tablero y en el Excel. Hay que distinguir planificadas de
-producidas de verdad.
+**Resuelto el 11 de septiembre.** El listado de lotes muestra Planificadas,
+Producidas e Impresas —con las anuladas como nota al pie—, el Excel lleva las
+mismas columnas, y el tablero cuenta solo lo que se fabricó. Un lote de 100 con
+30 anuladas dice ahora «70», no «100».
 
 ### Tarea 3 — Que la impresión arranque sola con la computadora `ENTREGADO`
 
@@ -166,19 +167,25 @@ Ninguno daba error en pantalla. Todos hacían mal las cosas en silencio.
 ```
 Panel → Lotes de Etiquetas → "Imprimir en Zebra"
   → PrintQueueService arma la cola y congela el ZPL de cada etiqueta
-    → el agente consulta GET /api/agent/pending cada 10 segundos
-      → imprime por win32print
-        → POST /api/agent/{cola}/item/{item}/complete   (una por etiqueta)
-        → POST /api/agent/{cola}/complete
+    → el agente consulta GET /api/agent/pending?limit=50 cada 10 segundos
+      → imprime por win32print, de a tandas de 50
+        → POST /api/agent/{cola}/items/complete   (las 50 en una petición)
+        → si quedan más, vuelve a pedir enseguida
+        → POST /api/agent/{cola}/complete   (cuando ya no queda nada)
 ```
+
+El agente que está instalado en la planta todavía usa el esquema anterior —sin
+`?limit` y avisando una por una— y sigue funcionando: el servidor atiende a los
+dos.
 
 **El ZPL se congela al armar la cola.** Reimprimir un lote viejo saca el formato
 que tenía ese día, no el actual. Para probar un cambio hay que crear un lote
 nuevo.
 
-**El cuello de botella es el reporte, no la impresión.** El agente confirma una
-etiqueta por petición: mil etiquetas son unos veinte minutos solo de
-confirmaciones. Medido contra el servidor:
+**El cuello de botella era el reporte, no la impresión.** Con el esquema
+anterior el agente confirmaba una etiqueta por petición: mil etiquetas eran unos
+veinte minutos solo de avisos. Con tandas de 50 son veinte peticiones. Medido
+contra el servidor con el esquema anterior:
 
 | Paso | Tiempo |
 |---|---|
@@ -187,9 +194,9 @@ confirmaciones. Medido contra el servidor:
 | Peso del envío | 11,7 MB |
 | Confirmar las 1000 | ~20 min |
 
-El endpoint `pending` **no tiene paginación**: devuelve todos los ítems de todas
-las colas pendientes juntos. Y solo atiende colas de tipo `usb`; una cola creada
-como `network` no la ve nunca.
+El endpoint `pending` acepta `?limit=N`; sin él devuelve todos los ítems de
+todas las colas pendientes juntos. Solo atiende colas de tipo `usb`; una cola
+creada como `network` no la ve nunca.
 
 ---
 
@@ -228,7 +235,7 @@ que solo tenía el repositorio, y lo detectó una prueba.
 **Antes de tocar la base, respaldo.** Los respaldos van en
 `/root/backups-garantias/`.
 
-**Las pruebas se corren antes y después.** Línea base actual: **236 pasan**. Una
+**Las pruebas se corren antes y después.** Línea base actual: **244 pasan**. Una
 prueba que no falla cuando se revierte el arreglo no sirve — verificarlo siempre.
 
 ### Despliegue
