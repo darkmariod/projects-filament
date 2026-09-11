@@ -12,7 +12,10 @@ services:
       dockerfile: Dockerfile
     container_name: garantias-app
     ports:
-      - "8081:80"
+      # Sin proxy delante, poner APP_PORT=80 en .env y todo -panel y agente-
+      # responde por el mismo puerto. El 8081 queda como valor por defecto
+      # para el servidor actual, que tiene Traefik en el 80.
+      - "${APP_PORT:-8081}:80"
     env_file:
       - .env
     environment:

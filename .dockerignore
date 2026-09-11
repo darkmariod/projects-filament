@@ -1,0 +1,37 @@
+# Lo que no debe entrar en la imagen. El Dockerfile hace COPY . . dos veces:
+# sin esta lista se hornean las claves del .env, el historial de git completo
+# y cualquier vendor/ o node_modules/ local, que ademas pueden chocar con los
+# que se instalan dentro de la imagen.
+
+.env
+.env.*
+!.env.example
+
+.git
+.gitignore
+.gitattributes
+
+vendor
+node_modules
+public/build
+public/hot
+
+storage/app/public/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+
+tests
+phpunit.xml
+.phpunit.result.cache
+
+scripts
+docs
+*.md
+*.pdf
+
+.idea
+.vscode
+.DS_Store
+._*
