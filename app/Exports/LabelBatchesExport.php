@@ -30,7 +30,9 @@ class LabelBatchesExport implements
         $query = LabelBatch::with([
             'product.productModel',
             'generatedBy',
-        ])->orderBy('created_at', 'desc');
+        ])
+            ->withCount(['producedLabels', 'anulledLabels', 'printedLabels'])
+            ->orderBy('created_at', 'desc');
 
         if (!empty($this->filters['status'])) {
             $query->where('status', $this->filters['status']);
@@ -56,7 +58,10 @@ class LabelBatchesExport implements
         return [
             'Código interno',
             'Producto',
-            'Cantidad',
+            'Planificadas',
+            'Producidas',
+            'Anuladas',
+            'Impresas',
             'Número lote cliente',
             'Operador',
             'Generado por',
@@ -72,6 +77,9 @@ class LabelBatchesExport implements
             $batch->internal_batch_code ?? '',
             $batch->product?->name ?? '',
             $batch->quantity ?? 0,
+            $batch->produced_labels_count ?? 0,
+            $batch->anulled_labels_count ?? 0,
+            $batch->printed_labels_count ?? 0,
             $batch->customer_batch_number ?? '',
             $batch->operator ?? '',
             $batch->generatedBy?->name ?? '',

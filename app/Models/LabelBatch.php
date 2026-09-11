@@ -150,6 +150,26 @@ class LabelBatch extends Model
         return $this->hasMany(Label::class);
     }
 
+    /**
+     * Etiquetas que llegaron a producción. Un lote de 100 con 30 anuladas
+     * antes de imprimirse produjo 70, no 100: `quantity` es lo planificado y
+     * esta relación es lo que de verdad se fabricó.
+     */
+    public function producedLabels(): HasMany
+    {
+        return $this->labels()->where('status', '!=', 'anulled');
+    }
+
+    public function anulledLabels(): HasMany
+    {
+        return $this->labels()->where('status', 'anulled');
+    }
+
+    public function printedLabels(): HasMany
+    {
+        return $this->labels()->whereIn('status', ['printed', 'registered']);
+    }
+
     public function logs(): HasMany
     {
         return $this->hasMany(LabelLog::class);

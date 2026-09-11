@@ -72,6 +72,24 @@ class DashboardWidgetsIntegrationTest extends TestCase
         ]);
     }
 
+    /**
+     * Lo que pidió el cliente: un lote de 100 con 30 anuladas antes de
+     * imprimirse no puede figurar en el tablero como 100 fabricadas.
+     *
+     * @test
+     */
+    public function stats_overview_does_not_count_anulled_labels_as_produced(): void
+    {
+        $user  = User::factory()->create();
+        $batch = $this->createBatch($this->realProduct, $user, 10, now());
+        $batch->labels()->take(3)->get()->each->update(['status' => 'anulled']);
+
+        Livewire::test(DashboardStatsOverview::class)
+            ->assertSee('Etiquetas Producidas')
+            ->assertSee('7')
+            ->assertSee('3 anuladas');
+    }
+
     /** @test */
     public function stats_overview_shows_correct_counts_with_seeded_data(): void
     {
@@ -101,7 +119,7 @@ class DashboardWidgetsIntegrationTest extends TestCase
         $this->createBatch($this->realProduct, $user, 1, now());
 
         Livewire::test(DashboardStatsOverview::class)
-            ->assertSee('Total Etiquetas')
+            ->assertSee('Etiquetas Producidas')
             ->assertSee('4') // 3 + 1 labels
             ->assertSee('Garantías Activas')
             ->assertSee('2') // 2 active warranties

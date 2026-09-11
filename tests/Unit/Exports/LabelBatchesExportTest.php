@@ -29,7 +29,10 @@ class LabelBatchesExportTest extends TestCase
         $expectedHeadings = [
             'Código interno',
             'Producto',
-            'Cantidad',
+            'Planificadas',
+            'Producidas',
+            'Anuladas',
+            'Impresas',
             'Número lote cliente',
             'Operador',
             'Generado por',
@@ -39,7 +42,7 @@ class LabelBatchesExportTest extends TestCase
         ];
 
         $this->assertSame($expectedHeadings, $headings);
-        $this->assertCount(9, $headings);
+        $this->assertCount(12, $headings);
     }
 
     /** @test */
@@ -63,14 +66,35 @@ class LabelBatchesExportTest extends TestCase
 
         $this->assertCount(1, $collection);
 
-        $mapped = $export->map($batch);
+        $mapped = $export->map($collection->first());
 
         $this->assertSame($batch->internal_batch_code, $mapped[0]);
         $this->assertSame($batch->product->name, $mapped[1]);
         $this->assertSame(3, $mapped[2]);
-        $this->assertSame($batch->customer_batch_number, $mapped[3]);
-        $this->assertSame($batch->operator, $mapped[4]);
-        $this->assertSame('Generado', $mapped[8]);
+        $this->assertSame($batch->customer_batch_number, $mapped[6]);
+        $this->assertSame($batch->operator, $mapped[7]);
+        $this->assertSame('Generado', $mapped[11]);
+    }
+
+    /**
+     * Lo que pidió el cliente: un lote de 100 con 30 anuladas antes de
+     * imprimirse produjo 70, y el Excel tiene que decirlo. Antes solo salía
+     * la cantidad planificada y todo el lote figuraba como fabricado.
+     *
+     * @test
+     */
+    public function export_tells_planned_apart_from_actually_produced(): void
+    {
+        $batch = $this->createBatch(10);
+        $batch->labels()->take(3)->get()->each->update(['status' => 'anulled']);
+        $batch->labels()->where('status', '!=', 'anulled')->take(4)->get()->each->update(['status' => 'printed']);
+
+        $mapped = (new LabelBatchesExport())->map((new LabelBatchesExport())->collection()->first());
+
+        $this->assertSame(10, $mapped[2], 'Planificadas');
+        $this->assertSame(7,  $mapped[3], 'Producidas: las 10 menos las 3 anuladas');
+        $this->assertSame(3,  $mapped[4], 'Anuladas');
+        $this->assertSame(4,  $mapped[5], 'Impresas');
     }
 
     /** @test */
@@ -93,19 +117,19 @@ class LabelBatchesExportTest extends TestCase
 
         $batch = $this->createBatch(1);
         $generated = $export->map($batch);
-        $this->assertStringContainsString('Generado', $generated[8]);
+        $this->assertStringContainsString('Generado', $generated[11]);
 
         $batch->update(['status' => 'active']);
         $active = $export->map($batch->fresh());
-        $this->assertStringContainsString('Activo', $active[8]);
+        $this->assertStringContainsString('Activo', $active[11]);
 
         $batch->update(['status' => 'printed']);
         $printed = $export->map($batch->fresh());
-        $this->assertStringContainsString('Impreso', $printed[8]);
+        $this->assertStringContainsString('Impreso', $printed[11]);
 
         $batch->update(['status' => 'anulled']);
         $anulled = $export->map($batch->fresh());
-        $this->assertStringContainsString('Anulado', $anulled[8]);
+        $this->assertStringContainsString('Anulado', $anulled[11]);
     }
 
     /** @test */
@@ -141,8 +165,8 @@ class LabelBatchesExportTest extends TestCase
 
         $mapped = $export->map($batch);
 
-        $this->assertSame($batch->customer_batch_number, $mapped[3]);
-        $this->assertNotEmpty($mapped[3]);
+        $this->assertSame($batch->customer_batch_number, $mapped[6]);
+        $this->assertNotEmpty($mapped[6]);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

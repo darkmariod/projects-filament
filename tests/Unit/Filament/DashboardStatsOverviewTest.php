@@ -24,7 +24,7 @@ class DashboardStatsOverviewTest extends TestCase
     public function it_displays_four_stat_cards_with_labels(): void
     {
         Livewire::test(DashboardStatsOverview::class)
-            ->assertSee('Total Etiquetas')
+            ->assertSee('Etiquetas Producidas')
             ->assertSee('Garantías Activas')
             ->assertSee('Lotes Este Mes')
             ->assertSee('Productos');
@@ -34,7 +34,7 @@ class DashboardStatsOverviewTest extends TestCase
     public function it_shows_zero_when_database_is_empty(): void
     {
         Livewire::test(DashboardStatsOverview::class)
-            ->assertSee('Total Etiquetas')
+            ->assertSee('Etiquetas Producidas')
             ->assertSee('0');
     }
 

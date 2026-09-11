@@ -8,6 +8,7 @@ use App\Filament\Resources\LabelBatchResource\RelationManagers\LabelsRelationMan
 use App\Models\LabelBatch;
 use App\Models\LabelLog;
 use App\Models\PrintQueue;
+use Illuminate\Database\Eloquent\Builder;
 use App\Models\Product;
 use App\Models\ZebraPrintSetting;
 use App\Services\LabelPdfService;
@@ -181,6 +182,13 @@ class LabelBatchResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            // Los contadores van en la misma consulta: sin esto cada fila
+            // dispararía tres consultas más y el listado se arrastraría.
+            ->modifyQueryUsing(fn (Builder $query) => $query->withCount([
+                'producedLabels',
+                'anulledLabels',
+                'printedLabels',
+            ]))
             ->columns([
                 Tables\Columns\TextColumn::make('internal_batch_code')
                     ->label('Código interno')
@@ -195,9 +203,32 @@ class LabelBatchResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('quantity')
-                    ->label('Cantidad')
+                    ->label('Planificadas')
                     ->sortable()
                     ->alignment('right'),
+
+                // Lo que se fabricó de verdad. Un lote de 100 con 30 anuladas
+                // antes de imprimirse muestra "70", no "100".
+                Tables\Columns\TextColumn::make('produced_labels_count')
+                    ->label('Producidas')
+                    ->sortable()
+                    ->alignment('right')
+                    ->weight('bold')
+                    ->color(fn (LabelBatch $record): string => match (true) {
+                        $record->produced_labels_count < $record->quantity => 'warning',
+                        default => 'success',
+                    })
+                    ->description(fn (LabelBatch $record): ?string =>
+                        $record->anulled_labels_count > 0
+                            ? "{$record->anulled_labels_count} anuladas"
+                            : null
+                    ),
+
+                Tables\Columns\TextColumn::make('printed_labels_count')
+                    ->label('Impresas')
+                    ->sortable()
+                    ->alignment('right')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('operator')
                     ->label('Operador')

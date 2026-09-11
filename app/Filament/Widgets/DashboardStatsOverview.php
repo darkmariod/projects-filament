@@ -14,8 +14,9 @@ class DashboardStatsOverview extends StatsOverviewWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Total Etiquetas', Label::count())
-                ->description('Etiquetas registradas')
+            // Las anuladas no se fabricaron: contarlas inflaría la producción.
+            Stat::make('Etiquetas Producidas', Label::where('status', '!=', 'anulled')->count())
+                ->description(Label::where('status', 'anulled')->count() . ' anuladas')
                 ->descriptionIcon('heroicon-m-tag')
                 ->color('info'),
 
