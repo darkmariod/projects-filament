@@ -18,6 +18,7 @@ services:
     environment:
       DB_HOST: garantias-mysql
       DB_USERNAME: garantias_user
+      TZ: ${TZ:-America/Guayaquil}
     networks:
       default:
     depends_on:
@@ -50,6 +51,10 @@ services:
       - --queue=default,print,emails
     env_file:
       - .env
+    environment:
+      DB_HOST: garantias-mysql
+      DB_USERNAME: garantias_user
+      TZ: ${TZ:-America/Guayaquil}
     depends_on:
       mysql:
         condition: service_healthy
@@ -68,6 +73,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_changeme}
       MYSQL_USER: garantias_user
       MYSQL_PASSWORD: ${DB_PASSWORD:-changeme_in_production}
+      TZ: ${TZ:-America/Guayaquil}
     ports:
       - "127.0.0.1:3307:3306"
     networks:

@@ -193,13 +193,27 @@ como `network` no la ve nunca.
 
 ---
 
+## Lo que se cerró el 11 de septiembre
+
+1. **Planificadas contra producidas** — el listado de lotes, el Excel y el
+   tablero distinguen ahora lo planificado de lo que se fabricó. Tarea 2
+   completa.
+2. **Tandas en `pending`** — `?limit=N` opcional; sin él devuelve todo como
+   siempre, así el agente viejo sigue funcionando.
+3. **Reporte en bloque** — `POST /api/agent/{cola}/items/complete` con una
+   lista de ítems. El agente pide y reporta de a 50: mil etiquetas pasan de
+   veinte minutos de avisos a veinte peticiones. Probado con el agente real
+   contra producción.
+4. **Despliegue en servidor nuevo** — guía completa en `DESPLIEGUE.md`,
+   incluido el contenido del `.env`. El `db:seed` genérico carga datos de
+   demostración: usar siempre `--class=RolesAndPermissionsSeeder`.
+
 ## Lo que falta
 
-1. **Reporte de planificadas contra producidas** — lo que queda de la Tarea 2.
-2. **Paginar el endpoint `pending`** — hoy manda 11,7 MB de una vez.
-3. **Reportar en bloque** — una petición por etiqueta es lo que hace que mil
-   tarden veinte minutos.
-4. **Preparar el despliegue en el servidor del cliente.**
+- **Actualizar el agente en la planta** con la versión que pide por tandas.
+  El que está instalado funciona, pero sigue reportando una por una.
+- **Un dominio y HTTPS** para el servidor del cliente. Hoy todo va por HTTP
+  con IP pelada.
 
 ---
 
