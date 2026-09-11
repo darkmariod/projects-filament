@@ -23,7 +23,7 @@ Volumen real: **más de mil etiquetas diarias**.
 | Clave del agente | `zebra-agent-key-2026` (cabecera `X-Agent-Key`) |
 | Servidor | `ssh -p 22022 root@108.174.152.179` |
 | Carpeta de despliegue | `/opt/sistema-garantias` (no es un clon de git) |
-| Repositorio | `github.com:darkmariod/projects-filament` rama `master` |
+| Repositorio | `github.com:darkmariod/projects-filament` rama `master` (la por defecto; `main` quedó en julio y divergió, no usarla) |
 
 **Los puertos no son intercambiables.** El panel solo responde por el 80 y la
 API del agente solo por el 8081. Entrar al panel por el 8081 hace que el ingreso
@@ -211,16 +211,27 @@ creada como `network` no la ve nunca.
    lista de ítems. El agente pide y reporta de a 50: mil etiquetas pasan de
    veinte minutos de avisos a veinte peticiones. Probado con el agente real
    contra producción.
-4. **Despliegue en servidor nuevo** — guía completa en `DESPLIEGUE.md`,
-   incluido el contenido del `.env`. El `db:seed` genérico carga datos de
-   demostración: usar siempre `--class=RolesAndPermissionsSeeder`.
+4. **Despliegue en servidor nuevo** — `instalar.sh` en la raíz: un solo
+   script que pregunta dirección, puerto y zona horaria, y deja todo
+   funcionando. Probado construyendo desde un clon limpio. Guía en
+   `DESPLIEGUE.md`. El `db:seed` genérico carga datos de demostración:
+   usar siempre `--class=RolesAndPermissionsSeeder`.
 
 ## Lo que falta
 
 - **Actualizar el agente en la planta** con la versión que pide por tandas.
   El que está instalado funciona, pero sigue reportando una por una.
 - **Un dominio y HTTPS** para el servidor del cliente. Hoy todo va por HTTP
-  con IP pelada.
+  con IP pelada. El instalador deja el 80 abierto; para HTTPS hace falta un
+  proxy delante (Caddy es el más simple: dos líneas de configuración y
+  certificado automático).
+
+## Sobre el servidor actual vs uno nuevo
+
+En el servidor actual el panel va por el **80** y la API del agente por el
+**8081** porque hay un Traefik ocupando el 80. En un servidor limpio no hace
+falta ese enredo: `APP_PORT=80` en `.env` y todo responde por la misma puerta.
+El instalador lo deja así por defecto.
 
 ---
 
