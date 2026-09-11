@@ -28,7 +28,7 @@ class LabelsRelationManager extends RelationManager
             ->columns([
                 ImageColumn::make('qr')
                     ->label('QR')
-                    ->getStateUsing(fn (Label $record): string => route('public.qr.image', $record->serial))
+                    ->getStateUsing(fn (Label $record): string => route('public.qr.image', $record->public_token))
                     ->size(56),
 
                 TextColumn::make('serial')
