@@ -112,10 +112,10 @@
         </div>
 
         <div class="actions">
-            <a href="{{ route('public.warranty.certificate', $label->serial) . '?download=1' }}" class="btn btn-success">
+            <a href="{{ route('public.warranty.certificate', $label->public_token) . '?download=1' }}" class="btn btn-success">
                 Descargar certificado PDF
             </a>
-            <a href="{{ route('public.product', $label->serial) }}" class="btn btn-outline">
+            <a href="{{ route('public.product', $label->public_token) }}" class="btn btn-outline">
                 Ver producto
             </a>
         </div>

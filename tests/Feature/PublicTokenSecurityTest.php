@@ -95,6 +95,48 @@ class PublicTokenSecurityTest extends TestCase
         $this->assertStringNotContainsString($label->serial, $label->qr_url);
     }
 
+    /**
+     * Las pruebas anteriores golpean las URLs directo. Esta sigue los enlaces
+     * que la página realmente le muestra al cliente: si una vista arma un enlace
+     * con el serial en vez del token, el botón "Registrar garantía" da 404 y
+     * nadie puede registrar nada — y ninguna prueba que vaya directo lo nota.
+     *
+     * @test
+     */
+    public function every_link_the_customer_sees_leads_somewhere(): void
+    {
+        $label = Label::factory()->create(['status' => 'available']);
+
+        $paginas = [
+            "/p/{$label->public_token}",
+            "/garantia/{$label->public_token}/registrar",
+        ];
+
+        foreach ($paginas as $pagina) {
+            $html = $this->get($pagina)->assertOk()->getContent();
+
+            // El serial se muestra como texto, eso está bien. Lo que no puede
+            // pasar es que viaje en un enlace, un formulario o una imagen.
+            preg_match_all('#(?:href|action|src)="([^"]*/(?:p|garantia|qr-img)/[^"]+)"#', $html, $m);
+            $this->assertNotEmpty($m[1], "La página {$pagina} no muestra ningún enlace público");
+
+            foreach (array_unique($m[1]) as $url) {
+                $this->assertStringNotContainsString(
+                    rawurlencode($label->serial),
+                    $url,
+                    "La página {$pagina} arma el enlace {$url} con el serial en vez del token"
+                );
+
+                $ruta = parse_url($url, PHP_URL_PATH);
+                $this->assertNotSame(
+                    404,
+                    $this->get($ruta)->getStatusCode(),
+                    "El enlace {$ruta} que muestra {$pagina} da 404"
+                );
+            }
+        }
+    }
+
     /** @test */
     public function public_lookups_are_capped_so_nobody_can_sweep_the_system(): void
     {

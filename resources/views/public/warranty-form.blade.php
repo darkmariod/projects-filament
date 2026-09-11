@@ -111,7 +111,7 @@
         <div class="form-title">Datos del cliente</div>
         <div class="form-subtitle">Complete todos los campos obligatorios (*)</div>
 
-        <form method="POST" action="{{ route('public.warranty.store', $label->serial) }}">
+        <form method="POST" action="{{ route('public.warranty.store', $label->public_token) }}">
             @csrf
 
             <div class="section-label">Información personal</div>
