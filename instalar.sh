@@ -16,6 +16,7 @@
 set -euo pipefail
 
 REPO_SSH="git@github.com:darkmariod/projects-filament.git"
+RAMA="master"   # main quedo en julio y divergio; el trabajo vivo esta en master
 REPO_HTTPS="https://github.com/darkmariod/projects-filament.git"
 DESTINO="/opt/sistema-garantias"
 RESPALDOS="/root/backups-garantias"
@@ -110,15 +111,16 @@ verde "Abiertos: 22 y ${APP_PORT}."
 # -----------------------------------------------------------------------------
 titulo "Código"
 if [[ -d "$DESTINO/.git" ]]; then
-    git -C "$DESTINO" pull --ff-only
+    git -C "$DESTINO" checkout -q "$RAMA"
+    git -C "$DESTINO" pull --ff-only origin "$RAMA"
     verde "Actualizado desde el repositorio."
 else
     mkdir -p "$(dirname "$DESTINO")"
     # SSH si el servidor tiene llave en GitHub; si no, HTTPS.
-    if git clone -q "$REPO_SSH" "$DESTINO" 2>/dev/null; then
+    if git clone -q -b "$RAMA" "$REPO_SSH" "$DESTINO" 2>/dev/null; then
         verde "Clonado por SSH."
     else
-        git clone -q "$REPO_HTTPS" "$DESTINO"
+        git clone -q -b "$RAMA" "$REPO_HTTPS" "$DESTINO"
         verde "Clonado por HTTPS."
     fi
 fi

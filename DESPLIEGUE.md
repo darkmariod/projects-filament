@@ -5,6 +5,33 @@ cero. Probado sobre Ubuntu Server 22.04 LTS.
 
 ---
 
+## El camino corto: `instalar.sh`
+
+Como `root` en el servidor nuevo:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/darkmariod/projects-filament/master/instalar.sh -o instalar.sh
+bash instalar.sh
+```
+
+Pregunta tres cosas —la dirección (IP o dominio), el puerto y la zona horaria—
+y hace todo lo demás: Docker, cortafuegos, código, claves, contenedores, base
+de datos, usuario administrador y comprobación. Al terminar imprime el
+`config.json` que hay que poner en la computadora de la planta.
+
+Dejar el puerto en **80**: sin un proxy delante, panel y agente responden por la
+misma puerta y no hay que explicarle a nadie que son dos puertos distintos.
+
+Se puede volver a correr para actualizar: conserva las claves que ya generó.
+
+**Lo único que hay que hacer a mano después:** entrar al panel con
+`admin@paraiso.com` / `password123` y cambiar esa clave.
+
+Las secciones que siguen explican paso a paso lo que el script hace, por si hay
+que hacerlo a mano o entender qué pasó.
+
+---
+
 ## 1. Qué necesita el servidor
 
 Con más de mil etiquetas diarias y un lote de mil que pesa 11,7 MB en ZPL:
@@ -26,8 +53,10 @@ Puertos que deben estar abiertos hacia afuera:
 | Puerto | Para qué |
 |---|---|
 | 22 | Administración por SSH |
-| 80 | Panel de administración y consultas públicas del QR |
-| 8081 | API del agente de impresión (la computadora de planta se conecta acá) |
+| 80 | Panel, consultas públicas del QR **y** API del agente de impresión |
+
+En el servidor actual el agente va por el 8081 porque hay un Traefik ocupando
+el 80. En un servidor limpio no hace falta: todo por el 80.
 
 ---
 
@@ -46,7 +75,6 @@ systemctl enable --now docker
 # Cortafuegos
 ufw allow 22/tcp
 ufw allow 80/tcp
-ufw allow 8081/tcp
 ufw --force enable
 ```
 
@@ -90,6 +118,7 @@ APP_KEY=
 # en el 80; CON puerto si se accede directo. Si no coincide con la dirección
 # real, el login falla en silencio.
 APP_URL=http://<ip-o-dominio>
+APP_PORT=80
 
 APP_LOCALE=es
 APP_FALLBACK_LOCALE=es
@@ -169,7 +198,7 @@ Los tres deben decir `healthy` o `running`: `garantias-app`, `garantias-queue`,
 | Qué | Cómo | Esperado |
 |---|---|---|
 | Panel | Abrir `http://<ip>/admin/login` en el navegador | Formulario de ingreso, en español |
-| API del agente | `curl -H "X-Agent-Key: <clave>" http://<ip>:8081/api/agent/status` | `{"success":true,...}` |
+| API del agente | `curl -H "X-Agent-Key: <clave>" http://<ip>/api/agent/status` | `{"success":true,...}` |
 | Ingreso | `admin@paraiso.com` / `password123` | Entra al tablero; cambiar la clave ahí mismo |
 
 Si el panel carga pero el ingreso no funciona, casi seguro `APP_URL` no coincide
@@ -183,8 +212,9 @@ reiniciar: `docker compose restart app`.
 Va en la computadora de planta que tiene conectada la Zebra. Todo está en
 `scripts/agente-zebra-python/`:
 
-1. Editar `config.json`: poner la IP del servidor nuevo en `vps_url` (con el
-   `:8081`) y la misma clave que `PRINT_AGENT_KEY` en `agent_key`.
+1. Editar `config.json`: poner la dirección del servidor nuevo en `vps_url`
+   (sin puerto si quedó en el 80) y la misma clave que `PRINT_AGENT_KEY` en
+   `agent_key`. El instalador imprime ese `config.json` ya armado al terminar.
 2. Comprimir la carpeta y seguir `GUIA-INSTALACION.pdf` en la computadora de
    planta.
 
