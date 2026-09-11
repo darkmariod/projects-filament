@@ -60,7 +60,7 @@ PRINTER_PORT = CFG["printer_port"]
 PRINTER_NAME = CFG["printer_name"]
 AGENT_KEY    = CFG["agent_key"]
 BATCH_SIZE   = int(CFG["batch_size"])
-HEADERS      = {"X-Agent-Key": AGENT_KEY}
+HEADERS      = {"X-Agent-Key": AGENT_KEY, "Accept": "application/json"}
 
 
 # El agente corre sin consola (pythonw.exe desde el Programador de tareas),
