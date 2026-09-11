@@ -21,8 +21,15 @@ class PrintQueueAgentController extends Controller
      * Devuelve las colas USB pendientes con items listos para imprimir.
      * El agente Windows consulta este endpoint cada N segundos.
      */
-    public function pending(): JsonResponse
+    public function pending(Request $request): JsonResponse
     {
+        // Un lote de la fabrica son mas de mil etiquetas: unos 12 KB de ZPL cada
+        // una, 11,7 MB en una sola respuesta. Con ?limit=N el agente las pide de
+        // a tandas. Sin el parametro se devuelve todo, como siempre: el agente
+        // que ya esta instalado en la planta no lo manda y tiene que seguir
+        // funcionando igual.
+        $limit = max(0, (int) $request->query('limit', 0));
+
         // Se incluye 'processing' para que el agente pueda RETOMAR un lote que
         // quedo a medias: si se corta la red, se reinicia la PC o el vigilante
         // relanza el agente, la cola queda en 'processing' y sin esto no vuelve
@@ -31,11 +38,22 @@ class PrintQueueAgentController extends Controller
         $queues = PrintQueue::whereIn('status', ['pending', 'partial', 'processing'])
             ->where('connection_type', 'usb')
             ->whereNotNull('printer_name')
-            ->with(['items' => function ($q) {
-                $q->whereIn('status', ['pending', 'printing'])
-                    ->orderBy('sequence');
-            }])
+            ->withCount(['items as remaining_items' => fn ($q) => $q->whereIn('status', ['pending', 'printing'])])
             ->get();
+
+        // Los items se cargan cola por cola y no con with(): un limit() dentro
+        // de with() acota el total de la consulta, no cada cola, y con dos
+        // colas pendientes la segunda podria recibir cero. Las colas
+        // pendientes son pocas, asi que una consulta por cola no pesa.
+        $queues->each(function (PrintQueue $queue) use ($limit) {
+            $q = $queue->items()
+                ->whereIn('status', ['pending', 'printing'])
+                ->orderBy('sequence');
+            if ($limit > 0) {
+                $q->limit($limit);
+            }
+            $queue->setRelation('items', $q->get());
+        });
 
         if ($queues->isEmpty()) {
             return response()->json([
@@ -67,6 +85,9 @@ class PrintQueueAgentController extends Controller
                 'batch_id'      => $queue->label_batch_id,
                 'printer_name'  => $queue->printer_name,
                 'total_items'   => count($items),
+                // Cuantas quedan sin imprimir en toda la cola, contando estas.
+                // Si es mayor que total_items, el agente tiene que volver a pedir.
+                'remaining'     => (int) $queue->remaining_items,
                 'items'         => $items,
             ];
 
@@ -101,24 +122,7 @@ class PrintQueueAgentController extends Controller
         $item = PrintQueueItem::where('print_queue_id', $queueId)
             ->findOrFail($itemId);
 
-        // El agente puede reportar dos veces la misma etiqueta: si se corta
-        // justo despues de imprimir, al retomar la cola vuelve a mandarla. Solo
-        // se cuenta el primer aviso, o el total impreso supera al del lote.
-        $yaEstabaImpreso = $item->status === 'printed';
-
-        $item->markAsPrinted();
-
-        // Actualizar label
-        if ($item->label_id) {
-            $item->label()->update([
-                'printed_at' => now(),
-                'status'     => 'printed',
-            ]);
-        }
-
-        if (! $yaEstabaImpreso) {
-            $item->printQueue->increment('printed_labels');
-        }
+        $this->marcarImpreso($item);
 
         Log::info('PrintAgent: item completado', [
             'queue_id' => $queueId,
@@ -129,6 +133,67 @@ class PrintQueueAgentController extends Controller
             'success' => true,
             'message' => "Item #{$itemId} marcado como impreso",
         ]);
+    }
+
+    /**
+     * POST /api/agent/{queueId}/items/complete   { "item_ids": [1, 2, 3] }
+     *
+     * Marca varios items como impresos en una sola peticion. Con una peticion
+     * por etiqueta, mil etiquetas eran unos veinte minutos solo de avisos; en
+     * tandas de cincuenta son veinte peticiones. El endpoint por item sigue
+     * existiendo para el agente que ya esta instalado en la planta.
+     */
+    public function completeItems(Request $request, int $queueId): JsonResponse
+    {
+        $data = $request->validate([
+            'item_ids'   => ['required', 'array', 'min:1', 'max:500'],
+            'item_ids.*' => ['integer'],
+        ]);
+
+        $items = PrintQueueItem::where('print_queue_id', $queueId)
+            ->whereIn('id', $data['item_ids'])
+            ->get();
+
+        foreach ($items as $item) {
+            $this->marcarImpreso($item);
+        }
+
+        Log::info('PrintAgent: items completados en bloque', [
+            'queue_id'  => $queueId,
+            'recibidos' => count($data['item_ids']),
+            'marcados'  => $items->count(),
+        ]);
+
+        return response()->json([
+            'success'  => true,
+            'marked'   => $items->count(),
+            'message'  => "{$items->count()} item(s) marcados como impresos",
+        ]);
+    }
+
+    /**
+     * Marca un item como impreso y refleja el estado en su etiqueta.
+     *
+     * El agente puede reportar dos veces la misma etiqueta: si se corta justo
+     * despues de imprimir, al retomar la cola vuelve a mandarla. Solo se cuenta
+     * el primer aviso, o el total impreso supera al del lote.
+     */
+    private function marcarImpreso(PrintQueueItem $item): void
+    {
+        $yaEstabaImpreso = $item->status === 'printed';
+
+        $item->markAsPrinted();
+
+        if ($item->label_id) {
+            $item->label()->update([
+                'printed_at' => now(),
+                'status'     => 'printed',
+            ]);
+        }
+
+        if (! $yaEstabaImpreso) {
+            $item->printQueue->increment('printed_labels');
+        }
     }
 
     /**

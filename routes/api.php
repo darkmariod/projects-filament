@@ -18,6 +18,7 @@ Route::prefix('agent')->middleware('agent.auth')->group(function () {
     Route::get('pending',                         [PrintQueueAgentController::class, 'pending']);
     Route::post('print-label',                    [PrintQueueAgentController::class, 'printSingleLabel']);
     Route::post('{queueId}/complete',             [PrintQueueAgentController::class, 'completeQueue']);
+    Route::post('{queueId}/items/complete',       [PrintQueueAgentController::class, 'completeItems']);
     Route::post('{queueId}/item/{itemId}/complete', [PrintQueueAgentController::class, 'completeItem']);
     Route::post('{queueId}/item/{itemId}/failed',   [PrintQueueAgentController::class, 'failItem']);
 });

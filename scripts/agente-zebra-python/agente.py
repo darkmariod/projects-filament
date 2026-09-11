@@ -29,6 +29,11 @@ DEFAULTS = {
     "printer_port": 9100,
     "printer_name": "ZDesigner ZT411-203dpi ZPL",
     "agent_key": "zebra-agent-key-2026",
+    # Cuantas etiquetas pide y reporta por vez. Un lote de mil son 11,7 MB
+    # si se piden todas juntas; de a 50 son tandas de ~600 KB. Y reportar
+    # 50 en una peticion en vez de 50 peticiones baja los veinte minutos de
+    # avisos a menos de uno.
+    "batch_size": 50,
 }
 
 
@@ -54,6 +59,7 @@ PRINTER_IP   = CFG["printer_ip"]
 PRINTER_PORT = CFG["printer_port"]
 PRINTER_NAME = CFG["printer_name"]
 AGENT_KEY    = CFG["agent_key"]
+BATCH_SIZE   = int(CFG["batch_size"])
 HEADERS      = {"X-Agent-Key": AGENT_KEY}
 
 
@@ -154,9 +160,9 @@ def api_get(path: str):
         return None
 
 
-def api_post(path: str):
+def api_post(path: str, body=None):
     try:
-        r = requests.post(f"{VPS_URL}/api/agent/{path}", headers=HEADERS, timeout=TIMEOUT)
+        r = requests.post(f"{VPS_URL}/api/agent/{path}", headers=HEADERS, json=body, timeout=TIMEOUT)
         r.raise_for_status()
         return r.json()
     except Exception as e:
@@ -169,23 +175,55 @@ def check_server() -> bool:
     return data is not None and data.get("success") is True
 
 
-def process_queues():
-    data = api_get("pending")
-    if not data or not data.get("success"):
+def reportar_impresas(queue_id: int, item_ids: list) -> None:
+    """Avisa al servidor que estas etiquetas ya salieron, en una sola peticion.
+
+    Si el servidor no conoce el endpoint en bloque (una version anterior), se
+    cae al aviso de una por una para no dejar nada sin reportar.
+    """
+    if not item_ids:
         return
+    r = api_post(f"{queue_id}/items/complete", {"item_ids": item_ids})
+    if r is not None and r.get("success"):
+        log(f"  [OK] {len(item_ids)} etiqueta(s) reportadas en bloque")
+        return
+    log("  Reporte en bloque no disponible, avisando una por una", "WARN")
+    for item_id in item_ids:
+        api_post(f"{queue_id}/item/{item_id}/complete")
+
+
+def process_queues():
+    # Mientras queden etiquetas se sigue pidiendo sin esperar los 10 segundos
+    # del ciclo. Se corta si el servidor deja de responder o ya no hay nada.
+    while _procesar_tanda():
+        pass
+
+
+def _procesar_tanda() -> bool:
+    """Pide una tanda, la imprime y la reporta. Devuelve True si quedan mas."""
+    # Se pide de a tandas. Si el servidor no entiende el parametro lo ignora y
+    # devuelve todo, como siempre: funciona con cualquiera de las dos versiones.
+    data = api_get(f"pending?limit={BATCH_SIZE}")
+    if not data or not data.get("success"):
+        return False
 
     queues = data.get("queues", [])
     if not queues:
-        return
+        return False
+
+    hay_mas = False
 
     for queue in queues:
-        queue_id = queue["queue_id"]
-        printer  = queue.get("printer_name", PRINTER_NAME)
-        items    = queue.get("items", [])
-        total    = queue.get("total_items", len(items))
+        queue_id  = queue["queue_id"]
+        printer   = queue.get("printer_name", PRINTER_NAME)
+        items     = queue.get("items", [])
+        total     = queue.get("total_items", len(items))
+        remaining = queue.get("remaining", total)
 
-        log(f"Cola #{queue_id} - {total} etiqueta(s) para '{printer}'")
+        log(f"Cola #{queue_id} - {total} etiqueta(s) para '{printer}'"
+            + (f" ({remaining} en total por imprimir)" if remaining > total else ""))
 
+        impresas = []
         for item in items:
             item_id = item["item_id"]
             zpl     = item["zpl_content"]
@@ -195,14 +233,24 @@ def process_queues():
             ok = send_zpl(zpl)
 
             if ok:
-                api_post(f"{queue_id}/item/{item_id}/complete")
-                log(f"  [OK] Item #{seq} impreso y reportado")
+                impresas.append(item_id)
+                log(f"  [OK] Item #{seq} impreso")
             else:
                 api_post(f"{queue_id}/item/{item_id}/failed")
                 log(f"  [FALLO] Item #{seq} fallido y reportado", "WARN")
 
-        api_post(f"{queue_id}/complete")
-        log(f"Cola #{queue_id} finalizada")
+        reportar_impresas(queue_id, impresas)
+
+        # Quedan mas en esta cola: se vuelve a pedir enseguida, sin esperar
+        # los 10 segundos del ciclo. El cierre de la cola se manda recien
+        # cuando ya no queda nada.
+        if remaining > total:
+            hay_mas = True
+        else:
+            api_post(f"{queue_id}/complete")
+            log(f"Cola #{queue_id} finalizada")
+
+    return hay_mas
 
 
 def main():

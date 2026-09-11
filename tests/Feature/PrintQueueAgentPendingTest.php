@@ -142,6 +142,98 @@ class PrintQueueAgentPendingTest extends TestCase
         );
     }
 
+    /**
+     * El agente que ya esta instalado en la planta no manda ?limit. Tiene que
+     * seguir recibiendo todo, exactamente como antes.
+     *
+     * @test
+     */
+    public function without_a_limit_the_old_agent_still_receives_everything(): void
+    {
+        $this->crearCola('pending', pendientes: 7);
+
+        $response = $this->withHeaders($this->headers())->getJson(self::ENDPOINT);
+
+        $response->assertOk();
+        $this->assertCount(7, $response->json('queues.0.items'));
+        $this->assertSame(7, $response->json('queues.0.remaining'));
+    }
+
+    /** @test */
+    public function with_a_limit_the_agent_receives_a_batch_and_knows_how_many_remain(): void
+    {
+        $this->crearCola('pending', pendientes: 7);
+
+        $response = $this->withHeaders($this->headers())->getJson(self::ENDPOINT . '?limit=3');
+
+        $response->assertOk();
+        $this->assertCount(3, $response->json('queues.0.items'), 'Solo la tanda pedida');
+        $this->assertSame(7, $response->json('queues.0.remaining'), 'Pero sabe que quedan siete en total');
+    }
+
+    /**
+     * Un limit() dentro de with() acota el total y no cada cola: con dos colas
+     * pendientes la segunda podria recibir cero. Este caso lo vigila.
+     *
+     * @test
+     */
+    public function the_limit_applies_to_each_queue_and_not_to_the_total(): void
+    {
+        $this->crearCola('pending', pendientes: 5);
+        $this->crearCola('pending', pendientes: 5);
+
+        $response = $this->withHeaders($this->headers())->getJson(self::ENDPOINT . '?limit=2');
+
+        $response->assertOk();
+        $this->assertCount(2, $response->json('queues'));
+        $this->assertCount(2, $response->json('queues.0.items'));
+        $this->assertCount(2, $response->json('queues.1.items'), 'La segunda cola tambien recibe su tanda');
+    }
+
+    /** @test */
+    public function the_agent_can_report_several_labels_in_one_request(): void
+    {
+        $queue = $this->crearCola('processing', pendientes: 4);
+        $ids   = $queue->items->pluck('id')->take(3)->all();
+
+        $response = $this->withHeaders($this->headers())
+            ->postJson("/api/agent/{$queue->id}/items/complete", ['item_ids' => $ids]);
+
+        $response->assertOk();
+        $this->assertSame(3, $response->json('marked'));
+        $this->assertSame(3, $queue->fresh()->printed_labels);
+        $this->assertSame(3, $queue->items()->where('status', 'printed')->count());
+    }
+
+    /** @test */
+    public function reporting_in_bulk_ignores_items_that_belong_to_another_queue(): void
+    {
+        $mia  = $this->crearCola('processing', pendientes: 2);
+        $otra = $this->crearCola('processing', pendientes: 2);
+
+        $response = $this->withHeaders($this->headers())->postJson(
+            "/api/agent/{$mia->id}/items/complete",
+            ['item_ids' => $otra->items->pluck('id')->all()]
+        );
+
+        $response->assertOk();
+        $this->assertSame(0, $response->json('marked'));
+        $this->assertSame(0, $otra->fresh()->printed_labels, 'Un agente no puede marcar items de otra cola');
+    }
+
+    /** @test */
+    public function reporting_in_bulk_counts_each_label_once(): void
+    {
+        $queue = $this->crearCola('processing', pendientes: 2);
+        $ids   = $queue->items->pluck('id')->all();
+        $url   = "/api/agent/{$queue->id}/items/complete";
+
+        $this->withHeaders($this->headers())->postJson($url, ['item_ids' => $ids]);
+        $this->withHeaders($this->headers())->postJson($url, ['item_ids' => $ids]);
+
+        $this->assertSame(2, $queue->fresh()->printed_labels);
+    }
+
     /** @test */
     public function the_printed_count_never_exceeds_the_size_of_the_batch(): void
     {
