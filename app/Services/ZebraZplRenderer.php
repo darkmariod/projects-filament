@@ -243,33 +243,11 @@ class ZebraZplRenderer
 
         $ry = $startY;
 
-        // Logo fallback chain: product image → category logo → paraiso-logo.gfa → text
-        $logoZpl = null;
-
-        // 1. Try product image
-        if (!empty($data['image'])) {
-            $converter = new ImageToZplConverter();
-            $logoZpl = $converter->convert($data['image']);
-        }
-
-        // 2. Try category logo
-        if ($logoZpl === null && !empty($data['category_logo'])) {
-            $converter = new ImageToZplConverter();
-            $logoZpl = $converter->convert($data['category_logo']);
-        }
-
-        // 3. Try paraiso-logo.gfa
-        if ($logoZpl === null) {
-            $logoZpl = $this->logoZpl();
-        }
-
-        // 4. Text fallback
-        if ($logoZpl !== null) {
-            $zpl->raw("^FO{$rightX},{$ry}{$logoZpl}^FS\n");
-            $ry += 118;
-        } else {
-            $zpl->text($rightX, $ry, 44, 'PARAISO');
-            $ry += 56;
+        // El ajuste "Mostrar logo" de la impresora apaga todo el bloque de marca:
+        // ni gráfico ni texto de reemplazo. El resto de la etiqueta sube para
+        // no dejar el hueco.
+        if ($this->settings->show_logo ?? true) {
+            $ry = $this->drawBrandLogo($zpl, $data, $rightX, $ry);
         }
 
         $zpl->text($rightX, $ry, 12, 'DONDE EMPIEZAN TUS SUEÑOS');
@@ -292,6 +270,37 @@ class ZebraZplRenderer
         $this->buildLegalText($zpl, $data, $rightX, $ry);
 
         $zpl->rotatedText(self::WIDTH_DOTS - 25, $startY, 16, 16, 'NO DESPRENDER LA ETIQUETA');
+    }
+
+    /**
+     * Dibuja el bloque de marca y devuelve la Y donde sigue el contenido.
+     *
+     * Orden de preferencia: imagen del producto → logo de la categoría →
+     * logotipo de Paraíso → texto "PARAISO" si no hay ningún gráfico.
+     */
+    private function drawBrandLogo(ZplBuilder $zpl, array $data, int $x, int $y): int
+    {
+        $logoZpl = null;
+
+        if (!empty($data['image'])) {
+            $logoZpl = (new ImageToZplConverter())->convert($data['image']);
+        }
+
+        if ($logoZpl === null && !empty($data['category_logo'])) {
+            $logoZpl = (new ImageToZplConverter())->convert($data['category_logo']);
+        }
+
+        if ($logoZpl === null) {
+            $logoZpl = $this->logoZpl();
+        }
+
+        if ($logoZpl !== null) {
+            $zpl->raw("^FO{$x},{$y}{$logoZpl}^FS\n");
+            return $y + 118;
+        }
+
+        $zpl->text($x, $y, 44, 'PARAISO');
+        return $y + 56;
     }
 
     /**

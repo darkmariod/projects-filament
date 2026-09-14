@@ -707,6 +707,38 @@ class ZebraZplServiceTest extends TestCase
         @unlink($logoAbsolute);
     }
 
+    /**
+     * El ajuste "Mostrar logo" de la impresora existía en el modelo pero el
+     * renderer no lo leía: la etiqueta salía siempre con logotipo. El cliente
+     * necesita poder imprimir sin él.
+     *
+     * @test
+     */
+    public function printer_setting_can_turn_the_brand_logo_off(): void
+    {
+        $label = $this->createFullLabel();
+        $label->product->update(['image' => null]);
+        $label->product->productModel->category->update(['logo' => null]);
+        $label->load('product.productModel.category');
+
+        $setting = ZebraPrintSetting::where('active', true)->first();
+
+        // Con el ajuste encendido, el logotipo de Paraíso va en la etiqueta.
+        $setting->update(['show_logo' => true]);
+        $conLogo = (new ZebraZplService())->generateForLabel($label->fresh());
+        $this->assertStringContainsString('^GFA,3600,3600,40,', $conLogo, 'Con show_logo el logotipo de Paraíso debe estar');
+
+        // Apagado, ni el gráfico ni el texto de reemplazo.
+        $setting->update(['show_logo' => false]);
+        $sinLogo = (new ZebraZplService())->generateForLabel($label->fresh());
+        $this->assertStringNotContainsString('^GFA,3600,3600,40,', $sinLogo, 'Sin show_logo no debe ir el gráfico del logotipo');
+        $this->assertStringNotContainsString('^FDPARAISO^FS', $sinLogo, 'Ni el texto PARAISO que lo reemplaza');
+
+        // Y el resto de la etiqueta sigue completo.
+        $this->assertStringContainsString('CONTROL DE CALIDAD', $sinLogo);
+        $this->assertStringContainsString($label->serial, $sinLogo);
+    }
+
     /** @test */
     public function no_image_no_category_logo_uses_paraiso_logo_gfa(): void
     {
