@@ -23,6 +23,7 @@ class WarrantyRegistrationTest extends TestCase
 
         $this->label = Label::factory()->create([
             'serial' => '2605-WRNT-V-00000001-3',
+            'public_token' => 'WRNT1111111111111111',
             'status' => 'available',
         ]);
 
@@ -54,7 +55,7 @@ class WarrantyRegistrationTest extends TestCase
     /** @test */
     public function get_warranty_form_shows_registration_page(): void
     {
-        $response = $this->get("/garantia/{$this->label->serial}/registrar");
+        $response = $this->get("/garantia/{$this->label->public_token}/registrar");
 
         $response->assertStatus(200);
         $response->assertSee('REGISTRO DE GARANTÍA');
@@ -66,11 +67,11 @@ class WarrantyRegistrationTest extends TestCase
     public function post_with_valid_data_creates_warranty(): void
     {
         $response = $this->post(
-            "/garantia/{$this->label->serial}/registrar",
+            "/garantia/{$this->label->public_token}/registrar",
             $this->validPayload
         );
 
-        $response->assertRedirect("/garantia/{$this->label->serial}/certificado");
+        $response->assertRedirect("/garantia/{$this->label->public_token}/certificado");
 
         $this->assertDatabaseHas('warranties', [
             'label_id' => $this->label->id,
@@ -90,7 +91,7 @@ class WarrantyRegistrationTest extends TestCase
     public function label_status_changes_to_registered_after_warranty(): void
     {
         $this->post(
-            "/garantia/{$this->label->serial}/registrar",
+            "/garantia/{$this->label->public_token}/registrar",
             $this->validPayload
         );
 
@@ -104,16 +105,16 @@ class WarrantyRegistrationTest extends TestCase
     public function duplicate_registration_is_prevented(): void
     {
         $this->post(
-            "/garantia/{$this->label->serial}/registrar",
+            "/garantia/{$this->label->public_token}/registrar",
             $this->validPayload
         );
 
         $response = $this->post(
-            "/garantia/{$this->label->serial}/registrar",
+            "/garantia/{$this->label->public_token}/registrar",
             $this->validPayload
         );
 
-        $response->assertRedirect("/p/{$this->label->serial}");
+        $response->assertRedirect("/p/{$this->label->public_token}");
         $response->assertSessionHas('error', 'Esta garantía ya fue registrada.');
 
         $this->assertDatabaseCount('warranties', 1);
@@ -134,7 +135,7 @@ class WarrantyRegistrationTest extends TestCase
     public function post_with_invalid_data_returns_validation_errors(): void
     {
         $response = $this->post(
-            "/garantia/{$this->label->serial}/registrar",
+            "/garantia/{$this->label->public_token}/registrar",
             [
                 'first_name' => '',
                 'last_name' => '',
@@ -156,7 +157,6 @@ class WarrantyRegistrationTest extends TestCase
             'city',
             'store_name',
             'invoice_number',
-            'purchase_date',
             'terms_accepted',
         ]);
     }
@@ -168,9 +168,9 @@ class WarrantyRegistrationTest extends TestCase
             'serial' => '2605-CNCL3-V-00000001-1',
         ]);
 
-        $response = $this->get("/garantia/{$cancelledLabel->serial}/registrar");
+        $response = $this->get("/garantia/{$cancelledLabel->public_token}/registrar");
 
-        $response->assertRedirect("/p/{$cancelledLabel->serial}");
+        $response->assertRedirect("/p/{$cancelledLabel->public_token}");
         $response->assertSessionHas('error', 'Esta etiqueta ha sido anulada.');
     }
 
@@ -180,7 +180,7 @@ class WarrantyRegistrationTest extends TestCase
         $this->label->product->productModel->update(['warranty_years' => 5]);
 
         $this->post(
-            "/garantia/{$this->label->serial}/registrar",
+            "/garantia/{$this->label->public_token}/registrar",
             $this->validPayload
         );
 
@@ -198,7 +198,7 @@ class WarrantyRegistrationTest extends TestCase
     public function customer_is_reused_for_same_document_number(): void
     {
         $this->post(
-            "/garantia/{$this->label->serial}/registrar",
+            "/garantia/{$this->label->public_token}/registrar",
             $this->validPayload
         );
 
@@ -212,7 +212,7 @@ class WarrantyRegistrationTest extends TestCase
         $payload['phone'] = '0999888777';
 
         $this->post(
-            "/garantia/{$secondLabel->serial}/registrar",
+            "/garantia/{$secondLabel->public_token}/registrar",
             $payload
         );
 

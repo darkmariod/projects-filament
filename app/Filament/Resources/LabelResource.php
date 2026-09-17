@@ -106,7 +106,7 @@ class LabelResource extends Resource
                     ->label('QR')
                     ->size(64)
                     ->square()
-                    ->getStateUsing(fn (Label $record): string => route('public.qr.image', $record->serial))
+                    ->getStateUsing(fn (Label $record): string => route('public.qr.image', $record->public_token))
                     ->url(fn (Label $record): string => $record->qr_url)
                     ->openUrlInNewTab(),
 

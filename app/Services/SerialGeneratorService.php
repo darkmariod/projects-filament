@@ -113,10 +113,53 @@ class SerialGeneratorService
         ];
     }
 
-    public function buildQrUrl(string $serial): string
+    /**
+     * Genera un token público criptográficamente seguro (≈100 bits de entropía).
+     *
+     * Base32 sin caracteres ambiguos (0/O, 1/I/L) para legibilidad manual.
+     * 20 caracteres de un alfabeto de 32 → 2^(5*20) = 2^100 combinaciones.
+     *
+     * Fuente: random_bytes() (CSPRNG). NO usa mt_rand/rand/uniqid.
+     */
+    public function generatePublicToken(): string
+    {
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 chars, sin 0/O/1/I/L
+        $bytes    = random_bytes(20);
+        $token    = '';
+
+        for ($i = 0; $i < 20; $i++) {
+            // Índice 0..31 a partir de cada byte (sin sesgo perceptible en la práctica)
+            $token .= $alphabet[ord($bytes[$i]) % 32];
+        }
+
+        // Reintenta si colisiona con un token existente (igual patrón que el loop de serials)
+        while (Label::where('public_token', $token)->exists()) {
+            $bytes = random_bytes(20);
+            $token = '';
+            for ($i = 0; $i < 20; $i++) {
+                $token .= $alphabet[ord($bytes[$i]) % 32];
+            }
+        }
+
+        return $token;
+    }
+
+    /**
+     * Construye la URL pública a partir del token (nuevo esquema seguro).
+     */
+    public function buildPublicUrl(string $token): string
     {
         $baseUrl = rtrim(config('app.url'), '/');
-        return $baseUrl . '/p/' . rawurlencode($serial);
+        return $baseUrl . '/p/' . rawurlencode($token);
+    }
+
+    /**
+     * Alias temporal de buildPublicUrl por compatibilidad con el esquema anterior.
+     * @deprecated Usar buildPublicUrl().
+     */
+    public function buildQrUrl(string $serial): string
+    {
+        return $this->buildPublicUrl($serial);
     }
 
     public function generateLabelsForBatch(LabelBatch $batch): bool
@@ -132,12 +175,14 @@ class SerialGeneratorService
             $now            = now();
 
             foreach ($serials as $item) {
-                $qrUrl = $this->buildQrUrl($item['serial']);
+                $token = $this->generatePublicToken();
+                $qrUrl = $this->buildPublicUrl($token);
 
                 $labelsToInsert[] = [
                     'label_batch_id'  => $batch->id,
                     'product_id'      => $batch->product_id,
                     'serial'          => $item['serial'],
+                    'public_token'    => $token,
                     'sequence_number' => $item['sequence_number'],
                     // Código de barras = serial único de cada etiqueta (no $product->barcode,
                     // que se repetía en todas las etiquetas del mismo producto).

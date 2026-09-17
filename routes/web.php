@@ -20,13 +20,13 @@ Route::get('/test-pdf', function () {
 
 use App\Http\Controllers\PublicController;
 
-Route::get('/qr-img/{serial}', [PublicController::class, 'qrImage'])->name('public.qr.image');
-Route::get('/p/{serial}', [PublicController::class, 'product'])->name('public.product');
-Route::get('/garantia/{serial}/registrar', [PublicController::class, 'warrantyForm'])->name('public.warranty.form');
-Route::post('/garantia/{serial}/registrar', [PublicController::class, 'warrantyStore'])
+Route::get('/qr-img/{token}', [PublicController::class, 'qrImage'])->name('public.qr.image');
+Route::get('/p/{token}', [PublicController::class, 'product'])->name('public.product');
+Route::get('/garantia/{token}/registrar', [PublicController::class, 'warrantyForm'])->name('public.warranty.form');
+Route::post('/garantia/{token}/registrar', [PublicController::class, 'warrantyStore'])
     ->middleware('throttle:warranty-register')
     ->name('public.warranty.store');
-Route::get('/garantia/{serial}/certificado', [PublicController::class, 'warrantyCertificate'])->name('public.warranty.certificate');
+Route::get('/garantia/{token}/certificado', [PublicController::class, 'warrantyCertificate'])->name('public.warranty.certificate');
 
 Route::view('/terminos-condiciones', 'public.terms')->name('public.terms');
 Route::view('/proteccion-datos', 'public.privacy')->name('public.privacy');

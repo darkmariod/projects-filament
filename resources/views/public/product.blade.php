@@ -65,7 +65,7 @@
 
         <div style="text-align:center; margin-bottom:16px;">
             <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px; display:inline-block;">
-                <img src="{{ route('public.qr.image', $label->serial) }}"
+                <img src="{{ route('public.qr.image', $label->public_token) }}"
                      alt="QR {{ $label->serial }}"
                      style="width:180px; height:180px; image-rendering:pixelated;">
             </div>
@@ -112,7 +112,7 @@
             <div style="text-align:center; margin-bottom:12px;">
                 <span class="badge badge-green">✓ Disponible para registrar garantía</span>
             </div>
-            <a href="{{ route('public.warranty.form', $label->serial) }}" class="btn">
+            <a href="{{ route('public.warranty.form', $label->public_token) }}" class="btn">
                 Registrar garantía
             </a>
 
@@ -124,7 +124,7 @@
                     <p>Válida hasta {{ $label->warranty->warranty_end_date->format('d/m/Y') }}</p>
                 @endif
             </div>
-            <a href="{{ route('public.warranty.certificate', $label->serial) }}" class="btn">
+            <a href="{{ route('public.warranty.certificate', $label->public_token) }}" class="btn">
                 Descargar certificado
             </a>
 

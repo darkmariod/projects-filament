@@ -46,9 +46,16 @@ class CreateLabel extends CreateRecord
             $data['barcode'] = $data['serial'];
         }
 
-        // Si no se proveyó qr_url, auto-generarla desde el serial
-        if (empty($data['qr_url']) && !empty($data['serial'])) {
-            $data['qr_url'] = app(SerialGeneratorService::class)->buildQrUrl($data['serial']);
+        $service = app(SerialGeneratorService::class);
+
+        // Generar token público no adivinable si falta
+        if (empty($data['public_token'])) {
+            $data['public_token'] = $service->generatePublicToken();
+        }
+
+        // Si no se proveyó qr_url, auto-generarla desde el token (nuevo esquema seguro)
+        if (empty($data['qr_url']) && !empty($data['public_token'])) {
+            $data['qr_url'] = $service->buildPublicUrl($data['public_token']);
         }
 
         return $data;

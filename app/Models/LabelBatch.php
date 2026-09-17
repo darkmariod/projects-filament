@@ -151,6 +151,27 @@ class LabelBatch extends Model
         return $this->hasMany(Label::class);
     }
 
+    /**
+     * Número de etiquetas realmente fabricadas (impresas o registradas).
+     * Excluye disponibles (planificadas) y anuladas antes de imprimir.
+     */
+    public function producedCount(): int
+    {
+        return $this->labels()
+            ->whereIn('status', ['printed', 'registered'])
+            ->count();
+    }
+
+    /**
+     * Número de etiquetas anuladas antes de llegar a imprimirse.
+     */
+    public function cancelledBeforePrintCount(): int
+    {
+        return $this->labels()
+            ->where('status', 'anulled')
+            ->count();
+    }
+
     public function logs(): HasMany
     {
         return $this->hasMany(LabelLog::class);

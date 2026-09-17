@@ -30,6 +30,7 @@ class LabelBatchesExportTest extends TestCase
             'Código interno',
             'Producto',
             'Cantidad',
+            'Producidas',
             'Número lote cliente',
             'Operador',
             'Generado por',
@@ -39,7 +40,7 @@ class LabelBatchesExportTest extends TestCase
         ];
 
         $this->assertSame($expectedHeadings, $headings);
-        $this->assertCount(9, $headings);
+        $this->assertCount(10, $headings);
     }
 
     /** @test */
@@ -68,9 +69,11 @@ class LabelBatchesExportTest extends TestCase
         $this->assertSame($batch->internal_batch_code, $mapped[0]);
         $this->assertSame($batch->product->name, $mapped[1]);
         $this->assertSame(3, $mapped[2]);
-        $this->assertSame($batch->customer_batch_number, $mapped[3]);
-        $this->assertSame($batch->operator, $mapped[4]);
-        $this->assertSame('Generado', $mapped[8]);
+        // Etiquetas del batch helper son 'available' → 0 producidas
+        $this->assertSame(0, $mapped[3]);
+        $this->assertSame($batch->customer_batch_number, $mapped[4]);
+        $this->assertSame($batch->operator, $mapped[5]);
+        $this->assertSame('Generado', $mapped[9]);
     }
 
     /** @test */
@@ -93,19 +96,19 @@ class LabelBatchesExportTest extends TestCase
 
         $batch = $this->createBatch(1);
         $generated = $export->map($batch);
-        $this->assertStringContainsString('Generado', $generated[8]);
+        $this->assertStringContainsString('Generado', $generated[9]);
 
         $batch->update(['status' => 'active']);
         $active = $export->map($batch->fresh());
-        $this->assertStringContainsString('Activo', $active[8]);
+        $this->assertStringContainsString('Activo', $active[9]);
 
         $batch->update(['status' => 'printed']);
         $printed = $export->map($batch->fresh());
-        $this->assertStringContainsString('Impreso', $printed[8]);
+        $this->assertStringContainsString('Impreso', $printed[9]);
 
         $batch->update(['status' => 'anulled']);
         $anulled = $export->map($batch->fresh());
-        $this->assertStringContainsString('Anulado', $anulled[8]);
+        $this->assertStringContainsString('Anulado', $anulled[9]);
     }
 
     /** @test */
@@ -141,8 +144,24 @@ class LabelBatchesExportTest extends TestCase
 
         $mapped = $export->map($batch);
 
-        $this->assertSame($batch->customer_batch_number, $mapped[3]);
-        $this->assertNotEmpty($mapped[3]);
+        $this->assertSame($batch->customer_batch_number, $mapped[4]);
+        $this->assertNotEmpty($mapped[4]);
+    }
+
+    /** @test */
+    public function export_maps_produced_count(): void
+    {
+        $batch = $this->createBatch(3);
+
+        // Marcar 2 como impresas
+        $batch->labels()->limit(2)->update(['status' => 'printed']);
+
+        $export = new LabelBatchesExport();
+
+        $mapped = $export->map($batch->fresh());
+
+        // Producidas = impresas + registradas (2)
+        $this->assertSame(2, $mapped[3]);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

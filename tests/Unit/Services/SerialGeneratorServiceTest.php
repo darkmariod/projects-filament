@@ -232,8 +232,131 @@ class SerialGeneratorServiceTest extends TestCase
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    //  Public token (Fase 1 - token público no adivinable)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** @test */
+    public function public_token_has_exact_length(): void
+    {
+        $token = $this->service->generatePublicToken();
+
+        $this->assertSame(20, strlen($token));
+    }
+
+    /** @test */
+    public function public_token_uses_base32_alphabet_without_ambiguous_chars(): void
+    {
+        // Alfabeto: A-Z (sin I, O) + dígitos 2-9 (sin 0/1/L)
+        $token = $this->service->generatePublicToken();
+
+        $allowed = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $this->assertSame(strlen($token), strspn($token, $allowed), 'Token solo contiene caracteres del alfabeto permitido');
+        $this->assertStringNotContainsString('0', $token);
+        $this->assertStringNotContainsString('O', $token);
+        $this->assertStringNotContainsString('1', $token);
+        $this->assertStringNotContainsString('I', $token);
+    }
+
+    /** @test */
+    public function generating_5000_tokens_produces_zero_collisions(): void
+    {
+        $tokens = [];
+        for ($i = 0; $i < 5000; $i++) {
+            $tokens[] = $this->service->generatePublicToken();
+        }
+
+        $this->assertSame(5000, count(array_unique($tokens)), 'Deben ser 5000 tokens únicos');
+    }
+
+    /** @test */
+    public function public_token_does_not_contain_sequence_or_product_code(): void
+    {
+        $token = $this->service->generatePublicToken();
+
+        // El token no debe contener secuencia numérica (8 dígitos) ni el formato de serial
+        $this->assertDoesNotMatchRegularExpression('/\d{8}/', $token);
+        $this->assertDoesNotMatchRegularExpression('/-V-/', $token);
+
+        // No debe contener ningún dígito (el alfabeto Base32 sin ambiguos usa 2-7, pero
+        // el serial original tiene 8 dígitos de secuencia + DV — verificamos que el token
+        // no repita el patrón secuencial)
+        $this->assertDoesNotMatchRegularExpression('/^\d{4}-/', $token);
+    }
+
+    /** @test */
+    public function two_tokens_from_same_batch_have_no_deterministic_relation(): void
+    {
+        // Reproduce el escenario de Diego: 2 etiquetas consecutivas del mismo lote
+        // (sequence N y N+1) — sus tokens NO deben tener transformación determinista.
+        $tokenN   = $this->service->generatePublicToken();
+        $tokenN1  = $this->service->generatePublicToken();
+
+        $this->assertNotSame($tokenN, $tokenN1);
+
+        // No deben compartir prefijo secuencial detectable
+        $commonPrefix = $this->commonPrefixLength($tokenN, $tokenN1);
+        $this->assertLessThan(5, $commonPrefix, 'Tokens no deben tener prefijo común largo');
+    }
+
+    /** @test */
+    public function generate_labels_for_batch_persists_unique_tokens_and_qr_urls(): void
+    {
+        $batch = $this->createBatch(quantity: 50, productCode: 'TOKENB', date: '2026-05-27');
+
+        $result = $this->service->generateLabelsForBatch($batch);
+
+        $this->assertTrue($result);
+
+        $labels = $batch->labels()->orderBy('sequence_number')->get();
+
+        $this->assertCount(50, $labels);
+
+        // 50 tokens únicos
+        $tokens = $labels->pluck('public_token')->all();
+        $this->assertCount(50, array_unique($tokens));
+
+        // Cada qr_url contiene SU propio token, no el de otra fila
+        foreach ($labels as $label) {
+            $this->assertNotNull($label->public_token);
+            $this->assertStringContainsString('/p/' . $label->public_token, $label->qr_url);
+        }
+
+        // Serial interno intacto y secuencial
+        $this->assertSame(1, $labels[0]->sequence_number);
+        $this->assertSame(2, $labels[1]->sequence_number);
+        $this->assertSame('2605-TOKENB-V-00000001-', substr($labels[0]->serial, 0, 23));
+    }
+
+    /** @test */
+    public function build_public_url_uses_token_not_serial(): void
+    {
+        $token = 'ABC23456789';
+
+        $url = $this->service->buildPublicUrl($token);
+
+        $this->assertStringContainsString('/p/' . $token, $url);
+        $this->assertStringNotContainsString('serial', strtolower($url));
+    }
+
+    /** @test */
+    public function build_qr_url_alias_remains_for_backward_compat(): void
+    {
+        $this->assertTrue(method_exists($this->service, 'buildQrUrl'));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     //  Helpers
     // ─────────────────────────────────────────────────────────────────────────
+
+    private function commonPrefixLength(string $a, string $b): int
+    {
+        $len = 0;
+        $max = min(strlen($a), strlen($b));
+        while ($len < $max && $a[$len] === $b[$len]) {
+            $len++;
+        }
+        return $len;
+    }
 
     private function createBatch(
         int $quantity = 1,

@@ -90,6 +90,7 @@ class ProductResource extends Resource
 
                         Forms\Components\FileUpload::make('image')
                             ->label('Imagen del producto')
+                            ->helperText('Este logo reemplaza al de Paraíso en la etiqueta impresa de este producto.')
                             ->image()
                             ->disk('public')
                             ->directory('products')

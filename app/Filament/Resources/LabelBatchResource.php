@@ -176,6 +176,12 @@ class LabelBatchResource extends Resource
                     ->sortable()
                     ->alignment('right'),
 
+                Tables\Columns\TextColumn::make('produced_count')
+                    ->label('Producidas')
+                    ->getStateUsing(fn (LabelBatch $record): int => $record->producedCount())
+                    ->sortable()
+                    ->alignment('right'),
+
                 Tables\Columns\TextColumn::make('operator')
                     ->label('Operador')
                     ->searchable()
